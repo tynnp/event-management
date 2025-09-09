@@ -9,6 +9,7 @@ export interface User {
   createdAt: string;
   eventsAttended: number;
   badges: string[];
+  isLocked?: boolean;
 }
 
 export interface Event {

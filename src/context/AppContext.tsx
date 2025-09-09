@@ -23,7 +23,10 @@ type AppAction =
   | { type: 'HIDE_COMMENT'; payload: string }
   | { type: 'ADD_RATING'; payload: Rating }
   | { type: 'APPROVE_EVENT'; payload: string }
-  | { type: 'REJECT_EVENT'; payload: { eventId: string; reason: string } };
+  | { type: 'REJECT_EVENT'; payload: { eventId: string; reason: string } }
+  | { type: 'DELETE_USER'; payload: string }
+  | { type: 'UPDATE_USER_ROLE'; payload: { id: string; role: 'admin' | 'moderator' | 'user' } }
+  | { type: 'TOGGLE_USER_LOCK'; payload: { id: string; isLocked: boolean } };
 
 const initialState: AppState = {
   currentUser: null,
