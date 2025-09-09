@@ -70,11 +70,6 @@ export function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="flex justify-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">CB</span>
-            </div>
-          </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {isRegistering ? 'Đăng ký tài khoản' : 'Đăng nhập'}
           </h2>
