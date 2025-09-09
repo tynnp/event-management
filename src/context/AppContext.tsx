@@ -33,7 +33,7 @@ const initialState: AppState = {
   users: [
     {
       id: '1',
-      email: 'admin@test.com',
+      email: 'tynnp@hcmue.edu.vn',
       password: 'admin123',
       name: 'Nguyễn Ngọc Phú Tỷ',
       role: 'admin',
@@ -46,7 +46,7 @@ const initialState: AppState = {
       id: '2',
       email: 'mod@test.com',
       password: 'mod123',
-      name: 'Kiểm duyệt viên',
+      name: 'Cao Võ Tuấn Kiệt',
       role: 'moderator',
       phone: '0987654321',
       createdAt: '2024-01-15',
@@ -57,7 +57,7 @@ const initialState: AppState = {
       id: '3',
       email: 'user@test.com',
       password: 'user123',
-      name: 'Người dùng mẫu',
+      name: 'Nguyễn Uyên Vy',
       role: 'user',
       phone: '0555666777',
       createdAt: '2024-02-01',
