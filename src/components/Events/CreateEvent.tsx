@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Users, Type, FileText, Globe, Lock } from 'lucide-react';
+import { Calendar, MapPin, Users, Type, FileText, Globe, Lock, Image as ImageIcon } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Event } from '../../types';
 
@@ -21,53 +21,36 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
     category: 'Công nghệ',
     isPublic: true,
     maxParticipants: '',
-    requiresApproval: true
+    requiresApproval: true,
+    image: '' // ảnh bìa
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [preview, setPreview] = useState<string | null>(null);
 
   const categories = ['Công nghệ', 'Giáo dục', 'Thể thao', 'Âm nhạc', 'Nghệ thuật', 'Kinh doanh', 'Sức khỏe'];
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = 'Vui lòng nhập tên sự kiện';
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'Vui lòng nhập mô tả sự kiện';
-    }
-
-    if (!formData.startTime) {
-      newErrors.startTime = 'Vui lòng chọn thời gian bắt đầu';
-    }
-
-    if (!formData.endTime) {
-      newErrors.endTime = 'Vui lòng chọn thời gian kết thúc';
-    }
-
+    if (!formData.title.trim()) newErrors.title = 'Vui lòng nhập tên sự kiện';
+    if (!formData.description.trim()) newErrors.description = 'Vui lòng nhập mô tả sự kiện';
+    if (!formData.startTime) newErrors.startTime = 'Vui lòng chọn thời gian bắt đầu';
+    if (!formData.endTime) newErrors.endTime = 'Vui lòng chọn thời gian kết thúc';
     if (formData.startTime && formData.endTime) {
       if (new Date(formData.endTime) <= new Date(formData.startTime)) {
         newErrors.endTime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
       }
     }
-
-    if (!formData.location.trim()) {
-      newErrors.location = 'Vui lòng nhập địa điểm';
-    }
-
+    if (!formData.location.trim()) newErrors.location = 'Vui lòng nhập địa điểm';
     if (formData.maxParticipants && parseInt(formData.maxParticipants) < 1) {
       newErrors.maxParticipants = 'Số lượng người tham gia phải lớn hơn 0';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm() || !currentUser) return;
 
     const newEvent: Event = {
@@ -86,7 +69,8 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
       participants: [],
       comments: [],
       ratings: [],
-      averageRating: 0
+      averageRating: 0,
+      image: formData.image || undefined
     };
 
     dispatch({ type: 'CREATE_EVENT', payload: newEvent });
@@ -95,8 +79,19 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setFormData(prev => ({ ...prev, image: base64 }));
+        setPreview(base64);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -119,12 +114,29 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               type="text"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.title ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="Nhập tên sự kiện..."
             />
             {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <ImageIcon className="inline h-4 w-4 mr-2" />
+              Ảnh bìa sự kiện
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full text-sm text-gray-600"
+            />
+            {preview && (
+              <div className="mt-3">
+                <img src={preview} alt="Xem trước ảnh bìa" className="w-full h-48 object-cover rounded-lg border" />
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -137,9 +149,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               rows={4}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.description ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="Mô tả chi tiết về sự kiện..."
             />
             {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
@@ -156,9 +166,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                 type="datetime-local"
                 value={formData.startTime}
                 onChange={(e) => handleInputChange('startTime', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.startTime ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startTime ? 'border-red-500' : 'border-gray-300'}`}
               />
               {errors.startTime && <p className="text-red-500 text-sm mt-1">{errors.startTime}</p>}
             </div>
@@ -172,9 +180,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                 type="datetime-local"
                 value={formData.endTime}
                 onChange={(e) => handleInputChange('endTime', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.endTime ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.endTime ? 'border-red-500' : 'border-gray-300'}`}
               />
               {errors.endTime && <p className="text-red-500 text-sm mt-1">{errors.endTime}</p>}
             </div>
@@ -190,9 +196,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               type="text"
               value={formData.location}
               onChange={(e) => handleInputChange('location', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.location ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="Nhập địa điểm tổ chức..."
             />
             {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
@@ -224,9 +228,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                 type="number"
                 value={formData.maxParticipants}
                 onChange={(e) => handleInputChange('maxParticipants', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.maxParticipants ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.maxParticipants ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="Để trống nếu không giới hạn"
                 min="1"
               />
@@ -237,9 +239,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
           {/* Privacy Settings */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Quyền riêng tư
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-3">Quyền riêng tư</label>
               <div className="space-y-3">
                 <label className="flex items-center">
                   <input
@@ -285,9 +285,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                   onChange={(e) => handleInputChange('requiresApproval', e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-sm text-gray-700">
-                  Yêu cầu kiểm duyệt trước khi công khai
-                </span>
+                <span className="ml-2 text-sm text-gray-700">Yêu cầu kiểm duyệt trước khi công khai</span>
               </label>
               <p className="text-xs text-gray-500 ml-6">
                 {currentUser?.role === 'user' ? 'Sự kiện sẽ được gửi đến kiểm duyệt viên để phê duyệt' : 'Bạn có thể tự phê duyệt sự kiện'}
