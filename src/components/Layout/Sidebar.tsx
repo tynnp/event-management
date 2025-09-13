@@ -29,7 +29,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     { id: 'moderation', label: 'Kiểm duyệt', icon: Shield, roles: ['moderator', 'admin'] },
     { id: 'check-in', label: 'Điểm danh', icon: CheckSquare, roles: ['moderator', 'admin'] },
     { id: 'users', label: 'Quản lý người dùng', icon: Users, roles: ['admin'] },
-    { id: 'statistics', label: 'Thống kê', icon: BarChart3, roles: ['admin', 'moderator'] },
+    { id: 'statistics', label: 'Thống kê', icon: BarChart3, roles: ['admin', 'moderator', 'user'] },
     { id: 'profile', label: 'Hồ sơ cá nhân', icon: Settings, roles: ['user', 'moderator', 'admin'] },
   ];
 

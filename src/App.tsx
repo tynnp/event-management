@@ -10,6 +10,7 @@ import { CreateEvent } from './components/Events/CreateEvent';
 import { ModerationPanel } from './components/Moderation/ModerationPanel';
 import { CheckInPanel } from './components/CheckIn/CheckInPanel';
 import { UserManagement } from './components/Users/UserManagement';
+import { StatisticsPanel } from './components/Statistics/StatisticsPanel';
 import { Event } from './types';
 
 function AppContent() {
@@ -91,12 +92,7 @@ function AppContent() {
         return <UserManagement />;
       
       case 'statistics':
-        return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Thống kê chi tiết</h2>
-            <p className="text-gray-600">Chức năng đang phát triển...</p>
-          </div>
-        );
+        return <StatisticsPanel />
       
       case 'profile':
         return (

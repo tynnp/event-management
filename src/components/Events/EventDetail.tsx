@@ -33,7 +33,12 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
   const isCreator = event.createdBy === currentUser?.id;
   const canRate = isParticipant && new Date(event.endTime) < new Date();
   const userParticipant = event.participants.find(p => p.userId === currentUser?.id);
-  const eventComments = comments.filter(c => c.eventId === event.id && !c.isHidden);
+
+  const eventComments = [
+    ...event.comments.filter(c => !c.isHidden),
+    ...comments.filter(c => c.eventId === event.id && !c.isHidden)
+  ];
+
   const eventRatings = ratings.filter(r => r.eventId === event.id);
   const hasRated = eventRatings.some(r => r.userId === currentUser?.id);
 
