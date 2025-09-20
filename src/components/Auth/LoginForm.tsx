@@ -62,8 +62,8 @@ export function LoginForm() {
 
   const demoAccounts = [
     { email: 'tynnp@hcmue.edu.vn', password: 'admin123', role: 'Quản trị viên' },
-    { email: 'mod@test.com', password: 'mod123', role: 'Kiểm duyệt viên' },
-    { email: 'user@test.com', password: 'user123', role: 'Người dùng' }
+    { email: 'kietcvt@hcmue.edu.vn', password: 'mod123', role: 'Kiểm duyệt viên' },
+    { email: 'vynu@hcmue.edu.vn', password: 'user123', role: 'Người dùng' }
   ];
 
   return (

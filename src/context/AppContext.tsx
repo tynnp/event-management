@@ -44,7 +44,7 @@ const initialState: AppState = {
     },
     {
       id: '2',
-      email: 'mod@test.com',
+      email: 'kietcvt@hcmue.edu.vn',
       password: 'mod123',
       name: 'Cao Võ Tuấn Kiệt',
       role: 'moderator',
@@ -55,7 +55,7 @@ const initialState: AppState = {
     },
     {
       id: '3',
-      email: 'user@test.com',
+      email: 'vynu@hcmue.edu.vn',
       password: 'user123',
       name: 'Nguyễn Uyên Vy',
       role: 'user',
@@ -66,9 +66,9 @@ const initialState: AppState = {
     },
     {
       id: '4',
-      email: 'user2@test.com',
+      email: 'tinbm@hcmue.edu.vn',
       password: 'user123',
-      name: 'Trần Văn Bình',
+      name: 'Bùi Minh Tín',
       role: 'user',
       phone: '0999888777',
       createdAt: '2025-02-20',
