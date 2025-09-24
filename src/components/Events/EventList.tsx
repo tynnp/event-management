@@ -66,10 +66,10 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
             {showMyEvents ? 'Sự kiện của tôi' : 'Khám phá sự kiện'}
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
             {showMyEvents 
               ? 'Quản lý các sự kiện bạn tạo và tham gia' 
               : 'Tìm kiếm và tham gia các sự kiện thú vị'}
@@ -79,7 +79,7 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
         {showCreateButton && (
           <button
             onClick={onCreateEvent}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="button-primary inline-flex items-center px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="h-4 w-4 mr-2" />
             Tạo sự kiện mới
@@ -88,17 +88,17 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="card rounded-lg p-4">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Lọc:</span>
+            <Filter className="h-4 w-4 text-gray-500 dark:text-dark-text-tertiary" />
+            <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Lọc:</span>
           </div>
           
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
-            className="border border-gray-300 rounded-lg px-3 py-1 text-sm"
+            className="input-field rounded-lg px-3 py-1 text-sm"
           >
             <option value="all">Tất cả</option>
             <option value="upcoming">Sắp diễn ra</option>
@@ -108,7 +108,7 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-1 text-sm"
+            className="input-field rounded-lg px-3 py-1 text-sm"
           >
             {categories.map(cat => (
               <option key={cat} value={cat}>
@@ -130,7 +130,7 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
             <div
               key={event.id}
               onClick={() => onEventClick?.(event)}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all cursor-pointer overflow-hidden group"
+              className="card rounded-xl hover:shadow-lg transition-all cursor-pointer overflow-hidden group"
             >
               <div className="aspect-video bg-gradient-to-r from-blue-500 to-purple-600 relative">
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
@@ -147,10 +147,10 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
               </div>
 
               <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+                <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-2 line-clamp-2">{event.title}</h3>
+                <p className="text-gray-600 dark:text-dark-text-secondary text-sm mb-4 line-clamp-2">{event.description}</p>
 
-                <div className="space-y-2 text-sm text-gray-500 mb-4">
+                <div className="space-y-2 text-sm text-gray-500 dark:text-dark-text-tertiary mb-4">
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>{formatDate(event.startTime)} • {formatTime(event.startTime)}</span>
@@ -171,12 +171,12 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     {isCreator && (
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 text-xs rounded-full">
+                      <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 text-xs rounded-full">
                         Người tạo
                       </span>
                     )}
                     {isParticipant && !isCreator && (
-                      <span className="bg-green-100 text-green-800 px-2 py-1 text-xs rounded-full">
+                      <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 text-xs rounded-full">
                         Đã tham gia
                       </span>
                     )}
@@ -199,9 +199,9 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
 
       {filteredEvents.length === 0 && (
         <div className="text-center py-12">
-          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">Không tìm thấy sự kiện nào</p>
-          <p className="text-gray-400 mt-1">Thử thay đổi bộ lọc hoặc tạo sự kiện mới</p>
+          <Calendar className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-dark-text-tertiary text-lg">Không tìm thấy sự kiện nào</p>
+          <p className="text-gray-400 dark:text-dark-text-tertiary mt-1">Thử thay đổi bộ lọc hoặc tạo sự kiện mới</p>
         </div>
       )}
     </div>

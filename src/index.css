@@ -1,3 +1,50 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Dark mode base styles */
+@layer base {
+  html {
+    @apply transition-colors duration-300;
+  }
+  
+  body {
+    @apply bg-gray-50 dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary;
+  }
+  
+  /* Custom scrollbar for dark mode */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-dark-bg-secondary;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-dark-bg-tertiary rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
+
+/* Dark mode component styles */
+@layer components {
+  .card {
+    @apply bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border shadow-sm;
+  }
+  
+  .input-field {
+    @apply bg-white dark:bg-dark-bg-tertiary border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text-primary placeholder-gray-500 dark:placeholder-dark-text-tertiary;
+  }
+  
+  .button-primary {
+    @apply bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white;
+  }
+  
+  .button-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 dark:bg-dark-bg-tertiary dark:hover:bg-gray-600 text-gray-900 dark:text-dark-text-primary;
+  }
+}

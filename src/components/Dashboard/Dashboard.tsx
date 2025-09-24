@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { Calendar, Users, TrendingUp, Clock, Star, CheckCircle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -58,10 +58,10 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
           Chào mừng, {currentUser?.name}!
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
           Quản lý và tham gia các sự kiện một cách hiệu quả
         </p>
       </div>
@@ -69,17 +69,17 @@ export function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div key={index} className="card rounded-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">{stat.title}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mt-1">{stat.value}</p>
               </div>
               <div className={`${stat.color} rounded-lg p-3`}>
                 <stat.icon className="h-6 w-6 text-white" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-4">{stat.trend}</p>
+            <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-4">{stat.trend}</p>
           </div>
         ))}
       </div>
@@ -87,66 +87,66 @@ export function Dashboard() {
       {/* Admin/Moderator specific stats */}
       {(currentUser?.role === 'admin' || currentUser?.role === 'moderator') && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card rounded-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Sự kiện chờ duyệt</p>
-                <p className="text-2xl font-bold text-orange-600 mt-1">{pendingEvents.length}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">Sự kiện chờ duyệt</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{pendingEvents.length}</p>
               </div>
-              <Clock className="h-8 w-8 text-orange-500" />
+              <Clock className="h-8 w-8 text-orange-500 dark:text-orange-400" />
             </div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card rounded-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Sự kiện đã duyệt</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{approvedEvents.length}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">Sự kiện đã duyệt</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{approvedEvents.length}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <CheckCircle className="h-8 w-8 text-green-500 dark:text-green-400" />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card rounded-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Tổng tham gia</p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">Tổng tham gia</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
                   {events.reduce((sum, event) => sum + event.participants.length, 0)}
                 </p>
               </div>
-              <Users className="h-8 w-8 text-blue-500" />
+              <Users className="h-8 w-8 text-blue-500 dark:text-blue-400" />
             </div>
           </div>
         </div>
       )}
 
       {/* Recent Events */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Sự kiện gần đây</h2>
+      <div className="card rounded-xl">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Sự kiện gần đây</h2>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-200 dark:divide-dark-border">
           {recentEvents.map((event) => (
-            <div key={event.id} className="p-6 hover:bg-gray-50 transition-colors">
+            <div key={event.id} className="p-6 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-sm font-medium text-gray-900">{event.title}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{event.location}</p>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">{event.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-1">{event.location}</p>
                   <div className="flex items-center mt-2 space-x-4">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-dark-text-tertiary">
                       {new Date(event.startTime).toLocaleDateString('vi-VN')}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-dark-text-tertiary">
                       {event.participants.length} người tham gia
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                    event.status === 'approved' ? 'bg-green-100 text-green-800' :
-                    event.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
+                    event.status === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                    event.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
+                    'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                   }`}>
                     {event.status === 'approved' ? 'Đã duyệt' :
                      event.status === 'pending' ? 'Chờ duyệt' : 'Bị từ chối'}
@@ -156,7 +156,7 @@ export function Dashboard() {
             </div>
           ))}
           {recentEvents.length === 0 && (
-            <div className="p-6 text-center text-gray-500">
+            <div className="p-6 text-center text-gray-500 dark:text-dark-text-tertiary">
               Chưa có sự kiện nào
             </div>
           )}
