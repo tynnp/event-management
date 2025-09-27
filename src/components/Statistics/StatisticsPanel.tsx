@@ -114,8 +114,8 @@ export function StatisticsPanel() {
     <div className="space-y-12">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Thống kê chi tiết</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Thống kê chi tiết</h1>
+        <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
           {currentUser.role === 'admin'
             ? 'Tổng quan hệ thống + sự kiện đã tạo + sự kiện tham gia'
             : currentUser.role === 'moderator'
@@ -132,12 +132,12 @@ export function StatisticsPanel() {
             {adminStats.map((stat, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                className="card rounded-xl shadow-sm  p-6"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">{stat.title}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mt-1">
                       {stat.value}
                     </p>
                   </div>
@@ -151,8 +151,8 @@ export function StatisticsPanel() {
 
           {/* Event Status & User Roles */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-4">Sự kiện theo trạng thái</h3>
+            <div className="card rounded-xl shadow-sm  p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Sự kiện theo trạng thái</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={eventStatusData}>
                   <XAxis dataKey="name" />
@@ -163,8 +163,8 @@ export function StatisticsPanel() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-4">Người dùng theo vai trò</h3>
+            <div className="card rounded-xl shadow-sm  p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Người dùng theo vai trò</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -176,7 +176,7 @@ export function StatisticsPanel() {
                     outerRadius={100}
                     label
                   >
-                    {userRoleData.map((entry, i) => (
+                    {userRoleData.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
@@ -191,19 +191,19 @@ export function StatisticsPanel() {
       {/* --- Organizer block (admin & moderator) --- */}
       {(currentUser.role === 'admin' || currentUser.role === 'moderator') && (
         <div className="space-y-6">
-          <h2 className="text-xl font-bold text-gray-900">Thống kê sự kiện tôi tạo</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Thống kê sự kiện tôi tạo</h2>
 
           {/* Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {organizerStats.map((stat, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                className="card rounded-xl shadow-sm  p-6"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">{stat.title}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mt-1">
                       {stat.value}
                     </p>
                   </div>
@@ -217,8 +217,8 @@ export function StatisticsPanel() {
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-4">Xu hướng đăng ký & tham gia</h3>
+            <div className="card rounded-xl shadow-sm  p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Xu hướng đăng ký & tham gia</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={participantsPerEvent}>
                   <XAxis dataKey="name" hide />
@@ -230,8 +230,8 @@ export function StatisticsPanel() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-4">Độ hài lòng (trung bình)</h3>
+            <div className="card rounded-xl shadow-sm  p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Độ hài lòng (trung bình)</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={ratingsPerEvent}>
                   <XAxis dataKey="name" hide />
@@ -244,17 +244,17 @@ export function StatisticsPanel() {
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold mb-4">Bảng thống kê từng sự kiện</h3>
+          <div className="card rounded-xl shadow-sm  p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Bảng thống kê từng sự kiện</h3>
             <div className="max-h-96 overflow-y-auto">
-              <table className="min-w-full border border-gray-200 text-sm">
-                <thead className="bg-gray-50 sticky top-0">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 dark:bg-dark-bg-tertiary sticky top-0">
                   <tr>
-                    <th className="px-4 py-2 border-b text-left">Tên sự kiện</th>
-                    <th className="px-4 py-2 border-b text-left">Đăng ký</th>
-                    <th className="px-4 py-2 border-b text-left">Check-in</th>
-                    <th className="px-4 py-2 border-b text-left">Tỷ lệ</th>
-                    <th className="px-4 py-2 border-b text-left">Đánh giá TB</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Tên sự kiện</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Đăng ký</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Check-in</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Tỷ lệ</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Đánh giá TB</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -266,12 +266,12 @@ export function StatisticsPanel() {
                         ? ((checkedIn / registered) * 100).toFixed(1) + '%'
                         : '0%';
                     return (
-                      <tr key={e.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 border-b">{e.title}</td>
-                        <td className="px-4 py-2 border-b">{registered}</td>
-                        <td className="px-4 py-2 border-b">{checkedIn}</td>
-                        <td className="px-4 py-2 border-b">{rate}</td>
-                        <td className="px-4 py-2 border-b">
+                      <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary">
+                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">{e.title}</td>
+                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">{registered}</td>
+                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">{checkedIn}</td>
+                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">{rate}</td>
+                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
                           {e.averageRating > 0
                             ? e.averageRating.toFixed(1)
                             : 'Chưa có'}
@@ -288,19 +288,19 @@ export function StatisticsPanel() {
 
       {/* --- User block (admin, mod, user) --- */}
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-gray-900">Thống kê sự kiện tôi tham gia</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Thống kê sự kiện tôi tham gia</h2>
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {userStats.map((stat, i) => (
             <div
               key={i}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+              className="card rounded-xl shadow-sm  p-6"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mt-1">
                     {stat.value}
                   </p>
                 </div>
@@ -314,8 +314,8 @@ export function StatisticsPanel() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold mb-4">Tỉ lệ điểm danh</h3>
+          <div className="card rounded-xl shadow-sm  p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Tỉ lệ điểm danh</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -327,7 +327,7 @@ export function StatisticsPanel() {
                   outerRadius={100}
                   label
                 >
-                  {checkInData.map((entry, i) => (
+                  {checkInData.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
@@ -335,8 +335,8 @@ export function StatisticsPanel() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold mb-4">
+          <div className="card rounded-xl shadow-sm  p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">
               Sự kiện đã tham gia theo danh mục
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -351,16 +351,16 @@ export function StatisticsPanel() {
         </div>
 
         {/* History */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Lịch sử sự kiện đã tham gia</h3>
+        <div className="card rounded-xl p-6">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Lịch sử sự kiện đã tham gia</h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-200 text-sm">
-              <thead className="bg-gray-50">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 dark:bg-dark-bg-tertiary">
                 <tr>
-                  <th className="px-4 py-2 border-b text-left">Tên sự kiện</th>
-                  <th className="px-4 py-2 border-b text-left">Ngày</th>
-                  <th className="px-4 py-2 border-b text-left">Check-in</th>
-                  <th className="px-4 py-2 border-b text-left">Đánh giá</th>
+                  <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Tên sự kiện</th>
+                  <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Ngày</th>
+                  <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Check-in</th>
+                  <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Đánh giá</th>
                 </tr>
               </thead>
               <tbody>
@@ -372,15 +372,15 @@ export function StatisticsPanel() {
                     (r) => r.userId === currentUser.id
                   );
                   return (
-                    <tr key={e.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 border-b">{e.title}</td>
-                      <td className="px-4 py-2 border-b">
+                    <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary">
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">{e.title}</td>
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
                         {new Date(e.startTime).toLocaleDateString('vi-VN')}
                       </td>
-                      <td className="px-4 py-2 border-b">
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
                         {participant?.checkedIn ? '✔️' : '❌'}
                       </td>
-                      <td className="px-4 py-2 border-b">
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
                         {rating ? rating.rating : 'Chưa đánh giá'}
                       </td>
                     </tr>

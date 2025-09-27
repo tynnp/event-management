@@ -3,7 +3,6 @@ import {
   Calendar, 
   MapPin, 
   Users, 
-  Clock, 
   Share2, 
   MessageSquare,
   Star,
@@ -134,13 +133,13 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
     <div className="max-w-4xl mx-auto">
       <button
         onClick={onBack}
-        className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+        className="flex items-center text-gray-600 dark:text-dark-text-secondary hover:text-gray-900 dark:text-dark-text-primary mb-6 transition-colors"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Quay lại
       </button>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="card rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Header */}
         <div className="aspect-video bg-gradient-to-r from-blue-500 to-purple-600 relative">
           <div className="absolute inset-0 bg-black/20" />
@@ -150,10 +149,10 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
             </span>
           </div>
           <div className="absolute top-6 right-6 flex space-x-2">
-            <button className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition-colors">
+            <button className="card/20 backdrop-blur-sm text-white p-2 rounded-lg hover:card/30 transition-colors">
               <Heart className="h-4 w-4" />
             </button>
-            <button className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition-colors">
+            <button className="card/20 backdrop-blur-sm text-white p-2 rounded-lg hover:card/30 transition-colors">
               <Share2 className="h-4 w-4" />
             </button>
           </div>
@@ -162,26 +161,26 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
         <div className="p-8">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">{event.title}</h1>
-              <p className="text-gray-600 text-lg mb-6">{event.description}</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">{event.title}</h1>
+              <p className="text-gray-600 dark:text-dark-text-secondary text-lg mb-6">{event.description}</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="space-y-4">
-                  <div className="flex items-center text-gray-700">
-                    <Calendar className="h-5 w-5 mr-3 text-gray-400" />
+                  <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
+                    <Calendar className="h-5 w-5 mr-3 text-gray-400 dark:text-dark-text-tertiary" />
                     <div>
                       <p className="font-medium">{formatDate(event.startTime)}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">
                         {formatTime(event.startTime)} - {formatTime(event.endTime)}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center text-gray-700">
-                    <MapPin className="h-5 w-5 mr-3 text-gray-400" />
+                  <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
+                    <MapPin className="h-5 w-5 mr-3 text-gray-400 dark:text-dark-text-tertiary" />
                     <p>{event.location}</p>
                   </div>
-                  <div className="flex items-center text-gray-700">
-                    <Users className="h-5 w-5 mr-3 text-gray-400" />
+                  <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
+                    <Users className="h-5 w-5 mr-3 text-gray-400 dark:text-dark-text-tertiary" />
                     <p>
                       {event.participants.length}
                       {event.maxParticipants ? `/${event.maxParticipants}` : ''} người tham gia
@@ -190,15 +189,15 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2">Thông tin tổ chức</h3>
-                    <p className="text-sm text-gray-600">
+                  <div className="bg-gray-50 dark:bg-dark-bg-tertiary rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-2">Thông tin tổ chức</h3>
+                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
                       Người tạo: {users.find(u => u.id === event.createdBy)?.name}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
                       Loại: {event.isPublic ? 'Công khai' : 'Riêng tư'}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
                       Danh mục: {event.category}
                     </p>
                   </div>
@@ -208,7 +207,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
 
             {/* Action Buttons */}
             <div className="lg:ml-8 lg:min-w-[300px]">
-              <div className="bg-gray-50 rounded-xl p-6">
+              <div className="bg-gray-50 dark:bg-dark-bg-tertiary rounded-xl p-6">
                 {!isParticipant && !isCreator && eventStatus.status === 'upcoming' && (
                   <button
                     onClick={handleJoinEvent}
@@ -221,7 +220,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
 
                 {isParticipant && userParticipant && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-center text-green-600 bg-green-50 py-3 px-4 rounded-lg">
+                    <div className="flex items-center justify-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 py-3 px-4 rounded-lg">
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Đã tham gia sự kiện
                     </div>
@@ -243,7 +242,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                 )}
 
                 {isCreator && (
-                  <div className="text-center text-blue-600 bg-blue-50 py-3 px-4 rounded-lg">
+                  <div className="text-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 py-3 px-4 rounded-lg">
                     <span className="font-medium">Bạn là người tạo sự kiện này</span>
                   </div>
                 )}
@@ -253,7 +252,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                     <div className="flex items-center justify-center space-x-2">
                       <Star className="h-5 w-5 text-yellow-500 fill-current" />
                       <span className="font-medium">{event.averageRating.toFixed(1)}/5.0</span>
-                      <span className="text-gray-500">({eventRatings.length} đánh giá)</span>
+                      <span className="text-gray-500 dark:text-dark-text-tertiary">({eventRatings.length} đánh giá)</span>
                     </div>
                   </div>
                 )}
@@ -263,11 +262,11 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
 
           {/* Rating Section - only show if user can rate */}
           {canRate && !hasRated && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-              <h3 className="font-semibold text-gray-900 mb-4">Đánh giá sự kiện</h3>
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 mb-8">
+              <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-4">Đánh giá sự kiện</h3>
               <form onSubmit={handleAddRating} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                     Điểm đánh giá
                   </label>
                   <div className="flex space-x-1">
@@ -284,14 +283,14 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                     Nhận xét (tùy chọn)
                   </label>
                   <textarea
                     value={newReview}
                     onChange={(e) => setNewReview(e.target.value)}
                     rows={3}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 dark:border-dark-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary placeholder-gray-500 dark:placeholder-dark-text-tertiary"
                     placeholder="Chia sẻ cảm nhận của bạn về sự kiện..."
                   />
                 </div>
@@ -308,7 +307,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
 
           {/* Comments Section */}
           <div className="border-t border-gray-200 pt-8">
-            <h3 className="font-semibold text-gray-900 mb-6 flex items-center">
+            <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-6 flex items-center">
               <MessageSquare className="h-5 w-5 mr-2" />
               Bình luận ({eventComments.length})
             </h3>
@@ -322,7 +321,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     rows={3}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 dark:border-dark-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary placeholder-gray-500 dark:placeholder-dark-text-tertiary"
                     placeholder="Viết bình luận..."
                   />
                   <button
@@ -345,18 +344,18 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                     <div className="w-8 h-8 bg-gray-300 rounded-full flex-shrink-0" />
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900">{user?.name}</span>
-                        <span className="text-gray-500 text-sm">
+                        <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name}</span>
+                        <span className="text-gray-500 dark:text-dark-text-tertiary text-sm">
                           {new Date(comment.createdAt).toLocaleString('vi-VN')}
                         </span>
                       </div>
-                      <p className="text-gray-700">{comment.content}</p>
+                      <p className="text-gray-700 dark:text-dark-text-secondary">{comment.content}</p>
                     </div>
                   </div>
                 );
               })}
               {eventComments.length === 0 && (
-                <p className="text-gray-500 text-center py-8">Chưa có bình luận nào</p>
+                <p className="text-gray-500 dark:text-dark-text-tertiary text-center py-8">Chưa có bình luận nào</p>
               )}
             </div>
           </div>
@@ -366,14 +365,14 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
       {/* QR Code Modal */}
       {showQR && userParticipant && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-sm w-full text-center">
-            <h3 className="text-lg font-semibold mb-4">Mã QR tham gia sự kiện</h3>
+          <div className="bg-white dark:bg-dark-bg-secondary rounded-xl p-8 max-w-sm w-full text-center border border-gray-200 dark:border-dark-border">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Mã QR tham gia sự kiện</h3>
             <img
               src={generateQRCode(userParticipant.qrCode)}
               alt="QR Code"
-              className="w-48 h-48 mx-auto mb-4 border border-gray-200 rounded-lg"
+              className="w-48 h-48 mx-auto mb-4 border border-gray-200 dark:border-dark-border rounded-lg"
             />
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
               Xuất trình mã này tại cửa để điểm danh
             </p>
             <button

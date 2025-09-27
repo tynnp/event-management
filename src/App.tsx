@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { LoginForm } from './components/Auth/LoginForm';
 import { Header } from './components/Layout/Header';
 import { Sidebar } from './components/Layout/Sidebar';
@@ -96,62 +97,62 @@ function AppContent() {
       
       case 'profile':
         return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Hồ sơ cá nhân</h2>
+          <div className="card rounded-xl p-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">Hồ sơ cá nhân</h2>
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Họ và tên</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">Họ và tên</label>
                   <input
                     type="text"
                     value={currentUser.name}
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    className="input-field w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">Email</label>
                   <input
                     type="email"
                     value={currentUser.email}
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    className="input-field w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">Số điện thoại</label>
                   <input
                     type="tel"
                     value={currentUser.phone || ''}
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    className="input-field w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Vai trò</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">Vai trò</label>
                   <input
                     type="text"
                     value={currentUser.role === 'admin' ? 'Quản trị viên' : 
                            currentUser.role === 'moderator' ? 'Kiểm duyệt viên' : 'Người dùng'}
                     readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    className="input-field w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary"
                   />
                 </div>
               </div>
               
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Huy hiệu</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-3">Huy hiệu</h3>
                 <div className="flex flex-wrap gap-2">
                   {currentUser.badges.map((badge, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                      className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium"
                     >
                       {badge}
                     </span>
                   ))}
                   {currentUser.badges.length === 0 && (
-                    <p className="text-gray-500">Chưa có huy hiệu nào</p>
+                    <p className="text-gray-500 dark:text-dark-text-tertiary">Chưa có huy hiệu nào</p>
                   )}
                 </div>
               </div>
@@ -165,7 +166,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg-primary">
       <Header />
       <div className="flex">
         <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
@@ -179,9 +180,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ThemeProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ThemeProvider>
   );
 }
 

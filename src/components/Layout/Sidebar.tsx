@@ -38,7 +38,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   );
 
   return (
-    <aside className="w-64 bg-white shadow-sm border-r border-gray-200 h-screen sticky top-0">
+    <aside className="w-64 bg-white dark:bg-dark-bg-secondary shadow-sm border-r border-gray-200 dark:border-dark-border h-screen sticky top-0">
       <nav className="mt-8 px-4">
         <ul className="space-y-2">
           {filteredMenuItems.map((item) => (
@@ -47,8 +47,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                 onClick={() => onSectionChange(item.id)}
                 className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeSection === item.id
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
+                    : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary hover:text-gray-900 dark:hover:text-dark-text-primary'
                 }`}
               >
                 <item.icon className="mr-3 h-5 w-5" />

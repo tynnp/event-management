@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { QrCode, Search, Users, CheckCircle, Clock, Scan } from 'lucide-react';
+import { useState } from 'react';
+import { QrCode, Users, CheckCircle, Clock, Scan } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export function CheckInPanel() {
@@ -25,7 +25,7 @@ export function CheckInPanel() {
       return;
     }
 
-    const [eventId, userId, timestamp] = qrParts;
+    const [eventId, userId] = qrParts;
     
     if (eventId !== selectedEvent) {
       setScanResult('Mã QR không thuộc sự kiện đã chọn');
@@ -33,7 +33,12 @@ export function CheckInPanel() {
     }
 
     const event = events.find(e => e.id === eventId);
-    const participant = event?.participants.find(p => p.userId === userId);
+    if (!event) {
+      setScanResult('Không tìm thấy sự kiện');
+      return;
+    }
+    
+    const participant = event.participants.find(p => p.userId === userId);
     
     if (!participant) {
       setScanResult('Người dùng chưa đăng ký sự kiện này');
@@ -78,33 +83,33 @@ export function CheckInPanel() {
 
     if (now < start) return { status: 'upcoming', text: 'Sắp diễn ra', color: 'text-blue-600' };
     if (now >= start && now <= end) return { status: 'ongoing', text: 'Đang diễn ra', color: 'text-green-600' };
-    return { status: 'ended', text: 'Đã kết thúc', color: 'text-gray-600' };
+    return { status: 'ended', text: 'Đã kết thúc', color: 'text-gray-600 dark:text-dark-text-secondary' };
   };
 
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Điểm danh sự kiện</h2>
-        <p className="text-gray-600 mt-1">Quét mã QR để điểm danh người tham gia</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Điểm danh sự kiện</h2>
+        <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Quét mã QR để điểm danh người tham gia</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* QR Scanner */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+        <div className="card rounded-xl shadow-sm  p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-6 flex items-center">
             <Scan className="h-5 w-5 mr-2" />
             Quét mã QR
           </h3>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 Chọn sự kiện
               </label>
               <select
                 value={selectedEvent}
                 onChange={(e) => setSelectedEvent(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full input-field px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Chọn sự kiện...</option>
                 {approvedEvents.map((event) => {
@@ -119,7 +124,7 @@ export function CheckInPanel() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 Mã QR hoặc nhập thủ công
               </label>
               <div className="flex space-x-2">
@@ -128,7 +133,7 @@ export function CheckInPanel() {
                   value={qrInput}
                   onChange={(e) => setQrInput(e.target.value)}
                   placeholder="Quét hoặc nhập mã QR..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 input-field px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   onClick={handleQRScan}
@@ -144,8 +149,8 @@ export function CheckInPanel() {
             {scanResult && (
               <div className={`p-4 rounded-lg ${
                 scanResult.includes('thành công') 
-                  ? 'bg-green-50 text-green-800 border border-green-200' 
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800' 
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'
               }`}>
                 {scanResult}
               </div>
@@ -155,24 +160,24 @@ export function CheckInPanel() {
 
         {/* Event Details */}
         {selectedEventData && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+          <div className="card rounded-xl shadow-sm  p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-6">
               Chi tiết sự kiện
             </h3>
 
             <div className="space-y-4">
               <div>
-                <h4 className="font-medium text-gray-900">{selectedEventData.title}</h4>
-                <p className="text-gray-600 text-sm mt-1">{selectedEventData.description}</p>
+                <h4 className="font-medium text-gray-900 dark:text-dark-text-primary">{selectedEventData.title}</h4>
+                <p className="text-gray-600 dark:text-dark-text-secondary text-sm mt-1">{selectedEventData.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">Thời gian:</span>
+                  <span className="text-gray-500 dark:text-dark-text-tertiary">Thời gian:</span>
                   <p className="font-medium">
                     {new Date(selectedEventData.startTime).toLocaleDateString('vi-VN')}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-dark-text-secondary">
                     {new Date(selectedEventData.startTime).toLocaleTimeString('vi-VN', {
                       hour: '2-digit',
                       minute: '2-digit'
@@ -183,7 +188,7 @@ export function CheckInPanel() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Địa điểm:</span>
+                  <span className="text-gray-500 dark:text-dark-text-tertiary">Địa điểm:</span>
                   <p className="font-medium">{selectedEventData.location}</p>
                 </div>
               </div>
@@ -194,28 +199,28 @@ export function CheckInPanel() {
                     <div className="flex items-center justify-center text-blue-600 mb-1">
                       <Users className="h-4 w-4 mr-1" />
                     </div>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-gray-900 dark:text-dark-text-primary">
                       {selectedEventData.participants.length}
                     </p>
-                    <p className="text-xs text-gray-500">Đăng ký</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">Đăng ký</p>
                   </div>
                   <div>
                     <div className="flex items-center justify-center text-green-600 mb-1">
                       <CheckCircle className="h-4 w-4 mr-1" />
                     </div>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-gray-900 dark:text-dark-text-primary">
                       {selectedEventData.participants.filter(p => p.checkedIn).length}
                     </p>
-                    <p className="text-xs text-gray-500">Đã điểm danh</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">Đã điểm danh</p>
                   </div>
                   <div>
                     <div className="flex items-center justify-center text-orange-600 mb-1">
                       <Clock className="h-4 w-4 mr-1" />
                     </div>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-gray-900 dark:text-dark-text-primary">
                       {selectedEventData.participants.filter(p => !p.checkedIn).length}
                     </p>
-                    <p className="text-xs text-gray-500">Chưa điểm danh</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">Chưa điểm danh</p>
                   </div>
                 </div>
               </div>
@@ -226,32 +231,32 @@ export function CheckInPanel() {
 
       {/* Participants List */}
       {selectedEventData && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">
+        <div className="card rounded-xl shadow-sm ">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
               Danh sách người tham gia ({selectedEventData.participants.length})
             </h3>
           </div>
           
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-dark-border">
             {selectedEventData.participants.map((participant) => {
               const user = users.find(u => u.id === participant.userId);
               return (
                 <div key={participant.userId} className="p-4 flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                         {user?.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{user?.name}</p>
-                      <p className="text-sm text-gray-500">{user?.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">{user?.email}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-4">
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-dark-text-tertiary">
                       Đăng ký: {new Date(participant.joinedAt).toLocaleDateString('vi-VN')}
                     </span>
                     {participant.checkedIn ? (
@@ -271,7 +276,7 @@ export function CheckInPanel() {
             })}
             
             {selectedEventData.participants.length === 0 && (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-gray-500 dark:text-dark-text-tertiary">
                 Chưa có người đăng ký tham gia
               </div>
             )}

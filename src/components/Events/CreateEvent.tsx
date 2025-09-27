@@ -97,16 +97,16 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+      <div className="card rounded-xl p-8">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Tạo sự kiện mới</h2>
-          <p className="text-gray-600 mt-2">Tạo và quản lý sự kiện của bạn một cách dễ dàng</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Tạo sự kiện mới</h2>
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-2">Tạo và quản lý sự kiện của bạn một cách dễ dàng</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
               <Type className="inline h-4 w-4 mr-2" />
               Tên sự kiện *
             </label>
@@ -114,15 +114,15 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               type="text"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+              className={`input-field w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.title ? 'border-red-500 dark:border-red-400' : ''}`}
               placeholder="Nhập tên sự kiện..."
             />
-            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+            {errors.title && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.title}</p>}
           </div>
 
           {/* Image Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
               <ImageIcon className="inline h-4 w-4 mr-2" />
               Ảnh bìa sự kiện
             </label>
@@ -130,18 +130,18 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="w-full text-sm text-gray-600"
+              className="w-full text-sm text-gray-600 dark:text-dark-text-tertiary file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300"
             />
             {preview && (
               <div className="mt-3">
-                <img src={preview} alt="Xem trước ảnh bìa" className="w-full h-48 object-cover rounded-lg border" />
+                <img src={preview} alt="Xem trước ảnh bìa" className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-dark-border" />
               </div>
             )}
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
               <FileText className="inline h-4 w-4 mr-2" />
               Mô tả sự kiện *
             </label>
@@ -149,16 +149,16 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               rows={4}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+              className={`input-field w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? 'border-red-500 dark:border-red-400' : ''}`}
               placeholder="Mô tả chi tiết về sự kiện..."
             />
-            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+            {errors.description && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.description}</p>}
           </div>
 
           {/* Date and Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 <Calendar className="inline h-4 w-4 mr-2" />
                 Thời gian bắt đầu *
               </label>
@@ -166,13 +166,13 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                 type="datetime-local"
                 value={formData.startTime}
                 onChange={(e) => handleInputChange('startTime', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startTime ? 'border-red-500' : 'border-gray-300'}`}
+                className={`input-field w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startTime ? 'border-red-500 dark:border-red-400' : ''}`}
               />
-              {errors.startTime && <p className="text-red-500 text-sm mt-1">{errors.startTime}</p>}
+              {errors.startTime && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.startTime}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 <Calendar className="inline h-4 w-4 mr-2" />
                 Thời gian kết thúc *
               </label>
@@ -180,15 +180,15 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                 type="datetime-local"
                 value={formData.endTime}
                 onChange={(e) => handleInputChange('endTime', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.endTime ? 'border-red-500' : 'border-gray-300'}`}
+                className={`input-field w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.endTime ? 'border-red-500 dark:border-red-400' : ''}`}
               />
-              {errors.endTime && <p className="text-red-500 text-sm mt-1">{errors.endTime}</p>}
+              {errors.endTime && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.endTime}</p>}
             </div>
           </div>
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
               <MapPin className="inline h-4 w-4 mr-2" />
               Địa điểm *
             </label>
@@ -196,22 +196,22 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               type="text"
               value={formData.location}
               onChange={(e) => handleInputChange('location', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.location ? 'border-red-500' : 'border-gray-300'}`}
+              className={`input-field w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.location ? 'border-red-500 dark:border-red-400' : ''}`}
               placeholder="Nhập địa điểm tổ chức..."
             />
-            {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+            {errors.location && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.location}</p>}
           </div>
 
           {/* Category and Max Participants */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 Danh mục
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-field w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>{category}</option>
@@ -220,7 +220,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 <Users className="inline h-4 w-4 mr-2" />
                 Giới hạn người tham gia
               </label>
@@ -228,18 +228,18 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                 type="number"
                 value={formData.maxParticipants}
                 onChange={(e) => handleInputChange('maxParticipants', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.maxParticipants ? 'border-red-500' : 'border-gray-300'}`}
+                className={`input-field w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.maxParticipants ? 'border-red-500 dark:border-red-400' : ''}`}
                 placeholder="Để trống nếu không giới hạn"
                 min="1"
               />
-              {errors.maxParticipants && <p className="text-red-500 text-sm mt-1">{errors.maxParticipants}</p>}
+              {errors.maxParticipants && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.maxParticipants}</p>}
             </div>
           </div>
 
           {/* Privacy Settings */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Quyền riêng tư</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-3">Quyền riêng tư</label>
               <div className="space-y-3">
                 <label className="flex items-center">
                   <input
@@ -252,9 +252,9 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                   <div className="ml-3">
                     <div className="flex items-center">
                       <Globe className="h-4 w-4 mr-2 text-green-600" />
-                      <span className="text-sm font-medium text-gray-900">Công khai</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">Công khai</span>
                     </div>
-                    <p className="text-sm text-gray-500">Mọi người có thể tìm thấy và tham gia</p>
+                    <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">Mọi người có thể tìm thấy và tham gia</p>
                   </div>
                 </label>
 
@@ -269,9 +269,9 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                   <div className="ml-3">
                     <div className="flex items-center">
                       <Lock className="h-4 w-4 mr-2 text-orange-600" />
-                      <span className="text-sm font-medium text-gray-900">Riêng tư</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">Riêng tư</span>
                     </div>
-                    <p className="text-sm text-gray-500">Chỉ những người có link mới có thể tham gia</p>
+                    <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">Chỉ những người có link mới có thể tham gia</p>
                   </div>
                 </label>
               </div>
@@ -285,9 +285,9 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                   onChange={(e) => handleInputChange('requiresApproval', e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-sm text-gray-700">Yêu cầu kiểm duyệt trước khi công khai</span>
+                <span className="ml-2 text-sm text-gray-700 dark:text-dark-text-secondary">Yêu cầu kiểm duyệt trước khi công khai</span>
               </label>
-              <p className="text-xs text-gray-500 ml-6">
+              <p className="text-xs text-gray-500 dark:text-dark-text-tertiary ml-6">
                 {currentUser?.role === 'user' ? 'Sự kiện sẽ được gửi đến kiểm duyệt viên để phê duyệt' : 'Bạn có thể tự phê duyệt sự kiện'}
               </p>
             </div>
@@ -298,13 +298,13 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="button-secondary px-6 py-3 rounded-lg transition-colors"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="button-primary px-6 py-3 rounded-lg transition-colors font-medium"
             >
               Tạo sự kiện
             </button>

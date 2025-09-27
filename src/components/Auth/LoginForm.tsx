@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { ThemeToggle } from '../Layout/ThemeToggle';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -67,28 +68,33 @@ export function LoginForm() {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary py-12 px-4 sm:px-6 lg:px-8">
+      {/* Theme Toggle Button */}
+      <div className="absolute top-6 right-6">
+        <ThemeToggle />
+      </div>
+      
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary">
             {isRegistering ? 'Đăng ký tài khoản' : 'Đăng nhập'}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-dark-text-secondary">
             {isRegistering ? 'Tạo tài khoản mới để tham gia sự kiện' : 'Quản lý và tham gia sự kiện dễ dàng'}
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-xl p-8">
+        <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-xl p-8 border border-gray-200 dark:border-dark-border">
           {!isRegistering ? (
             <form className="space-y-6" onSubmit={handleLogin}>
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
                   {error}
                 </div>
               )}
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                   Email
                 </label>
                 <div className="mt-1 relative">
@@ -97,17 +103,17 @@ export function LoginForm() {
                     name="email"
                     type="email"
                     required
-                    className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
+                    className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
                     placeholder="Nhập email của bạn"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
-                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                   Mật khẩu
                 </label>
                 <div className="mt-1 relative">
@@ -116,21 +122,21 @@ export function LoginForm() {
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     required
-                    className="appearance-none relative block w-full px-3 py-2 pl-10 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
+                    className="appearance-none relative block w-full px-3 py-2 pl-10 pr-10 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
                     placeholder="Nhập mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                   <button
                     type="button"
                     className="absolute right-3 top-2.5"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
+                      <EyeOff className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
+                      <Eye className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                     )}
                   </button>
                 </div>
@@ -146,60 +152,60 @@ export function LoginForm() {
           ) : (
             <form className="space-y-6" onSubmit={handleRegister}>
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
                   {error}
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Họ và tên</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Họ và tên</label>
                 <input
                   type="text"
                   required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.name}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, name: e.target.value }))}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Số điện thoại</label>
                 <input
                   type="tel"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.phone}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, phone: e.target.value }))}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Email</label>
                 <input
                   type="email"
                   required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.email}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Mật khẩu</label>
                 <input
                   type="password"
                   required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.password}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Xác nhận mật khẩu</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Xác nhận mật khẩu</label>
                 <input
                   type="password"
                   required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.confirmPassword}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                 />
@@ -227,10 +233,10 @@ export function LoginForm() {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t border-gray-300 dark:border-dark-border" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Tài khoản demo</span>
+                  <span className="px-2 bg-white dark:bg-dark-bg-secondary text-gray-500 dark:text-dark-text-tertiary">Tài khoản demo</span>
                 </div>
               </div>
 
@@ -242,11 +248,11 @@ export function LoginForm() {
                       setEmail(account.email);
                       setPassword(account.password);
                     }}
-                    className="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="w-full text-left px-3 py-2 bg-gray-50 dark:bg-dark-bg-tertiary hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
                   >
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium">{account.role}</span>
-                      <span className="text-xs text-gray-500">{account.email}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">{account.role}</span>
+                      <span className="text-xs text-gray-500 dark:text-dark-text-tertiary">{account.email}</span>
                     </div>
                   </button>
                 ))}
