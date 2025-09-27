@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Calendar, Users, TrendingUp, Clock, Star, CheckCircle } from 'lucide-react';
+import React from 'react';
+import { Calendar, Users, Clock, Star, CheckCircle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export function Dashboard() {
@@ -163,27 +163,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <h2 className="text-lg font-semibold mb-4">Hành động nhanh</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="bg-white/20 backdrop-blur-sm rounded-lg p-4 hover:bg-white/30 transition-colors text-left">
-            <Calendar className="h-6 w-6 mb-2" />
-            <p className="font-medium">Tạo sự kiện mới</p>
-            <p className="text-sm opacity-90">Tổ chức sự kiện của bạn</p>
-          </button>
-          <button className="bg-white/20 backdrop-blur-sm rounded-lg p-4 hover:bg-white/30 transition-colors text-left">
-            <TrendingUp className="h-6 w-6 mb-2" />
-            <p className="font-medium">Xem thống kê</p>
-            <p className="text-sm opacity-90">Phân tích hiệu quả</p>
-          </button>
-          <button className="bg-white/20 backdrop-blur-sm rounded-lg p-4 hover:bg-white/30 transition-colors text-left">
-            <Users className="h-6 w-6 mb-2" />
-            <p className="font-medium">Khám phá sự kiện</p>
-            <p className="text-sm opacity-90">Tìm sự kiện thú vị</p>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
