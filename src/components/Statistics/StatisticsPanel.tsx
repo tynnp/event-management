@@ -1,4 +1,3 @@
-import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { Users, Calendar, CheckCircle, Clock, Star } from 'lucide-react';
 import {
@@ -70,6 +69,13 @@ export function StatisticsPanel() {
     { title: 'Sự kiện đã tham gia', value: myParticipations.length, icon: Calendar, color: 'bg-blue-500' },
     { title: 'Số lần điểm danh', value: myCheckedIn, icon: CheckCircle, color: 'bg-green-500' },
     { title: 'Huy hiệu', value: currentUser.badges.length, icon: Star, color: 'bg-yellow-500' },
+  ];
+
+  const userCreatedEventsStats = [
+    { title: 'Sự kiện đã tạo', value: myEvents.length, icon: Calendar, color: 'bg-purple-500' },
+    { title: 'Đã duyệt', value: myEvents.filter((e) => e.status === 'approved').length, icon: CheckCircle, color: 'bg-green-500' },
+    { title: 'Chờ duyệt', value: myEvents.filter((e) => e.status === 'pending').length, icon: Clock, color: 'bg-orange-500' },
+    { title: 'Người tham gia', value: myEvents.reduce((sum, e) => sum + e.participants.length, 0), icon: Users, color: 'bg-blue-500' },
   ];
 
   // --- Data biểu đồ ---
@@ -286,6 +292,79 @@ export function StatisticsPanel() {
         </div>
       )}
 
+      {/* User Created Events Statistics - Only for regular users */}
+      {currentUser.role === 'user' && myEvents.length > 0 && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Thống kê sự kiện tôi đã tạo</h2>
+
+          {/* Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {userCreatedEventsStats.map((stat, i) => (
+              <div
+                key={i}
+                className="card rounded-xl shadow-sm p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">{stat.title}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mt-1">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`${stat.color} rounded-lg p-3`}>
+                    <stat.icon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Recent Created Events Table */}
+          <div className="card rounded-xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Sự kiện gần đây của tôi</h3>
+            <div className="max-h-96 overflow-y-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 dark:bg-dark-bg-tertiary sticky top-0">
+                  <tr>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Tên sự kiện</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Trạng thái</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Người tham gia</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Ngày tạo</th>
+                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">Đánh giá TB</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myEvents.slice(0, 10).map((event) => (
+                    <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary">
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">{event.title}</td>
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          event.status === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                          event.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
+                          event.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                          'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                        }`}>
+                          {event.status === 'approved' ? 'Đã duyệt' :
+                           event.status === 'pending' ? 'Chờ duyệt' :
+                           event.status === 'rejected' ? 'Bị từ chối' : 'Đã hủy'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">{event.participants.length}</td>
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
+                        {new Date(event.createdAt).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
+                        {event.averageRating > 0 ? event.averageRating.toFixed(1) : 'Chưa có'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* --- User block (admin, mod, user) --- */}
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Thống kê sự kiện tôi tham gia</h2>
@@ -391,6 +470,7 @@ export function StatisticsPanel() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
