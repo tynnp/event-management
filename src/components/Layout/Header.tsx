@@ -1,9 +1,13 @@
 import React from 'react';
-import { User, LogOut, Bell, Settings } from 'lucide-react';
+import { User, LogOut, Bell, Settings, Menu } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ThemeToggle } from './ThemeToggle';
 
-export function Header() {
+interface HeaderProps {
+  onMenuToggle: () => void;
+}
+
+export function Header({ onMenuToggle }: HeaderProps) {
   const { state, dispatch } = useApp();
   const { currentUser } = state;
 
@@ -11,33 +15,30 @@ export function Header() {
     dispatch({ type: 'LOGOUT' });
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800';
-      case 'moderator':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-green-100 text-green-800';
-    }
-  };
-
-  const getRoleText = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Quản trị viên';
-      case 'moderator':
-        return 'Kiểm duyệt viên';
-      default:
-        return 'Người dùng';
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      return 'Chào buổi sáng!';
+    } else if (hour < 18) {
+      return 'Chào buổi chiều!';
+    } else {
+      return 'Chào buổi tối!';
     }
   };
 
   return (
     <header className="bg-white dark:bg-dark-bg-secondary shadow-sm border-b border-gray-200 dark:border-dark-border sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
+            {/* Menu Toggle Button - Always visible */}
+            <button
+              onClick={onMenuToggle}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary transition-colors mr-2"
+            >
+              <Menu className="h-5 w-5 text-gray-600 dark:text-dark-text-secondary" />
+            </button>
+            
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Quản lý sự kiện</span>
             </div>
@@ -56,10 +57,8 @@ export function Header() {
                   <User className="h-4 w-4 text-gray-600 dark:text-dark-text-primary" />
                 </div>
                 <div>
+                  <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">{getGreeting()}</p>
                   <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">{currentUser?.name}</p>
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(currentUser?.role || '')}`}>
-                    {getRoleText(currentUser?.role || '')}
-                  </span>
                 </div>
               </div>
               

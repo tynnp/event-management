@@ -8,16 +8,19 @@ import {
   Plus,
   CheckSquare,
   MessageSquare,
-  Shield
+  Shield,
+  X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+export function Sidebar({ activeSection, onSectionChange, isOpen, onClose }: SidebarProps) {
   const { state } = useApp();
   const { currentUser } = state;
 
@@ -38,26 +41,66 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   );
 
   return (
-    <aside className="w-64 bg-white dark:bg-dark-bg-secondary shadow-sm border-r border-gray-200 dark:border-dark-border h-screen sticky top-0">
-      <nav className="mt-8 px-4">
-        <ul className="space-y-2">
-          {filteredMenuItems.map((item) => (
-            <li key={item.id}>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside className={`
+        fixed top-0 left-0 z-50 w-64 h-screen bg-white dark:bg-dark-bg-secondary shadow-sm border-r border-gray-200 dark:border-dark-border
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        {/* Header with close button */}
+        <div className="bg-white dark:bg-dark-bg-secondary shadow-sm border-b border-gray-200 dark:border-dark-border">
+          <div className="w-full px-4">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                {/* Placeholder div to match the menu button width + margin */}
+                <div className="p-2 mr-2">
+                  <div className="h-5 w-5"></div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <span className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Menu</span>
+                </div>
+              </div>
+              
               <button
-                onClick={() => onSectionChange(item.id)}
-                className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeSection === item.id
-                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
-                    : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary hover:text-gray-900 dark:hover:text-dark-text-primary'
-                }`}
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary transition-colors"
               >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
+                <X className="h-5 w-5 text-gray-600 dark:text-dark-text-secondary" />
               </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </aside>
+            </div>
+          </div>
+        </div>
+
+        <nav className="mt-4 px-4">
+          <ul className="space-y-2">
+            {filteredMenuItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  onClick={() => onSectionChange(item.id)}
+                  className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    activeSection === item.id
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
+                      : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary hover:text-gray-900 dark:hover:text-dark-text-primary'
+                  }`}
+                >
+                  <item.icon className="mr-3 h-5 w-5" />
+                  {item.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+    </>
   );
 }

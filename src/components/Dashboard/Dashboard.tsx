@@ -55,11 +55,22 @@ export function Dashboard() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
+  const getRoleText = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Quản trị viên';
+      case 'moderator':
+        return 'Kiểm duyệt viên';
+      default:
+        return null; // Không hiển thị role cho user thường
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
-          Chào mừng, {currentUser?.name}!
+          Chào mừng, {getRoleText(currentUser?.role || '') ? `${getRoleText(currentUser?.role || '')} ` : ''}{currentUser?.name}!
         </h1>
         <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
           Quản lý và tham gia các sự kiện một cách hiệu quả

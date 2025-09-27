@@ -19,6 +19,7 @@ function AppContent() {
   const { currentUser } = state;
   const [activeSection, setActiveSection] = useState('dashboard');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!currentUser) {
     return <LoginForm />;
@@ -167,10 +168,19 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg-primary">
-      <Header />
-      <div className="flex">
-        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-        <main className="flex-1 p-8">
+      <Header onMenuToggle={() => setSidebarOpen(true)} />
+      <div className="flex relative">
+        <Sidebar 
+          activeSection={activeSection} 
+          onSectionChange={setActiveSection}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <main className={`
+          flex-1 transition-all duration-300 ease-in-out
+          ${sidebarOpen ? 'ml-64' : 'ml-0'}
+          p-8
+        `}>
           {renderContent()}
         </main>
       </div>
