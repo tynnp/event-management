@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { ThemeToggle } from '../Layout/ThemeToggle';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -68,6 +69,11 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary py-12 px-4 sm:px-6 lg:px-8">
+      {/* Theme Toggle Button */}
+      <div className="absolute top-6 right-6">
+        <ThemeToggle />
+      </div>
+      
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary">
@@ -88,7 +94,7 @@ export function LoginForm() {
               )}
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                   Email
                 </label>
                 <div className="mt-1 relative">
@@ -97,17 +103,17 @@ export function LoginForm() {
                     name="email"
                     type="email"
                     required
-                    className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
+                    className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
                     placeholder="Nhập email của bạn"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
-                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                   Mật khẩu
                 </label>
                 <div className="mt-1 relative">
@@ -116,21 +122,21 @@ export function LoginForm() {
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     required
-                    className="appearance-none relative block w-full px-3 py-2 pl-10 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
+                    className="appearance-none relative block w-full px-3 py-2 pl-10 pr-10 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
                     placeholder="Nhập mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                   <button
                     type="button"
                     className="absolute right-3 top-2.5"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
+                      <EyeOff className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
+                      <Eye className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                     )}
                   </button>
                 </div>
@@ -156,7 +162,7 @@ export function LoginForm() {
                 <input
                   type="text"
                   required
-                  className="input-field mt-1 block w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.name}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, name: e.target.value }))}
                 />
@@ -166,7 +172,7 @@ export function LoginForm() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Số điện thoại</label>
                 <input
                   type="tel"
-                  className="input-field mt-1 block w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.phone}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, phone: e.target.value }))}
                 />
@@ -177,7 +183,7 @@ export function LoginForm() {
                 <input
                   type="email"
                   required
-                  className="input-field mt-1 block w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.email}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
                 />
@@ -188,7 +194,7 @@ export function LoginForm() {
                 <input
                   type="password"
                   required
-                  className="input-field mt-1 block w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.password}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
                 />
@@ -199,7 +205,7 @@ export function LoginForm() {
                 <input
                   type="password"
                   required
-                  className="input-field mt-1 block w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   value={registerData.confirmPassword}
                   onChange={(e) => setRegisterData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                 />
