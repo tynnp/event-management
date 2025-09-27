@@ -21,7 +21,6 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
     category: 'Công nghệ',
     isPublic: true,
     maxParticipants: '',
-    requiresApproval: true,
     image: '' // ảnh bìa
   });
 
@@ -53,6 +52,15 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
     e.preventDefault();
     if (!validateForm() || !currentUser) return;
 
+    // Logic xác định status dựa trên role và loại sự kiện
+    let eventStatus: 'approved' | 'pending' = 'approved';
+    
+    if (currentUser.role === 'user') {
+      // Người dùng thường: sự kiện công khai cần duyệt, sự kiện riêng tư không cần
+      eventStatus = formData.isPublic ? 'pending' : 'approved';
+    }
+    // Admin và moderator: luôn được phê duyệt tự động
+
     const newEvent: Event = {
       id: Date.now().toString(),
       title: formData.title.trim(),
@@ -65,7 +73,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
       maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
       createdBy: currentUser.id,
       createdAt: new Date().toISOString(),
-      status: formData.requiresApproval ? 'pending' : 'approved',
+      status: eventStatus,
       participants: [],
       comments: [],
       ratings: [],
@@ -277,19 +285,54 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               </div>
             </div>
 
-            <div>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.requiresApproval}
-                  onChange={(e) => handleInputChange('requiresApproval', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-dark-text-secondary">Yêu cầu kiểm duyệt trước khi công khai</span>
-              </label>
-              <p className="text-xs text-gray-500 dark:text-dark-text-tertiary ml-6">
-                {currentUser?.role === 'user' ? 'Sự kiện sẽ được gửi đến kiểm duyệt viên để phê duyệt' : 'Bạn có thể tự phê duyệt sự kiện'}
-              </p>
+            {/* Thông báo về logic duyệt sự kiện */}
+            <div className={`rounded-lg p-4 ${
+              currentUser?.role === 'user' 
+                ? formData.isPublic 
+                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+                  : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+            }`}>
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className={`h-5 w-5 ${
+                    currentUser?.role === 'user' 
+                      ? formData.isPublic 
+                        ? 'text-yellow-400' 
+                        : 'text-green-400'
+                      : 'text-blue-400'
+                  }`} viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  {currentUser?.role === 'user' ? (
+                    <div>
+                      <p className={`text-sm font-medium ${
+                        formData.isPublic 
+                          ? 'text-yellow-800 dark:text-yellow-200'
+                          : 'text-green-800 dark:text-green-200'
+                      }`}>
+                        <strong>Thông báo duyệt sự kiện:</strong>
+                      </p>
+                      <p className={`text-sm ${
+                        formData.isPublic 
+                          ? 'text-yellow-700 dark:text-yellow-300'
+                          : 'text-green-700 dark:text-green-300'
+                      }`}>
+                        {formData.isPublic 
+                          ? 'Sự kiện công khai sẽ được gửi đến kiểm duyệt viên để phê duyệt trước khi hiển thị.'
+                          : 'Sự kiện riêng tư sẽ được phê duyệt tự động và có thể sử dụng ngay.'
+                        }
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      <strong>Quyền đặc biệt:</strong> Sự kiện của bạn sẽ được phê duyệt tự động do vai trò {currentUser?.role === 'admin' ? 'quản trị viên' : 'kiểm duyệt viên'}.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
