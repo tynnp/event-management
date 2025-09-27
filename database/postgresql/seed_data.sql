@@ -12,11 +12,11 @@ INSERT INTO categories (id, name, description, color, icon) VALUES
 
 -- Insert Users (password hash for 'password123')
 INSERT INTO users (id, email, password_hash, name, role, phone, events_attended) VALUES
-('650e8400-e29b-41d4-a716-446655440001', 'admin@example.com', '$2b$10$rQZ8K9vX7mN2pL1qR5sT3uVwYzA4bC6dE8fG0hI2jK4lM6nO8pQ0rS2tU4vW6xY8zA', 'Nguyễn Văn Admin', 'admin', '0123456789', 15),
-('650e8400-e29b-41d4-a716-446655440002', 'moderator@example.com', '$2b$10$rQZ8K9vX7mN2pL1qR5sT3uVwYzA4bC6dE8fG0hI2jK4lM6nO8pQ0rS2tU4vW6xY8zA', 'Trần Thị Moderator', 'moderator', '0987654321', 8),
-('650e8400-e29b-41d4-a716-446655440003', 'user1@example.com', '$2b$10$rQZ8K9vX7mN2pL1qR5sT3uVwYzA4bC6dE8fG0hI2jK4lM6nO8pQ0rS2tU4vW6xY8zA', 'Lê Văn User', 'user', '0369852147', 5),
-('650e8400-e29b-41d4-a716-446655440004', 'user2@example.com', '$2b$10$rQZ8K9vX7mN2pL1qR5sT3uVwYzA4bC6dE8fG0hI2jK4lM6nO8pQ0rS2tU4vW6xY8zA', 'Phạm Thị User', 'user', '0741852963', 3),
-('650e8400-e29b-41d4-a716-446655440005', 'user3@example.com', '$2b$10$rQZ8K9vX7mN2pL1qR5sT3uVwYzA4bC6dE8fG0hI2jK4lM6nO8pQ0rS2tU4vW6xY8zA', 'Hoàng Văn User', 'user', '0852741963', 7);
+('650e8400-e29b-41d4-a716-446655440001', 'admin@example.com', '$2b$10$ebSGrkG2ilbiIQ.pOWWE.O3/Fnt8qXfXZYSB55N6zKs1/5pPC1uxi', 'Nguyễn Văn Admin', 'admin', '0123456789', 15),
+('650e8400-e29b-41d4-a716-446655440002', 'moderator@example.com', '$2b$10$ebSGrkG2ilbiIQ.pOWWE.O3/Fnt8qXfXZYSB55N6zKs1/5pPC1uxi', 'Trần Thị Moderator', 'moderator', '0987654321', 8),
+('650e8400-e29b-41d4-a716-446655440003', 'user1@example.com', '$2b$10$ebSGrkG2ilbiIQ.pOWWE.O3/Fnt8qXfXZYSB55N6zKs1/5pPC1uxi', 'Lê Văn User', 'user', '0369852147', 5),
+('650e8400-e29b-41d4-a716-446655440004', 'user2@example.com', '$2b$10$ebSGrkG2ilbiIQ.pOWWE.O3/Fnt8qXfXZYSB55N6zKs1/5pPC1uxi', 'Phạm Thị User', 'user', '0741852963', 3),
+('650e8400-e29b-41d4-a716-446655440005', 'user3@example.com', '$2b$10$ebSGrkG2ilbiIQ.pOWWE.O3/Fnt8qXfXZYSB55N6zKs1/5pPC1uxi', 'Hoàng Văn User', 'user', '0852741963', 7);
 
 -- Insert Events
 INSERT INTO events (id, title, description, start_time, end_time, location, image_url, is_public, max_participants, created_by, category_id, status, average_rating, total_ratings) VALUES
