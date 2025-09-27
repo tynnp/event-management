@@ -21,6 +21,8 @@ type AppAction =
   | { type: 'CHECK_IN'; payload: { eventId: string; userId: string } }
   | { type: 'ADD_COMMENT'; payload: Comment }
   | { type: 'HIDE_COMMENT'; payload: string }
+  | { type: 'UNHIDE_COMMENT'; payload: string }
+  | { type: 'DELETE_COMMENT'; payload: string }
   | { type: 'ADD_RATING'; payload: Rating }
   | { type: 'APPROVE_EVENT'; payload: string }
   | { type: 'REJECT_EVENT'; payload: { eventId: string; reason: string } }
@@ -699,6 +701,22 @@ function appReducer(state: AppState, action: AppAction): AppState {
             ? { ...comment, isHidden: true }
             : comment
         ),
+      };
+
+    case 'UNHIDE_COMMENT':
+      return {
+        ...state,
+        comments: state.comments.map((comment) =>
+          comment.id === action.payload
+            ? { ...comment, isHidden: false }
+            : comment
+        ),
+      };
+
+    case 'DELETE_COMMENT':
+      return {
+        ...state,
+        comments: state.comments.filter((comment) => comment.id !== action.payload),
       };
 
     case 'ADD_RATING':

@@ -10,7 +10,11 @@ import {
   ArrowLeft,
   CheckCircle,
   UserPlus,
-  Heart
+  Heart,
+  Eye,
+  EyeOff,
+  Trash2,
+  MoreVertical
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Event, Comment, Rating } from '../../types';
@@ -27,6 +31,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
   const [newRating, setNewRating] = useState(0);
   const [newReview, setNewReview] = useState('');
   const [showQR, setShowQR] = useState(false);
+  const [showHiddenComments, setShowHiddenComments] = useState(false);
 
   const isParticipant = event.participants.some(p => p.userId === currentUser?.id);
   const isCreator = event.createdBy === currentUser?.id;
@@ -37,6 +42,13 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
     ...event.comments.filter(c => !c.isHidden),
     ...comments.filter(c => c.eventId === event.id && !c.isHidden)
   ];
+
+  const hiddenComments = [
+    ...event.comments.filter(c => c.isHidden),
+    ...comments.filter(c => c.eventId === event.id && c.isHidden)
+  ];
+
+  const allComments = showHiddenComments ? [...eventComments, ...hiddenComments] : eventComments;
 
   const eventRatings = ratings.filter(r => r.eventId === event.id);
   const hasRated = eventRatings.some(r => r.userId === currentUser?.id);
@@ -101,6 +113,20 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
       dispatch({ type: 'ADD_RATING', payload: rating });
       setNewRating(0);
       setNewReview('');
+    }
+  };
+
+  const handleUnhideComment = (commentId: string) => {
+    dispatch({ type: 'UNHIDE_COMMENT', payload: commentId });
+  };
+
+  const handleHideComment = (commentId: string) => {
+    dispatch({ type: 'HIDE_COMMENT', payload: commentId });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (confirm('Bạn có chắc chắn muốn xóa bình luận này?')) {
+      dispatch({ type: 'DELETE_COMMENT', payload: commentId });
     }
   };
 
@@ -306,11 +332,32 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
           )}
 
           {/* Comments Section */}
-          <div className="border-t border-gray-200 pt-8">
-            <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-6 flex items-center">
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Bình luận ({eventComments.length})
-            </h3>
+          <div className="border-t border-gray-200 dark:border-dark-border pt-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary flex items-center">
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Bình luận ({allComments.length})
+              </h3>
+              
+              {hiddenComments.length > 0 && (
+                <button
+                  onClick={() => setShowHiddenComments(!showHiddenComments)}
+                  className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                >
+                  {showHiddenComments ? (
+                    <>
+                      <EyeOff className="h-4 w-4 mr-1" />
+                      Ẩn bình luận đã ẩn
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-4 w-4 mr-1" />
+                      Hiện bình luận đã ẩn ({hiddenComments.length})
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
 
             {/* Add Comment */}
             <form onSubmit={handleAddComment} className="mb-8">
@@ -337,24 +384,65 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
 
             {/* Comments List */}
             <div className="space-y-6">
-              {eventComments.map((comment) => {
+              {allComments.map((comment) => {
                 const user = users.find(u => u.id === comment.userId);
+                const isHidden = comment.isHidden;
+                const canModerate = currentUser?.role === 'admin' || currentUser?.role === 'moderator';
+                
                 return (
-                  <div key={comment.id} className="flex space-x-4">
-                    <div className="w-8 h-8 bg-gray-300 rounded-full flex-shrink-0" />
+                  <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? 'bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400' : 'bg-white dark:bg-dark-bg-secondary'}`}>
+                    <div className="w-8 h-8 bg-gray-300 dark:bg-dark-bg-tertiary rounded-full flex-shrink-0" />
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name}</span>
-                        <span className="text-gray-500 dark:text-dark-text-tertiary text-sm">
-                          {new Date(comment.createdAt).toLocaleString('vi-VN')}
-                        </span>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name}</span>
+                          <span className="text-gray-500 dark:text-dark-text-tertiary text-sm">
+                            {new Date(comment.createdAt).toLocaleString('vi-VN')}
+                          </span>
+                          {isHidden && (
+                            <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded-full">
+                              Đã ẩn
+                            </span>
+                          )}
+                        </div>
+                        
+                        {canModerate && (
+                          <div className="flex items-center space-x-2">
+                            {isHidden ? (
+                              <button
+                                onClick={() => handleUnhideComment(comment.id)}
+                                className="p-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                                title="Hiện lại bình luận"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleHideComment(comment.id)}
+                                className="p-1 text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition-colors"
+                                title="Ẩn bình luận"
+                              >
+                                <EyeOff className="h-4 w-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="p-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                              title="Xóa bình luận"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-gray-700 dark:text-dark-text-secondary">{comment.content}</p>
+                      <p className={`${isHidden ? 'text-gray-500 dark:text-dark-text-tertiary' : 'text-gray-700 dark:text-dark-text-secondary'}`}>
+                        {comment.content}
+                      </p>
                     </div>
                   </div>
                 );
               })}
-              {eventComments.length === 0 && (
+              {allComments.length === 0 && (
                 <p className="text-gray-500 dark:text-dark-text-tertiary text-center py-8">Chưa có bình luận nào</p>
               )}
             </div>
