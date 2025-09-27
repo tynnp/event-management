@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ThemeToggle } from '../Layout/ThemeToggle';
+import { ForgotPassword } from './ForgotPassword';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -9,6 +10,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [registerData, setRegisterData] = useState({
     name: '',
     phone: '',
@@ -66,6 +68,10 @@ export function LoginForm() {
     { email: 'kietcvt@hcmue.edu.vn', password: 'mod123', role: 'Kiểm duyệt viên' },
     { email: 'vynu@hcmue.edu.vn', password: 'user123', role: 'Người dùng' }
   ];
+
+  if (showForgotPassword) {
+    return <ForgotPassword onBack={() => setShowForgotPassword(false)} />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary py-12 px-4 sm:px-6 lg:px-8">
@@ -138,6 +144,15 @@ export function LoginForm() {
                     ) : (
                       <Eye className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                     )}
+                  </button>
+                </div>
+                <div className="mt-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-blue-600 hover:text-blue-500 transition-colors"
+                  >
+                    Quên mật khẩu?
                   </button>
                 </div>
               </div>
