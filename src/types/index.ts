@@ -47,6 +47,8 @@ export interface Comment {
   content: string;
   createdAt: string;
   isHidden: boolean;
+  parentId?: string; // ID của comment gốc nếu đây là reply
+  replies?: Comment[]; // Danh sách các reply
 }
 
 export interface Rating {

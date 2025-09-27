@@ -14,7 +14,7 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  MoreVertical
+  Reply
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Event, Comment, Rating } from '../../types';
@@ -32,23 +32,36 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
   const [newReview, setNewReview] = useState('');
   const [showQR, setShowQR] = useState(false);
   const [showHiddenComments, setShowHiddenComments] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
 
   const isParticipant = event.participants.some(p => p.userId === currentUser?.id);
   const isCreator = event.createdBy === currentUser?.id;
   const canRate = isParticipant && new Date(event.endTime) < new Date();
   const userParticipant = event.participants.find(p => p.userId === currentUser?.id);
 
-  const eventComments = [
-    ...event.comments.filter(c => !c.isHidden),
-    ...comments.filter(c => c.eventId === event.id && !c.isHidden)
+  // Lấy tất cả comments và replies
+  const allEventComments = [
+    ...event.comments,
+    ...comments.filter(c => c.eventId === event.id)
   ];
 
-  const hiddenComments = [
-    ...event.comments.filter(c => c.isHidden),
-    ...comments.filter(c => c.eventId === event.id && c.isHidden)
-  ];
+  // Nhóm comments và replies
+  const groupedComments = allEventComments.reduce((acc, comment) => {
+    if (!comment.parentId) {
+      // Đây là comment gốc
+      acc[comment.id] = {
+        ...comment,
+        replies: allEventComments.filter(c => c.parentId === comment.id)
+      };
+    }
+    return acc;
+  }, {} as Record<string, Comment & { replies: Comment[] }>);
 
-  const allComments = showHiddenComments ? [...eventComments, ...hiddenComments] : eventComments;
+  const visibleComments = Object.values(groupedComments).filter(c => !c.isHidden);
+  const hiddenComments = Object.values(groupedComments).filter(c => c.isHidden);
+  
+  const allComments = showHiddenComments ? [...visibleComments, ...hiddenComments] : visibleComments;
 
   const eventRatings = ratings.filter(r => r.eventId === event.id);
   const hasRated = eventRatings.some(r => r.userId === currentUser?.id);
@@ -128,6 +141,35 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
     if (confirm('Bạn có chắc chắn muốn xóa bình luận này?')) {
       dispatch({ type: 'DELETE_COMMENT', payload: commentId });
     }
+  };
+
+  const handleReply = (commentId: string) => {
+    setReplyingTo(commentId);
+    setReplyContent('');
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
+    setReplyContent('');
+  };
+
+  const handleSubmitReply = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyContent.trim() || !currentUser || !replyingTo) return;
+
+    const reply: Comment = {
+      id: Date.now().toString(),
+      userId: currentUser.id,
+      eventId: event.id,
+      content: replyContent.trim(),
+      createdAt: new Date().toISOString(),
+      isHidden: false,
+      parentId: replyingTo
+    };
+
+    dispatch({ type: 'ADD_COMMENT', payload: reply });
+    setReplyContent('');
+    setReplyingTo(null);
   };
 
   const generateQRCode = (data: string) => {
@@ -406,38 +448,106 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                           )}
                         </div>
                         
-                        {canModerate && (
-                          <div className="flex items-center space-x-2">
-                            {isHidden ? (
+                        <div className="flex items-center space-x-2">
+                          {/* Reply button */}
+                          <button
+                            onClick={() => handleReply(comment.id)}
+                            className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                            title="Trả lời"
+                          >
+                            <Reply className="h-4 w-4" />
+                          </button>
+                          
+                          {canModerate && (
+                            <>
+                              {isHidden ? (
+                                <button
+                                  onClick={() => handleUnhideComment(comment.id)}
+                                  className="p-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                                  title="Hiện lại bình luận"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleHideComment(comment.id)}
+                                  className="p-1 text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition-colors"
+                                  title="Ẩn bình luận"
+                                >
+                                  <EyeOff className="h-4 w-4" />
+                                </button>
+                              )}
                               <button
-                                onClick={() => handleUnhideComment(comment.id)}
-                                className="p-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
-                                title="Hiện lại bình luận"
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="p-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                                title="Xóa bình luận"
                               >
-                                <Eye className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" />
                               </button>
-                            ) : (
-                              <button
-                                onClick={() => handleHideComment(comment.id)}
-                                className="p-1 text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition-colors"
-                                title="Ẩn bình luận"
-                              >
-                                <EyeOff className="h-4 w-4" />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="p-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-                              title="Xóa bình luận"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
+                            </>
+                          )}
+                        </div>
                       </div>
                       <p className={`${isHidden ? 'text-gray-500 dark:text-dark-text-tertiary' : 'text-gray-700 dark:text-dark-text-secondary'}`}>
                         {comment.content}
                       </p>
+
+                      {/* Replies */}
+                      {comment.replies && comment.replies.length > 0 && (
+                        <div className="mt-4 ml-4 space-y-3">
+                          {comment.replies.map((reply) => {
+                            const replyUser = users.find(u => u.id === reply.userId);
+                            return (
+                              <div key={reply.id} className="flex space-x-3 p-3 bg-gray-50 dark:bg-dark-bg-tertiary rounded-lg">
+                                <div className="w-6 h-6 bg-gray-300 dark:bg-dark-bg-secondary rounded-full flex-shrink-0" />
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <span className="font-medium text-gray-900 dark:text-dark-text-primary text-sm">{replyUser?.name}</span>
+                                    <span className="text-gray-500 dark:text-dark-text-tertiary text-xs">
+                                      {new Date(reply.createdAt).toLocaleString('vi-VN')}
+                                    </span>
+                                  </div>
+                                  <p className="text-gray-700 dark:text-dark-text-secondary text-sm">{reply.content}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Reply Form */}
+                      {replyingTo === comment.id && (
+                        <form onSubmit={handleSubmitReply} className="mt-4 ml-4">
+                          <div className="flex space-x-3">
+                            <div className="w-6 h-6 bg-gray-300 dark:bg-dark-bg-secondary rounded-full flex-shrink-0" />
+                            <div className="flex-1">
+                              <textarea
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                rows={2}
+                                className="w-full border border-gray-300 dark:border-dark-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary placeholder-gray-500 dark:placeholder-dark-text-tertiary text-sm"
+                                placeholder="Viết phản hồi..."
+                              />
+                              <div className="flex space-x-2 mt-2">
+                                <button
+                                  type="submit"
+                                  disabled={!replyContent.trim()}
+                                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                                >
+                                  Phản hồi
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleCancelReply}
+                                  className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                                >
+                                  Hủy
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                      )}
                     </div>
                   </div>
                 );
