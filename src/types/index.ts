@@ -8,7 +8,6 @@ export interface User {
   phone?: string;
   createdAt: string;
   eventsAttended: number;
-  badges: string[];
   isLocked?: boolean;
 }
 

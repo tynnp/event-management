@@ -42,7 +42,6 @@ const initialState: AppState = {
       phone: '0123456789',
       createdAt: '2025-01-01',
       eventsAttended: 25,
-      badges: ['Người tiên phong', 'Quản lý xuất sắc'],
     },
     {
       id: '2',
@@ -53,7 +52,6 @@ const initialState: AppState = {
       phone: '0987654321',
       createdAt: '2025-01-15',
       eventsAttended: 18,
-      badges: ['Kiểm duyệt tận tâm'],
     },
     {
       id: '3',
@@ -64,7 +62,6 @@ const initialState: AppState = {
       phone: '0555666777',
       createdAt: '2025-02-01',
       eventsAttended: 12,
-      badges: ['Tham gia tích cực'],
     },
     {
       id: '4',
@@ -75,7 +72,6 @@ const initialState: AppState = {
       phone: '0999888777',
       createdAt: '2025-02-20',
       eventsAttended: 5,
-      badges: [],
     },
   ],
   events: [

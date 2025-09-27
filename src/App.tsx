@@ -141,22 +141,6 @@ function AppContent() {
                 </div>
               </div>
               
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-3">Huy hiệu</h3>
-                <div className="flex flex-wrap gap-2">
-                  {currentUser.badges.map((badge, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium"
-                    >
-                      {badge}
-                    </span>
-                  ))}
-                  {currentUser.badges.length === 0 && (
-                    <p className="text-gray-500 dark:text-dark-text-tertiary">Chưa có huy hiệu nào</p>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         );

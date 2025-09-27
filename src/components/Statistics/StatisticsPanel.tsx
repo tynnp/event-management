@@ -68,7 +68,6 @@ export function StatisticsPanel() {
   const userStats = [
     { title: 'Sự kiện đã tham gia', value: myParticipations.length, icon: Calendar, color: 'bg-blue-500' },
     { title: 'Số lần điểm danh', value: myCheckedIn, icon: CheckCircle, color: 'bg-green-500' },
-    { title: 'Huy hiệu', value: currentUser.badges.length, icon: Star, color: 'bg-yellow-500' },
   ];
 
   const userCreatedEventsStats = [
@@ -370,7 +369,7 @@ export function StatisticsPanel() {
         <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Thống kê sự kiện tôi tham gia</h2>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {userStats.map((stat, i) => (
             <div
               key={i}
