@@ -1,0 +1,26 @@
+{
+  "name": "express-rest-api",
+  "version": "1.0.0",
+  "description": "A RESTful API for user functionalities, event management, attendance tracking, comments, reviews, and statistical reporting.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^6.8.0",
+    "dotenv": "^17.2.2",
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "eslint": "^8.30.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.26.0"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}
