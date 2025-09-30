@@ -1,12 +1,9 @@
 const express = require('express');
-const { markAttendance, getAttendanceRecords } = require('../controllers/attendanceController');
-
 const router = express.Router();
+const attendanceController = require('../controllers/attendanceController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-// Route to mark attendance
-router.post('/mark', markAttendance);
-
-// Route to get attendance records
-router.get('/records', getAttendanceRecords);
+router.post('/checkin', authMiddleware, attendanceController.checkIn);
+router.get('/generate-qr', authMiddleware, attendanceController.generateQRCode);
 
 module.exports = router;

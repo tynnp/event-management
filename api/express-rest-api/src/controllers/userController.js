@@ -1,43 +1,27 @@
-const User = require('../models/User');
+const { getPostgresPool } = require('../config/database');
 
-// Get user profile
 exports.getUserProfile = async (req, res) => {
-    try {
-        const userId = req.user.id; // Assuming user ID is stored in req.user
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
+  const pool = getPostgresPool();
+  try {
+    const result = await pool.query('SELECT id, email, name, avatar_url, role, phone, events_attended, created_at, updated_at, last_login FROM users WHERE id = $1', [req.user.id]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching profile', error: err.message });
+  }
 };
 
-// Update user profile
 exports.updateUserProfile = async (req, res) => {
-    try {
-        const userId = req.user.id; // Assuming user ID is stored in req.user
-        const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true });
-        if (!updatedUser) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json(updatedUser);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-// Delete user
-exports.deleteUser = async (req, res) => {
-    try {
-        const userId = req.user.id; // Assuming user ID is stored in req.user
-        const deletedUser = await User.findByIdAndDelete(userId);
-        if (!deletedUser) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(204).send(); // No content
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
+  const pool = getPostgresPool();
+  const { name, phone, avatar_url } = req.body;
+  try {
+    await pool.query(
+      'UPDATE users SET name = $1, phone = $2, avatar_url = $3, updated_at = NOW() WHERE id = $4',
+      [name, phone, avatar_url, req.user.id]
+    );
+    res.json({ message: 'Profile updated' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating profile', error: err.message });
+  }
 };

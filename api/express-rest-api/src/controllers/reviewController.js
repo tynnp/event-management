@@ -1,35 +1,27 @@
-const Review = require('../models/Review');
+const { getPostgresPool } = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
 
-// Add a new review
 exports.addReview = async (req, res) => {
-    try {
-        const { userId, eventId, rating, feedback } = req.body;
-        const newReview = new Review({ userId, eventId, rating, feedback });
-        await newReview.save();
-        res.status(201).json({ message: 'Review added successfully', review: newReview });
-    } catch (error) {
-        res.status(500).json({ message: 'Error adding review', error: error.message });
-    }
+  const pool = getPostgresPool();
+  const { event_id, rating, review } = req.body;
+  try {
+    const id = uuidv4();
+    await pool.query(
+      'INSERT INTO ratings (id, user_id, event_id, rating, review, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())',
+      [id, req.user.id, event_id, rating, review]
+    );
+    res.status(201).json({ message: 'Review added' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error adding review', error: err.message });
+  }
 };
 
-// Get all reviews for an event
-exports.getReviews = async (req, res) => {
-    try {
-        const { eventId } = req.params;
-        const reviews = await Review.find({ eventId });
-        res.status(200).json(reviews);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching reviews', error: error.message });
-    }
-};
-
-// Delete a review
-exports.deleteReview = async (req, res) => {
-    try {
-        const { reviewId } = req.params;
-        await Review.findByIdAndDelete(reviewId);
-        res.status(200).json({ message: 'Review deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error deleting review', error: error.message });
-    }
+exports.getReviewsByEvent = async (req, res) => {
+  const pool = getPostgresPool();
+  try {
+    const result = await pool.query('SELECT * FROM ratings WHERE event_id = $1', [req.params.eventId]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching reviews', error: err.message });
+  }
 };

@@ -1,15 +1,9 @@
 const express = require('express');
-const { addComment, getComments, deleteComment } = require('../controllers/commentController');
-
 const router = express.Router();
+const commentController = require('../controllers/commentController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-// Route to add a comment
-router.post('/:eventId/comments', addComment);
-
-// Route to get comments for an event
-router.get('/:eventId/comments', getComments);
-
-// Route to delete a comment
-router.delete('/comments/:commentId', deleteComment);
+router.post('/', authMiddleware, commentController.addComment);
+router.get('/:eventId', commentController.getCommentsByEvent);
 
 module.exports = router;
