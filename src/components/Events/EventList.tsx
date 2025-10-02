@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Calendar, MapPin, Users, Clock, Filter, Plus } from 'lucide-react';
-import { useApp } from '../../context/AppContext';
-import { Event } from '../../types';
+import React, { useState } from "react";
+import { Calendar, MapPin, Users, Clock, Filter, Plus } from "lucide-react";
+import { useApp } from "../../context/AppContext";
+import { Event } from "../../types";
 
 interface EventListProps {
   showMyEvents?: boolean;
@@ -10,43 +10,55 @@ interface EventListProps {
   onEventClick?: (event: Event) => void;
 }
 
-export function EventList({ showMyEvents = false, showCreateButton = false, onCreateEvent, onEventClick }: EventListProps) {
+export function EventList({
+  showMyEvents = false,
+  showCreateButton = false,
+  onCreateEvent,
+  onEventClick,
+}: EventListProps) {
   const { state } = useApp();
   const { events, currentUser } = state;
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
-  const [category, setCategory] = useState('all');
+  const [filter, setFilter] = useState<"all" | "upcoming" | "past">("all");
+  const [category, setCategory] = useState("all");
 
-  let filteredEvents = events.filter(event => event.status === 'approved');
+  let filteredEvents = events.filter((event) => event.status === "approved");
 
   if (showMyEvents) {
-    filteredEvents = events.filter(event => 
-      event.createdBy === currentUser?.id ||
-      event.participants.some(p => p.userId === currentUser?.id)
+    filteredEvents = events.filter(
+      (event) =>
+        event.createdBy === currentUser?.id ||
+        event.participants.some((p) => p.userId === currentUser?.id)
     );
   }
 
-  if (filter === 'upcoming') {
-    filteredEvents = filteredEvents.filter(event => new Date(event.startTime) > new Date());
-  } else if (filter === 'past') {
-    filteredEvents = filteredEvents.filter(event => new Date(event.endTime) < new Date());
+  if (filter === "upcoming") {
+    filteredEvents = filteredEvents.filter(
+      (event) => new Date(event.startTime) > new Date()
+    );
+  } else if (filter === "past") {
+    filteredEvents = filteredEvents.filter(
+      (event) => new Date(event.endTime) < new Date()
+    );
   }
 
-  if (category !== 'all') {
-    filteredEvents = filteredEvents.filter(event => event.category === category);
+  if (category !== "all") {
+    filteredEvents = filteredEvents.filter(
+      (event) => event.category === category
+    );
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -55,31 +67,56 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
     const start = new Date(event.startTime);
     const end = new Date(event.endTime);
 
-    if (now < start) return { status: 'upcoming', text: 'Sắp diễn ra', color: 'bg-blue-100 text-blue-800' };
-    if (now >= start && now <= end) return { status: 'ongoing', text: 'Đang diễn ra', color: 'bg-green-100 text-green-800' };
-    return { status: 'ended', text: 'Đã kết thúc', color: 'bg-gray-100 text-gray-800' };
+    if (now < start)
+      return {
+        status: "upcoming",
+        text: "Sắp diễn ra",
+        color: "bg-blue-100 text-blue-800",
+      };
+    if (now >= start && now <= end)
+      return {
+        status: "ongoing",
+        text: "Đang diễn ra",
+        color: "bg-green-100 text-green-800",
+      };
+    return {
+      status: "ended",
+      text: "Đã kết thúc",
+      color: "bg-gray-100 text-gray-800",
+    };
   };
 
-  const categories = ['all', 'Công nghệ', 'Giáo dục', 'Thể thao', 'Âm nhạc', 'Nghệ thuật'];
+  const categories = [
+    "all",
+    "Công nghệ",
+    "Giáo dục",
+    "Thể thao",
+    "Âm nhạc",
+    "Nghệ thuật",
+  ];
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
-            {showMyEvents ? 'Sự kiện của tôi' : 'Khám phá sự kiện'}
+          <h2 className="text-3xl md:text-4xl font-extrabold flex items-center justify-center gap-3">
+            <span className="text-4xl animate-bounce">🔹</span>
+            <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+              {showMyEvents ? "Sự kiện của tôi" : "Khám phá sự kiện"}
+            </span>
           </h2>
-          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
-            {showMyEvents 
-              ? 'Quản lý các sự kiện bạn tạo và tham gia' 
-              : 'Tìm kiếm và tham gia các sự kiện thú vị'}
+          <p className="text-gray-600 dark:text-gray-300 mt-1">
+            {showMyEvents
+              ? "Quản lý các sự kiện bạn tạo và tham gia"
+              : "Tìm kiếm và tham gia các sự kiện thú vị"}
           </p>
         </div>
 
         {showCreateButton && (
           <button
             onClick={onCreateEvent}
-            className="button-primary inline-flex items-center px-4 py-2 rounded-lg transition-colors"
+            className="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold hover:scale-105 transform transition-all"
           >
             <Plus className="h-4 w-4 mr-2" />
             Tạo sự kiện mới
@@ -88,17 +125,19 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
       </div>
 
       {/* Filters */}
-      <div className="card rounded-lg p-4">
+      <div className="rounded-xl p-4 shadow-lg bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-dark-bg-secondary dark:via-dark-bg-tertiary dark:to-dark-bg-primary">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-500 dark:text-dark-text-tertiary" />
-            <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Lọc:</span>
+            <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Lọc:
+            </span>
           </div>
-          
+
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
-            className="input-field rounded-lg px-3 py-1 text-sm"
+            className="px-3 py-1 rounded-lg text-sm border border-gray-300 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-blue-400 to-purple-500 transition"
           >
             <option value="all">Tất cả</option>
             <option value="upcoming">Sắp diễn ra</option>
@@ -108,11 +147,11 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="input-field rounded-lg px-3 py-1 text-sm"
+            className="px-3 py-1 rounded-lg text-sm border border-gray-300 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-blue-400 to-purple-500 transition"
           >
-            {categories.map(cat => (
+            {categories.map((cat) => (
               <option key={cat} value={cat}>
-                {cat === 'all' ? 'Tất cả danh mục' : cat}
+                {cat === "all" ? "Tất cả danh mục" : cat}
               </option>
             ))}
           </select>
@@ -123,19 +162,23 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map((event) => {
           const eventStatus = getEventStatus(event);
-          const isParticipant = event.participants.some(p => p.userId === currentUser?.id);
+          const isParticipant = event.participants.some(
+            (p) => p.userId === currentUser?.id
+          );
           const isCreator = event.createdBy === currentUser?.id;
 
           return (
             <div
               key={event.id}
               onClick={() => onEventClick?.(event)}
-              className="card rounded-xl hover:shadow-lg transition-all cursor-pointer overflow-hidden group"
+              className="rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all group bg-gradient-to-br from-white via-indigo-50 to-purple-50 dark:from-dark-bg-secondary dark:via-dark-bg-tertiary dark:to-dark-bg-primary"
             >
-              <div className="aspect-video bg-gradient-to-r from-blue-500 to-purple-600 relative">
+              <div className="aspect-video relative bg-gradient-to-r from-blue-400 to-purple-600">
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
                 <div className="absolute top-4 left-4">
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${eventStatus.color}`}>
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${eventStatus.color}`}
+                  >
                     {eventStatus.text}
                   </span>
                 </div>
@@ -147,23 +190,33 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
               </div>
 
               <div className="p-6">
-                <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-2 line-clamp-2">{event.title}</h3>
-                <p className="text-gray-600 dark:text-dark-text-secondary text-sm mb-4 line-clamp-2">{event.description}</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                  {event.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
+                  {event.description}
+                </p>
 
-                <div className="space-y-2 text-sm text-gray-500 dark:text-dark-text-tertiary mb-4">
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span>{formatDate(event.startTime)} • {formatTime(event.startTime)}</span>
+                <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-purple-500" />
+                    <span>
+                      {formatDate(event.startTime)} •{" "}
+                      {formatTime(event.startTime)}
+                    </span>
                   </div>
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-2" />
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-pink-500" />
                     <span className="line-clamp-1">{event.location}</span>
                   </div>
-                  <div className="flex items-center">
-                    <Users className="h-4 w-4 mr-2" />
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-500" />
                     <span>
                       {event.participants.length}
-                      {event.maxParticipants ? `/${event.maxParticipants}` : ''} người tham gia
+                      {event.maxParticipants
+                        ? `/${event.maxParticipants}`
+                        : ""}{" "}
+                      người tham gia
                     </span>
                   </div>
                 </div>
@@ -181,11 +234,13 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center text-yellow-500">
                     {event.averageRating > 0 && (
                       <>
-                        <span className="text-sm font-medium">{event.averageRating.toFixed(1)}</span>
+                        <span className="text-sm font-medium">
+                          {event.averageRating.toFixed(1)}
+                        </span>
                         <span className="ml-1">⭐</span>
                       </>
                     )}
@@ -199,9 +254,13 @@ export function EventList({ showMyEvents = false, showCreateButton = false, onCr
 
       {filteredEvents.length === 0 && (
         <div className="text-center py-12">
-          <Calendar className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-dark-text-tertiary text-lg">Không tìm thấy sự kiện nào</p>
-          <p className="text-gray-400 dark:text-dark-text-tertiary mt-1">Thử thay đổi bộ lọc hoặc tạo sự kiện mới</p>
+          <Calendar className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-500 dark:text-gray-400 text-lg">
+            Không tìm thấy sự kiện nào
+          </p>
+          <p className="text-gray-400 dark:text-gray-500 mt-1">
+            Thử thay đổi bộ lọc hoặc tạo sự kiện mới
+          </p>
         </div>
       )}
     </div>
