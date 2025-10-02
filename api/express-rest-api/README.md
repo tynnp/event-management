@@ -94,7 +94,7 @@ To start the server, run:
 npm start
 ```
 
-The API will be available at `http://localhost:3000`.
+The API will be available at `http://localhost:5000`.
 
 ## License
 
