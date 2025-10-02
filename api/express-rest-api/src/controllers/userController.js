@@ -1,5 +1,6 @@
 //file: api/express-rest-api/src/controllers/userController.js
 const { getPostgresPool } = require('../config/database');
+const bcrypt = require('bcryptjs');
 
 exports.getUserProfile = async (req, res) => {
   const pool = getPostgresPool();
@@ -73,4 +74,40 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
+exports.changePassword = async (req, res) => {
+  const pool = getPostgresPool();
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return res.status(400).json({ message: 'All password fields are required' });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ message: 'New password and confirm password do not match' });
+  }
+
+  // Password policy: tối thiểu 8 ký tự, có chữ và số
+  const pwPattern = /^(?=.{8,}$)(?=.*[A-Za-z])(?=.*\d).*/;
+  if (!pwPattern.test(newPassword)) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters and include letters and numbers' });
+  }
+
+  try {
+    // Lấy password hash hiện tại từ DB
+    const result = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!valid) return res.status(401).json({ message: 'Current password is incorrect' });
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [newHash, req.user.id]);
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error changing password', error: err.message });
+  }
+};
 
