@@ -1,3 +1,4 @@
+//file: api/express-rest-api/src/controllers/authController.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getPostgresPool } = require('../config/database');
@@ -15,6 +16,11 @@ exports.register = async (req, res) => {
     );
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
+    // Nếu lỗi duplicate key
+    if (err.code === '23505') {
+      return res.status(400).json({ message: 'Email has been registered' });
+    }
+    // Lỗi khác
     res.status(500).json({ message: 'Registration failed', error: err.message });
   }
 };
