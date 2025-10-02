@@ -111,3 +111,37 @@ exports.changePassword = async (req, res) => {
   }
 };
 
+exports.changeUserRole = async (req, res) => {
+  const pool = getPostgresPool();
+  const { id } = req.params; // id user cần thay đổi role
+  const { newRole } = req.body; // 'user' | 'moderator' | 'admin'
+
+  // chỉ admin mới được thay đổi role
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Only admin can change user roles' });
+  }
+
+  // không cho admin thay đổi role của chính mình
+  if (req.user.id === id) {
+    return res.status(400).json({ message: 'You cannot change your own role' });
+  }
+
+  // check role hợp lệ
+  const validRoles = ['user', 'moderator', 'admin'];
+  if (!validRoles.includes(newRole)) {
+    return res.status(400).json({ message: 'Invalid role' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, role',
+      [newRole, id]
+    );
+
+    if (result.rowCount === 0) return res.status(404).json({ message: 'User not found' });
+
+    res.json({ message: 'Role updated', user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating role', error: err.message });
+  }
+};

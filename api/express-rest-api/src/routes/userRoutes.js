@@ -8,5 +8,8 @@ router.get('/profile', authMiddleware, userController.getUserProfile);
 router.put('/profile', authMiddleware, userController.updateUserProfile);
 //Thay đổi password
 router.post('/change-password', authMiddleware, userController.changePassword);
+//Phân quyền user
+router.put('/:id/role', authMiddleware, userController.changeUserRole);
+
 
 module.exports = router;
