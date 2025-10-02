@@ -1,3 +1,4 @@
+// file: api/express-rest-api/src/config/database.js
 require("dotenv").config(); // thêm dòng này
 
 const { Pool } = require('pg');

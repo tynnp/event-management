@@ -1,3 +1,4 @@
+//file: api/express-rest-api/src/controllers/eventController.js
 const { getPostgresPool } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 

@@ -1,3 +1,4 @@
+//file: api/express-rest-api/src/models/Attendance.js
 const mongoose = require('mongoose');
 
 const attendanceSchema = new mongoose.Schema({

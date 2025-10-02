@@ -1,3 +1,4 @@
+//file: api/express-rest-api/src/app.js
 const express = require('express');
 const dotenv = require('dotenv');
 const { connectMongoDB } = require('./config/database');

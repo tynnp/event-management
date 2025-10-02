@@ -1,3 +1,4 @@
+//file: api/express-rest-api/src/models/Stats.js
 const mongoose = require('mongoose');
 
 const statsSchema = new mongoose.Schema({

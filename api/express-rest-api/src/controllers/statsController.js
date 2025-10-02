@@ -1,3 +1,4 @@
+//file: api/express-rest-api/src/controllers/statsController.js
 const { getPostgresPool } = require('../config/database');
 const Comment = require('../models/Comment');
 

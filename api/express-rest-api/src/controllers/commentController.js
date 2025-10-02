@@ -1,3 +1,4 @@
+//file: api/express-rest-api/src/controllers/commentController.js
 const Comment = require('../models/Comment');
 
 exports.addComment = async (req, res) => {

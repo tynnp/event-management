@@ -7,6 +7,14 @@ const { v4: uuidv4 } = require('uuid');
 exports.register = async (req, res) => {
   const pool = getPostgresPool();
   const { email, password, name, phone } = req.body;
+
+  const pwPattern = /^(?=.{8,}$)(?=.*[A-Za-z])(?=.*\d).*/; // ít nhất 8 ký tự, có chữ và số
+  if (!pwPattern.test(password)) {
+    return res.status(400).json({
+      message: 'Password must be at least 8 characters long and include letters and numbers'
+    });
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const id = uuidv4();

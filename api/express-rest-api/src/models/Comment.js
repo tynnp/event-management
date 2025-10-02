@@ -1,3 +1,4 @@
+//file: api/express-rest-api/src/models/Comment.js
 const mongoose = require('mongoose');
 
 const commentSchema = new mongoose.Schema({
