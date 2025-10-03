@@ -10,6 +10,8 @@ router.put('/profile', authMiddleware, userController.updateUserProfile);
 router.post('/change-password', authMiddleware, userController.changePassword);
 //Phân quyền user
 router.put('/:id/role', authMiddleware, userController.changeUserRole);
+// Khóa / mở khóa tài khoản (admin)
+router.put('/:id/lock', authMiddleware, userController.toggleUserLock);
 
 
 module.exports = router;

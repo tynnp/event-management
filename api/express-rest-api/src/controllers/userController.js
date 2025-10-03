@@ -145,3 +145,32 @@ exports.changeUserRole = async (req, res) => {
     res.status(500).json({ message: 'Error updating role', error: err.message });
   }
 };
+
+// Khóa hoặc mở khóa tài khoản
+exports.toggleUserLock = async (req, res) => {
+  const pool = getPostgresPool();
+  const { id } = req.params; // user cần khóa/mở khóa
+  const { lock } = req.body; // true = khóa, false = mở
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Only admin can lock/unlock accounts' });
+  }
+
+  // không cho tự khóa chính mình
+  if (req.user.id === id) {
+    return res.status(400).json({ message: 'You cannot lock/unlock your own account' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE users SET is_locked = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, is_locked',
+      [lock, id]
+    );
+
+    if (result.rowCount === 0) return res.status(404).json({ message: 'User not found' });
+
+    res.json({ message: lock ? 'User locked' : 'User unlocked', user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Error locking/unlocking user', error: err.message });
+  }
+};

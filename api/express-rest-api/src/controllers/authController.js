@@ -41,6 +41,10 @@ exports.login = async (req, res) => {
     const user = result.rows[0];
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
+    if (user.is_locked) {
+      return res.status(403).json({ message: 'Account is locked. Please contact admin.' });
+    }
+
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
@@ -54,3 +58,4 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 };
+
