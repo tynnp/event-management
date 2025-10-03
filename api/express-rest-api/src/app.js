@@ -10,6 +10,8 @@ const commentRoutes = require('./routes/commentRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const errorHandler = require('./middleware/errorHandler');
+const emailRoutes = require('./routes/emailRoutes');
+
 
 dotenv.config();
 
@@ -28,6 +30,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/stats', statsRoutes);
 
 app.use(errorHandler);
+app.use('/api/email', emailRoutes);
+
 
 connectMongoDB().then(() => {
   app.listen(PORT, () => {
