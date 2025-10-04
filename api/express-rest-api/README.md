@@ -1,29 +1,29 @@
 # Express REST API
 
-This project is a RESTful API built with Node.js and Express, designed to manage user functionalities, event management, attendance tracking, comments and reviews, and statistical reporting.
+Dự án này là một RESTful API được xây dựng bằng Node.js và Express, nhằm quản lý người dùng, quản lý sự kiện, điểm danh QR, bình luận & đánh giá, và báo cáo thống kê.
 
 ## Features
 
-- **User Management**
-  - Registration
-  - Login
-  - Authorization
-  - Profile management
+- **Quản lý người dùng**
+  - Đăng ký
+  - Đăng nhập
+  - Phân quyền
+  - Quản lý hồ sơ (profile)
 
-- **Event Management**
-  - Create, Read, Update, Delete (CRUD) events
-  - Event browsing
+- **Quản lý sự kiện**
+  - Tạo, đọc, sửa, xoá (CRUD) sự kiện
+  - Xem danh sách sự kiện
 
-- **QR Attendance**
-  - Mark attendance using QR codes
-  - Retrieve attendance records
+- **Điểm danh QR**
+  - Điểm danh bằng mã QR
+  - Lấy danh sách điểm danh
 
-- **Comment and Review Systems**
-  - Add, retrieve, and delete comments
-  - Add, retrieve, and delete reviews
+- **Hệ thống bình luận và đánh giá**
+  - Thêm, xem, xoá bình luận
+  - Thêm, xem, xoá đánh giá
 
-- **Statistical Reporting**
-  - Generate reports on user and event statistics
+- **Báo cáo thống kê**
+  - Thống kê người dùng và sự kiện
 
 ## Project Structure
 
@@ -36,6 +36,7 @@ express-rest-api
 │   │   ├── userController.js
 │   │   ├── eventController.js
 │   │   ├── attendanceController.js
+|   |   |-- emailVerificationController.js
 │   │   ├── commentController.js
 │   │   ├── reviewController.js
 │   │   └── statsController.js
@@ -47,6 +48,7 @@ express-rest-api
 │   │   ├── commentRoutes.js
 │   │   ├── reviewRoutes.js
 │   │   └── statsRoutes.js
+|   |   |__ emailRoutes.js
 │   ├── models
 │   │   ├── User.js
 │   │   ├── Event.js
@@ -59,10 +61,12 @@ express-rest-api
 │   │   ├── errorHandler.js
 │   │   └── validateMiddleware.js
 │   ├── utils
+|   |   |__ emailService.js
 │   │   ├── qrGenerator.js
 │   │   └── statistics.js
 │   └── config
 │       └── database.js
+|       |__ redis.js
 ├── package.json
 ├── .env.example
 └── README.md
@@ -95,7 +99,3 @@ npm start
 ```
 
 The API will be available at `http://localhost:5000`.
-
-## License
-
-This project is licensed under the MIT License.
