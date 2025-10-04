@@ -242,10 +242,10 @@ database/
 
 ## Cài đặt và Thiết lập
 ### Yêu cầu cài đặt 
-MongoDB
-https://www.youtube.com/watch?v=aaspCQmBUbg - link hướng dẫn
-PostgreSQL
-https://www.youtube.com/watch?v=4qH-7w5LZsA - link hướng dẫn
+- MongoDB
+  https://www.youtube.com/watch?v=aaspCQmBUbg - link hướng dẫn
+- PostgreSQL
+  https://www.youtube.com/watch?v=4qH-7w5LZsA - link hướng dẫn
 
 ### 1. Cài đặt Dependencies
 
