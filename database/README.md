@@ -241,6 +241,11 @@ database/
 ```
 
 ## Cài đặt và Thiết lập
+### Yêu cầu cài đặt 
+MongoDB
+https://www.youtube.com/watch?v=aaspCQmBUbg - link hướng dẫn
+PostgreSQL
+https://www.youtube.com/watch?v=4qH-7w5LZsA - link hướng dẫn
 
 ### 1. Cài đặt Dependencies
 
@@ -266,6 +271,8 @@ Script này sẽ:
 - Chạy tất cả PostgreSQL migrations
 - Tạo indexes cho MongoDB
 - Seed dữ liệu mẫu cho cả hai database
+
+* NOTE: Nếu lỗi db Postgre thì thay đổi trong database/config/database.js
 
 ### 4. Kiểm tra kết nối
 
