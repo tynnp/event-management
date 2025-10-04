@@ -1,16 +1,14 @@
-//file: api/express-rest-api/src/models/Attendance.js
+// file: src/models/Attendance.js
 const mongoose = require('mongoose');
 
 const attendanceSchema = new mongoose.Schema({
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String, // đổi từ ObjectId => String
         required: true,
-        ref: 'User'
     },
     eventId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String, // đổi từ ObjectId => String
         required: true,
-        ref: 'Event'
     },
     timestamp: {
         type: Date,

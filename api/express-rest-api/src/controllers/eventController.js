@@ -59,3 +59,43 @@ exports.rejectEvent = async (req, res) => {
     res.status(500).json({ message: 'Error rejecting event', error: err.message });
   }
 };
+
+exports.updateEvent = async (req, res) => {
+  const pool = getPostgresPool();
+  const { title, description, start_time, end_time, location, image_url, is_public, max_participants, category_id } = req.body;
+
+  const updates = [];
+  const values = [];
+  let i = 1;
+
+  if (title) { updates.push(`title=$${i++}`); values.push(title); }
+  if (description) { updates.push(`description=$${i++}`); values.push(description); }
+  if (start_time) { updates.push(`start_time=$${i++}`); values.push(start_time); }
+  if (end_time) { updates.push(`end_time=$${i++}`); values.push(end_time); }
+  if (location) { updates.push(`location=$${i++}`); values.push(location); }
+  if (image_url) { updates.push(`image_url=$${i++}`); values.push(image_url); }
+  if (is_public !== undefined) { updates.push(`is_public=$${i++}`); values.push(is_public); }
+  if (max_participants) { updates.push(`max_participants=$${i++}`); values.push(max_participants); }
+  if (category_id) { updates.push(`category_id=$${i++}`); values.push(category_id); }
+
+  values.push(req.params.id);
+
+  try {
+    const result = await pool.query(`UPDATE events SET ${updates.join(', ')}, updated_at=NOW() WHERE id=$${i} RETURNING *`, values);
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
+    res.json({ message: 'Event updated', event: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating event', error: err.message });
+  }
+};
+
+exports.deleteEvent = async (req, res) => {
+  const pool = getPostgresPool();
+  try {
+    const result = await pool.query('DELETE FROM events WHERE id=$1', [req.params.id]);
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
+    res.json({ message: 'Event deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting event', error: err.message });
+  }
+};

@@ -1,24 +1,130 @@
 // file: api/express-rest-api/src/controllers/attendanceController.js
 const { getPostgresPool } = require('../config/database');
+const Attendance = require('../models/Attendance'); // Mongo model (optional)
 const { v4: uuidv4 } = require('uuid');
 
-exports.checkIn = async (req, res) => {
-  const pool = getPostgresPool();
-  const { event_id, qr_code } = req.body;
+function parseQrData(qrData) {
+  // qrData có thể là JSON string hoặc data URL chứa JSON
   try {
-    const result = await pool.query(
-      'UPDATE participants SET checked_in = true, check_in_time = NOW() WHERE event_id = $1 AND qr_code = $2 RETURNING *',
-      [event_id, qr_code]
-    );
-    if (result.rowCount === 0) return res.status(404).json({ message: 'Participant not found or invalid QR code' });
-    res.json({ message: 'Check-in successful', participant: result.rows[0] });
+    // nếu qrcode client gửi là data URL (rare) -> bỏ phần trước nếu có
+    if (qrData.startsWith('data:')) {
+      // khách hàng thường gửi JSON sau khi scan QR; giữ này để an toàn
+      const base64 = qrData.split(',')[1];
+      const buf = Buffer.from(base64, 'base64');
+      return JSON.parse(buf.toString('utf8'));
+    }
+    // thử parse trực tiếp
+    return JSON.parse(qrData);
+  } catch (e) {
+    // không phải JSON
+    return null;
+  }
+}
+
+exports.generateQRCode = async (req, res) => {
+  // giữ nguyên logic trước đó (đã implement)
+  // trả về data URL (đang có ở repo)
+  const pool = getPostgresPool();
+  const { event_id } = req.query; // nhận event_id từ query param
+
+  if (!event_id) {
+      return res.status(400).json({ message: 'event_id is required' });
+  }
+
+  try {
+      // 1. Kiểm tra sự kiện có tồn tại
+      const eventResult = await pool.query('SELECT id FROM events WHERE id = $1', [event_id]);
+      if (eventResult.rowCount === 0) {
+          return res.status(404).json({ message: 'Event not found' });
+      }
+
+      // 2. Tạo QR code dựa trên event_id + random salt (để QR code khác nhau cho mỗi lần)
+      const qrData = JSON.stringify({
+          event_id,
+          code: uuidv4()
+      });
+
+      const { generateQRCode } = require('../utils/qrGenerator');
+      const qr_code_url = await generateQRCode(qrData);
+
+      // 3. Không auto lưu participants ở đây (để tránh constraint); participants sẽ được tạo khi user check-in
+      res.json({ qr_code_url, qr_payload: qrData }); // trả thêm qr_payload tiện test
   } catch (err) {
-    res.status(500).json({ message: 'Check-in failed', error: err.message });
+      console.error(err);
+      res.status(500).json({ message: 'Error generating QR code', error: err.message });
   }
 };
 
-exports.generateQRCode = async (req, res) => {
-  // Dummy QR code generator, replace with real logic if needed
-  const qr_code = uuidv4();
-  res.json({ qr_code });
+exports.checkIn = async (req, res) => {
+  const pool = getPostgresPool();
+  const { event_id, qr_code, qr_data } = req.body;
+
+  // xác định event_id + code
+  let eventId = event_id;
+  let code = qr_code;
+
+  if (!eventId || !code) {
+    if (qr_data) {
+      const parsed = parseQrData(qr_data);
+      if (!parsed || !parsed.event_id || !parsed.code) {
+        return res.status(400).json({ message: 'qr_data invalid. expected JSON with event_id and code' });
+      }
+      eventId = parsed.event_id;
+      code = parsed.code;
+    }
+  }
+
+  if (!eventId || !code) {
+    return res.status(400).json({ message: 'event_id and qr_code (or qr_data) required' });
+  }
+
+  try {
+    // 1) kiểm tra event tồn tại
+    const ev = await pool.query('SELECT id, status FROM events WHERE id = $1', [eventId]);
+    if (ev.rowCount === 0) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    // (tùy: có thể check status approved, thời gian, v.v.)
+
+    // 2) Cố gắng update participant (nếu đã tồn tại)
+    const updateResult = await pool.query(
+      'UPDATE participants SET checked_in = true, check_in_time = NOW() WHERE event_id = $1 AND qr_code = $2 RETURNING *',
+      [eventId, code]
+    );
+
+    if (updateResult.rowCount > 0) {
+      // Ghi vào Mongo Attendance (option)
+      try {
+        await Attendance.create({ userId: req.user.id, eventId, timestamp: new Date() });
+      } catch (e) {
+        // không fatal
+        console.warn('Mongo attendance create failed:', e.message);
+      }
+
+      return res.json({ message: 'Check-in successful', participant: updateResult.rows[0] });
+    }
+
+    // 3) Nếu không có participant tương ứng => tạo participant mới (ghi user tham gia + checkin)
+    const newParticipantId = uuidv4();
+    const insertResult = await pool.query(
+      'INSERT INTO participants (id, user_id, event_id, qr_code, joined_at, checked_in, check_in_time) VALUES ($1, $2, $3, $4, NOW(), true, NOW()) RETURNING *',
+      [newParticipantId, req.user.id, eventId, code]
+    );
+
+    // Ghi vào Mongo Attendance (option)
+    try {
+      await Attendance.create({ userId: req.user.id, eventId, timestamp: new Date() });
+    } catch (e) {
+      console.warn('Mongo attendance create failed:', e.message);
+    }
+
+    return res.json({ message: 'Check-in successful (participant auto-created)', participant: insertResult.rows[0] });
+  } catch (err) {
+    console.error(err);
+    // xử lý duplicate key khi user đã join nhưng qr_code khác: có thể xảy ra nếu qr_code unique
+    if (err.code === '23505') {
+      return res.status(409).json({ message: 'Participant already exists or qr_code conflict', error: err.detail });
+    }
+    res.status(500).json({ message: 'Check-in failed', error: err.message });
+  }
 };

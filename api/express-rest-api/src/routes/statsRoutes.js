@@ -2,8 +2,11 @@
 const express = require('express');
 const router = express.Router();
 const statsController = require('../controllers/statsController');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 
-router.get('/events', statsController.eventStatistics);
-router.get('/comments', statsController.commentStatistics);
+// chỉ admin mới được xem thống kê
+router.get('/events', authMiddleware, roleMiddleware(['admin']), statsController.eventStatistics);
+router.get('/comments', authMiddleware, roleMiddleware(['admin']), statsController.commentStatistics);
 
 module.exports = router;

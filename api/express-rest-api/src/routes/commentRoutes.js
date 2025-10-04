@@ -2,9 +2,14 @@
 const express = require('express');
 const router = express.Router();
 const commentController = require('../controllers/commentController');
+const reviewController = require('../controllers/reviewController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-router.post('/', authMiddleware, commentController.addComment);
-router.get('/:eventId', commentController.getCommentsByEvent);
+// bình luận & đánh giá đều cho tất cả user đăng nhập
+router.post('/comments', authMiddleware, commentController.addComment);
+router.get('/comments/:eventId', commentController.getCommentsByEvent);
+
+router.post('/reviews', authMiddleware, reviewController.addReview);
+router.get('/reviews/:eventId', reviewController.getReviewsByEvent);
 
 module.exports = router;
