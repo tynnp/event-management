@@ -246,7 +246,7 @@ database/
   https://www.youtube.com/watch?v=aaspCQmBUbg - link hướng dẫn
 - PostgreSQL
   https://www.youtube.com/watch?v=4qH-7w5LZsA - link hướng dẫn
-
+*NOTE: Phải cài đặt cả hai để setup.js chạy ổn định
 ### 1. Cài đặt Dependencies
 
 ```bash
@@ -272,8 +272,41 @@ Script này sẽ:
 - Tạo indexes cho MongoDB
 - Seed dữ liệu mẫu cho cả hai database
 
-* NOTE: Nếu lỗi db Postgre thì thay đổi trong database/config/database.js
+* NOTE: Nếu lỗi db Postgre không kết nối tới DATABASE thì thay đổi trong database/config/database.js
+```bash
+// Database Configuration
+// Cấu hình kết nối cho PostgreSQL và MongoDB
 
+import { Pool } from 'pg';
+import { MongoClient, ObjectId } from 'mongodb';
+
+// PostgreSQL Configuration
+const postgresConfig = {
+  host: process.env.POSTGRES_HOST || 'localhost', //CHANGE HERE
+  port: process.env.POSTGRES_PORT || 5432,    //CHANGE HERE
+  database: process.env.POSTGRES_DB || 'event_management', // CHANGE HERE
+  user: process.env.POSTGRES_USER || 'postgres',  // CHANGE HERE
+  password: process.env.POSTGRES_PASSWORD || 'password', // CHANGE HERE 
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+};
+
+// MongoDB Configuration
+const mongoConfig = {
+  url: process.env.MONGODB_URL || 'mongodb://localhost:27017', // CHANGE LOCALHOST TO 127.0.0.1 IF YOUR MONGGODB SETUP DEFAULT 
+  database: process.env.MONGODB_DB || 'event_management',    
+  options: {
+    maxPoolSize: 10, // Maintain up to 10 socket connections
+    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+    socketTimeoutMS: 45000 // Close sockets after 45 seconds of inactivity
+    // bufferMaxEntries: 0, // Disable mongoose buffering
+    // bufferCommands: false, // Disable mongoose buffering
+  }
+};
+```
+- Link lỗi: https://stackoverflow.com/questions/69878173/scram-server-first-message-client-password-must-be-a-string 
 ### 4. Kiểm tra kết nối
 
 ```javascript
