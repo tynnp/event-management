@@ -19,8 +19,8 @@ Dự án này là một RESTful API được xây dựng bằng Node.js và Expr
   - Lấy danh sách điểm danh
 
 - **Hệ thống bình luận và đánh giá**
-  - Thêm, xem, xoá bình luận
-  - Thêm, xem, xoá đánh giá
+  - Thêm, xem bình luận
+  - Thêm, xem đánh giá
 
 - **Báo cáo thống kê**
   - Thống kê người dùng và sự kiện
@@ -71,6 +71,12 @@ express-rest-api
 ├── .env.example
 └── README.md
 ```
+## Require (phiên bản mới nhất)
+- Redis 
+  Xem hướng dẫn cài đặt - [click here](https://www.youtube.com/watch?v=188Fy-oCw4w&t=31s)
+  Thiết lập auth redis - [click here](https://stackoverflow.com/questions/7537905/how-to-set-password-for-redis)
+- Gmail của bạn    
+  Xem hướng dẫn thiết lập mật khẩu - [click here](https://www.youtube.com/watch?v=XIcyAHIMIiw)
 
 ## Installation
 
@@ -88,7 +94,6 @@ express-rest-api
    ```
    npm install
    ```
-
 4. Set up environment variables by copying `.env.example` to `.env` and updating the values as needed.
 
 ## Usage
