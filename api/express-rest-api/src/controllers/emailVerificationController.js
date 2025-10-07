@@ -13,14 +13,36 @@ exports.sendChangeEmailOTP = async (req, res) => {
   const { newEmail } = req.body;
   if (!newEmail) return res.status(400).json({ message: 'New email required' });
 
+  // Kiểm tra định dạng email hợp lệ
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(newEmail)) {
+    return res.status(400).json({ message: 'Invalid email format' });
+  }
+
+  const pool = getPostgresPool();
+
+  // Kiểm tra email có bị trùng với người khác không
+  const exists = await pool.query('SELECT id FROM users WHERE email = $1', [newEmail]);
+  if (exists.rowCount > 0) {
+    return res.status(400).json({ message: 'This email is already in use' });
+  }
+
   const client = await connectRedis();
   const otp = generateOTP();
   await client.setEx(`changeEmail:${req.user.id}`, 300, JSON.stringify({ otp, newEmail }));
 
-  await sendMail(newEmail, 'Verify your new email', `Your OTP code is: ${otp}`);
+  // Lấy email hiện tại của user
+  const result = await pool.query('SELECT email FROM users WHERE id = $1', [req.user.id]);
+  const currentEmail = result.rows[0]?.email;
+  if (!currentEmail) {
+    return res.status(404).json({ message: 'User email not found' });
+  }
 
-  res.json({ message: 'OTP sent to new email' });
+  // Gửi OTP xác nhận về email cũ
+  await sendMail(currentEmail, 'Confirm email change', `Your OTP code is: ${otp}`);
+  res.json({ message: 'OTP sent to your current email for verification' });
 };
+
 
 // Xác thực OTP đổi email
 exports.verifyChangeEmailOTP = async (req, res) => {
