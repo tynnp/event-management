@@ -12,6 +12,7 @@ router.post('/change-password', authMiddleware, userController.changePassword);
 router.put('/:id/role', authMiddleware, userController.changeUserRole);
 // Khóa / mở khóa tài khoản (admin)
 router.put('/:id/lock', authMiddleware, userController.toggleUserLock);
-
+// Yêu cầu xóa tài khoản (user)
+router.post('/request-delete', authMiddleware, userController.requestAccountDeletion);
 
 module.exports = router;

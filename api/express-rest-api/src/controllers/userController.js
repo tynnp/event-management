@@ -1,5 +1,6 @@
 //file: api/express-rest-api/src/controllers/userController.js
 const { getPostgresPool } = require('../config/database');
+const { sendMail } = require('../utils/emailService');
 const bcrypt = require('bcryptjs');
 
 exports.getUserProfile = async (req, res) => {
@@ -172,5 +173,48 @@ exports.toggleUserLock = async (req, res) => {
     res.json({ message: lock ? 'User locked' : 'User unlocked', user: result.rows[0] });
   } catch (err) {
     res.status(500).json({ message: 'Error locking/unlocking user', error: err.message });
+  }
+};
+
+exports.requestAccountDeletion = async (req, res) => {
+  try {
+    const pool = getPostgresPool();
+
+    // Lấy thông tin user hiện tại
+    const result = await pool.query(
+      'SELECT id, email, name FROM users WHERE id = $1',
+      [req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = result.rows[0];
+
+    // Lấy mail chủ từ EMAIL_USER
+    const adminEmail = process.env.EMAIL_USER;
+    if (!adminEmail) {
+      return res.status(500).json({ message: 'EMAIL_USER not configured in .env' });
+    }
+
+    // Soạn nội dung email
+    const subject = `[ACCOUNT DELETION REQUEST] ${user.name || user.email}`;
+    const body = `
+      A user has requested to delete their account.
+
+      User ID: ${user.id}
+      Name: ${user.name || '(no name)'}
+      Email: ${user.email}
+      Time: ${new Date().toLocaleString()}
+    `;
+
+    // Gửi mail đến email chủ
+    await sendMail(adminEmail, subject, body);
+
+    res.json({ message: 'Account deletion request sent to system owner' });
+  } catch (err) {
+    console.error('❌ Error sending deletion request:', err);
+    res.status(500).json({ message: 'Failed to send deletion request', error: err.message });
   }
 };
