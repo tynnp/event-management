@@ -14,5 +14,6 @@ router.put('/:id/role', authMiddleware, userController.changeUserRole);
 router.put('/:id/lock', authMiddleware, userController.toggleUserLock);
 // Yêu cầu xóa tài khoản (user)
 router.post('/request-delete', authMiddleware, userController.requestAccountDeletion);
-
+// DELETE user account (admin only)
+router.delete('/:userId', authMiddleware, userController.deleteUserAccount);
 module.exports = router;

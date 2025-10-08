@@ -214,7 +214,44 @@ exports.requestAccountDeletion = async (req, res) => {
 
     res.json({ message: 'Account deletion request sent to system owner' });
   } catch (err) {
-    console.error('❌ Error sending deletion request:', err);
+    console.error('Error sending deletion request:', err);
     res.status(500).json({ message: 'Failed to send deletion request', error: err.message });
+  }
+};
+
+// DELETE USER ACCOUNT (admin only)
+exports.deleteUserAccount = async (req, res) => {
+  const pool = getPostgresPool();
+  const { userId } = req.params; // lấy id user cần xóa từ URL
+
+  // chỉ admin mới có quyền xóa
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Only admin can delete user accounts' });
+  }
+
+  try {
+    // kiểm tra user có tồn tại không
+    const check = await pool.query('SELECT id, role FROM users WHERE id = $1', [userId]);
+    if (check.rowCount === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const target = check.rows[0];
+    if (target.role === 'admin') {
+      return res.status(403).json({ message: 'Admin account cannot be deleted by another admin' });
+    }
+
+    // xóa các dữ liệu liên quan trước (nếu có constraint)
+    await pool.query('DELETE FROM participants WHERE user_id = $1', [userId]);
+    await pool.query('DELETE FROM ratings WHERE user_id = $1', [userId]);
+    await pool.query('DELETE FROM events WHERE created_by = $1', [userId]);
+
+    // xóa user cuối cùng
+    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    res.json({ message: `User ${userId} deleted successfully` });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({ message: 'Error deleting user', error: err.message });
   }
 };
