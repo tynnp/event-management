@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const { getPostgresPool } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 const { createSession } = require('./sessionController'); // đường dẫn đúng tới controller
+// LOGOUT
+const { logAction } = require('./auditController'); // nếu chưa import
 
 exports.register = async (req, res) => {
   const pool = getPostgresPool();
@@ -72,3 +74,26 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 };
+
+exports.logout = async (req, res) => {
+  const pool = getPostgresPool();
+  const userId = req.user?.id;
+
+  if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+  try {
+    // 1. Xóa session của user trong bảng user_sessions
+    await pool.query('DELETE FROM user_sessions WHERE user_id = $1', [userId]);
+
+    // 2. Cập nhật last_login = NOW() (ghi lại thời điểm logout)
+    await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [userId]);
+
+    // 3. Trả response
+    res.json({ message: 'Logout successful' });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ message: 'Logout failed', error: err.message });
+  }
+};
+
+
