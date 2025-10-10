@@ -11,7 +11,9 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const emailRoutes = require('./routes/emailRoutes');
-
+const notificationRoutes = require('./routes/notifications');
+const sessionRoutes = require('./routes/sessions');
+const auditRoutes = require('./routes/audit');
 
 dotenv.config();
 
@@ -28,6 +30,9 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/audit', auditRoutes);
 
 app.use(errorHandler);
 app.use('/api/email', emailRoutes);

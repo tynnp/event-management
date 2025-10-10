@@ -1,6 +1,7 @@
-//file: api/express-rest-api/src/controllers/eventController.js
+// file: api/express-rest-api/src/controllers/eventController.js
 const { getPostgresPool } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
+const { sendNotification } = require('./notificationController'); // 🔔 thêm dòng này
 
 // CREATE: user tạo được nhưng chỉ moderator duyệt
 exports.createEvent = async (req, res) => {
@@ -50,7 +51,6 @@ exports.getEventDetail = async (req, res) => {
     const event = result.rows[0];
     if (!event) return res.status(404).json({ message: 'Event not found' });
 
-    // chỉ user tạo hoặc sự kiện đã approved mới được xem
     if (event.status !== 'approved' && event.created_by !== req.user.id && req.user.role === 'user') {
       return res.status(403).json({ message: 'Not allowed to view this event' });
     }
@@ -72,7 +72,18 @@ exports.approveEvent = async (req, res) => {
   try {
     const result = await pool.query('UPDATE events SET status=$1 WHERE id=$2 RETURNING *', ['approved', req.params.id]);
     if (result.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
-    res.json({ message: 'Event approved', event: result.rows[0] });
+    const event = result.rows[0];
+
+    // 🔔 Gửi thông báo cho user tạo event
+    await sendNotification(
+      event.created_by,
+      'Sự kiện đã được duyệt',
+      `Sự kiện "${event.title}" của bạn đã được phê duyệt.`,
+      'event_approved',
+      event.id
+    );
+
+    res.json({ message: 'Event approved', event });
   } catch (err) {
     res.status(500).json({ message: 'Error approving event', error: err.message });
   }
@@ -93,7 +104,18 @@ exports.rejectEvent = async (req, res) => {
       ['rejected', reason, req.params.id]
     );
     if (result.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
-    res.json({ message: 'Event rejected', event: result.rows[0] });
+    const event = result.rows[0];
+
+    // 🔔 Gửi thông báo cho user tạo event
+    await sendNotification(
+      event.created_by,
+      'Sự kiện bị từ chối',
+      `Sự kiện "${event.title}" của bạn đã bị từ chối. Lý do: ${reason || 'Không xác định'}.`,
+      'event_rejected',
+      event.id
+    );
+
+    res.json({ message: 'Event rejected', event });
   } catch (err) {
     res.status(500).json({ message: 'Error rejecting event', error: err.message });
   }
@@ -119,7 +141,6 @@ exports.updateEvent = async (req, res) => {
     const values = [];
     let i = 1;
 
-    // only accept allowed fields — ignore others silently (or you may return 400)
     for (const field of allowedFields) {
       if (Object.prototype.hasOwnProperty.call(payload, field) && payload[field] !== undefined) {
         updates.push(`${field} = $${i++}`);
@@ -141,13 +162,12 @@ exports.updateEvent = async (req, res) => {
   }
 };
 
-
 // DELETE
 exports.deleteEvent = async (req, res) => {
   const pool = getPostgresPool();
 
   try {
-    const result = await pool.query('SELECT created_by FROM events WHERE id = $1', [req.params.id]);
+    const result = await pool.query('SELECT created_by, title FROM events WHERE id = $1', [req.params.id]);
     if (result.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
 
     const event = result.rows[0];
@@ -157,6 +177,18 @@ exports.deleteEvent = async (req, res) => {
     if (!canDelete) return res.status(403).json({ message: 'Not authorized to delete this event' });
 
     await pool.query('DELETE FROM events WHERE id = $1', [req.params.id]);
+
+    // 🔔 Thông báo nếu moderator/admin xóa sự kiện của người khác
+    if (!isOwner) {
+      await sendNotification(
+        event.created_by,
+        'Sự kiện bị xóa',
+        `Sự kiện "${event.title}" của bạn đã bị xóa bởi quản trị viên.`,
+        'event_deleted',
+        req.params.id
+      );
+    }
+
     res.json({ message: 'Event deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Error deleting event', error: err.message });
