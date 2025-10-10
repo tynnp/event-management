@@ -15,14 +15,14 @@ exports.sendNotification = async (userId, title, message, type, relatedEventId =
   }
 };
 
-// Lấy danh sách thông báo cho moderator/admin
+// Lấy danh sách thông báo
 exports.getAllNotifications = async (req, res) => {
   const pool = getPostgresPool();
   try {
     let result;
 
     if (req.user.role === 'admin' || req.user.role === 'moderator') {
-      // admin/mod xem tất cả
+      // Admin/mod xem tất cả
       result = await pool.query(`
         SELECT n.*, u.name AS user_name
         FROM notifications n
@@ -30,7 +30,7 @@ exports.getAllNotifications = async (req, res) => {
         ORDER BY n.created_at DESC
       `);
     } else {
-      // user thường chỉ xem của mình
+      // User thường chỉ xem của chính mình
       result = await pool.query(`
         SELECT n.*, u.name AS user_name
         FROM notifications n
@@ -47,15 +47,34 @@ exports.getAllNotifications = async (req, res) => {
   }
 };
 
-
 // Đánh dấu đã đọc
 exports.markAsRead = async (req, res) => {
   const pool = getPostgresPool();
+  const notificationId = req.params.id;
+
   try {
+    // Kiểm tra xem thông báo có tồn tại và thuộc về user không
+    const check = await pool.query(
+      `SELECT user_id FROM notifications WHERE id = $1`,
+      [notificationId]
+    );
+
+    if (check.rows.length === 0) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    const ownerId = check.rows[0].user_id;
+
+    // Nếu user không phải admin hoặc chủ sở hữu thì không được đánh dấu
+    if (req.user.role !== 'admin' && req.user.id !== ownerId) {
+      return res.status(403).json({ message: 'Not authorized to mark this notification' });
+    }
+
     await pool.query(
       `UPDATE notifications SET is_read = true WHERE id = $1`,
-      [req.params.id]
+      [notificationId]
     );
+
     res.json({ message: 'Notification marked as read' });
   } catch (err) {
     console.error('Error marking notification:', err.message);
@@ -74,6 +93,7 @@ exports.deleteNotification = async (req, res) => {
     await pool.query(`DELETE FROM notifications WHERE id = $1`, [req.params.id]);
     res.json({ message: 'Notification deleted' });
   } catch (err) {
+    console.error('Error deleting notification:', err.message);
     res.status(500).json({ message: 'Error deleting notification' });
   }
 };

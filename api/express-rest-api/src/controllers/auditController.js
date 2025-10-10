@@ -27,7 +27,7 @@ exports.getAllLogs = async (req, res) => {
   const pool = getPostgresPool();
   try {
     const result = await pool.query(`
-      SELECT a.*, u.username
+      SELECT a.*, u.name AS user_name, u.email
       FROM audit_logs a
       LEFT JOIN users u ON a.user_id = u.id
       ORDER BY a.created_at DESC
