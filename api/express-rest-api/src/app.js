@@ -1,10 +1,10 @@
-// file: api/express-rest-api/src/app.js
 const express = require('express');
 const dotenv = require('dotenv');
 const { connectMongoDB } = require('./config/database');
 const authMiddleware = require('./middleware/authMiddleware');
 const auditLogger = require('./middleware/auditLogger');
 const errorHandler = require('./middleware/errorHandler');
+const { generalLimiter } = require('./middleware/rateLimiter'); // Thêm dòng này
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -26,6 +26,11 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ---------------------------
+// RATE LIMITER TOÀN CỤC
+// ---------------------------
+app.use(generalLimiter); // Giới hạn toàn bộ request (ví dụ: 100 req/15 phút/IP)
 
 // ---------------------------
 // GHI LOG TOÀN BỘ REQUEST (kể cả public)
