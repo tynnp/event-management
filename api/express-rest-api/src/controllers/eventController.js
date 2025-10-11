@@ -6,9 +6,16 @@ const { sendNotification } = require('./notificationController'); // 🔔 thêm 
 // CREATE: user tạo được nhưng chỉ moderator duyệt
 exports.createEvent = async (req, res) => {
   const pool = getPostgresPool();
-  const { title, description, start_time, end_time, location, image_url, is_public, max_participants, category_id } = req.body;
+  const { title, description, start_time, end_time, location, is_public, max_participants, category_id } = req.body;
 
   try {
+    // Nếu có upload hình
+    let image_url = null;
+    if (req.file) {
+      const { buildImageUrl } = require('../middleware/uploadMiddleware');
+      image_url = buildImageUrl(req.file.path);
+    }
+
     const id = uuidv4();
     await pool.query(
       `INSERT INTO events (id, title, description, start_time, end_time, location, image_url, 
@@ -128,6 +135,13 @@ exports.updateEvent = async (req, res) => {
   const payload = req.body;
 
   try {
+
+    // Nếu có upload hình
+    if (req.file) {
+      const { buildImageUrl } = require('../middleware/uploadMiddleware');
+      payload.image_url = buildImageUrl(req.file.path);
+    }
+
     const check = await pool.query('SELECT created_by FROM events WHERE id = $1', [req.params.id]);
     if (check.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
 
