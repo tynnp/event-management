@@ -24,6 +24,15 @@ exports.createEvent = async (req, res) => {
       [id, title, description, start_time, end_time, location, image_url, is_public, max_participants, req.user.id, category_id]
     );
 
+    // Nếu có ảnh upload -> chèn vào event_images
+    if (image_url) {
+      const imageId = uuidv4();
+      await pool.query(
+        'INSERT INTO event_images (id, event_id, image_url, uploaded_at) VALUES ($1, $2, $3, NOW())',
+        [imageId, id, image_url]
+      );
+    }
+
     res.status(201).json({ message: 'Event created and pending approval', eventId: id });
   } catch (err) {
     res.status(500).json({ message: 'Error creating event', error: err.message });
@@ -140,6 +149,13 @@ exports.updateEvent = async (req, res) => {
     if (req.file) {
       const { buildImageUrl } = require('../middleware/uploadMiddleware');
       payload.image_url = buildImageUrl(req.file.path);
+
+      // Chèn vào event_images
+      const imageId = uuidv4();
+      await pool.query(
+        'INSERT INTO event_images (id, event_id, image_url, uploaded_at) VALUES ($1, $2, $3, NOW())',
+        [imageId, req.params.id, payload.image_url]
+      );
     }
 
     const check = await pool.query('SELECT created_by FROM events WHERE id = $1', [req.params.id]);
