@@ -50,7 +50,7 @@ app.use('/api', authMiddleware);
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/attendance', attendanceRoutes);
-app.use('/api/comments', commentRoutes);
+app.use('/api/chats', commentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/notifications', notificationRoutes);
