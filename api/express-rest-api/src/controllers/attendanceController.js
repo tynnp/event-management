@@ -59,7 +59,6 @@ exports.checkIn = async (req, res) => {
   const pool = getPostgresPool();
   const { event_id, qr_code, qr_data } = req.body;
 
-  // xác định event_id + code
   let eventId = event_id;
   let code = qr_code;
 
@@ -81,37 +80,45 @@ exports.checkIn = async (req, res) => {
   try {
     // 1) kiểm tra event tồn tại
     const ev = await pool.query('SELECT id, status FROM events WHERE id = $1', [eventId]);
-    if (ev.rowCount === 0) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
-    // (tùy: có thể check status approved, thời gian, v.v.)
+    if (ev.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
 
     // 2) Cố gắng update participant (nếu đã tồn tại)
     const updateResult = await pool.query(
-      'UPDATE participants SET checked_in = true, check_in_time = NOW() WHERE event_id = $1 AND qr_code = $2 RETURNING *',
+      'UPDATE participants SET checked_in = true, check_in_time = NOW() WHERE event_id = $1 AND qr_code = $2 AND checked_in = false RETURNING *',
       [eventId, code]
     );
 
     if (updateResult.rowCount > 0) {
-      // Ghi vào Mongo Attendance (option)
+      // Chỉ tăng events_attended nếu participant chưa check-in trước đó
+      await pool.query(
+        'UPDATE users SET events_attended = events_attended + 1, updated_at = NOW() WHERE id = $1',
+        [req.user.id]
+      );
+
+      // Ghi Mongo Attendance (option)
       try {
         await Attendance.create({ userId: req.user.id, eventId, timestamp: new Date() });
       } catch (e) {
-        // không fatal
         console.warn('Mongo attendance create failed:', e.message);
       }
 
       return res.json({ message: 'Check-in successful', participant: updateResult.rows[0] });
     }
 
-    // 3) Nếu không có participant tương ứng => tạo participant mới (ghi user tham gia + checkin)
+    // 3) Nếu không có participant tương ứng => tạo participant mới
     const newParticipantId = uuidv4();
     const insertResult = await pool.query(
       'INSERT INTO participants (id, user_id, event_id, qr_code, joined_at, checked_in, check_in_time) VALUES ($1, $2, $3, $4, NOW(), true, NOW()) RETURNING *',
       [newParticipantId, req.user.id, eventId, code]
     );
 
-    // Ghi vào Mongo Attendance (option)
+    // Tăng events_attended vì đây là lần đầu check-in
+    await pool.query(
+      'UPDATE users SET events_attended = events_attended + 1, updated_at = NOW() WHERE id = $1',
+      [req.user.id]
+    );
+
+    // Ghi Mongo Attendance (option)
     try {
       await Attendance.create({ userId: req.user.id, eventId, timestamp: new Date() });
     } catch (e) {
@@ -121,10 +128,11 @@ exports.checkIn = async (req, res) => {
     return res.json({ message: 'Check-in successful (participant auto-created)', participant: insertResult.rows[0] });
   } catch (err) {
     console.error(err);
-    // xử lý duplicate key khi user đã join nhưng qr_code khác: có thể xảy ra nếu qr_code unique
     if (err.code === '23505') {
       return res.status(409).json({ message: 'Participant already exists or qr_code conflict', error: err.detail });
     }
     res.status(500).json({ message: 'Check-in failed', error: err.message });
   }
 };
+
+
