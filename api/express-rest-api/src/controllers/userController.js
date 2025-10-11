@@ -2,6 +2,8 @@
 const { getPostgresPool } = require('../config/database');
 const { sendMail } = require('../utils/emailService');
 const bcrypt = require('bcryptjs');
+const { buildImageUrl } = require('../middleware/uploadMiddleware');
+
 
 exports.getUserProfile = async (req, res) => {
   const pool = getPostgresPool();
@@ -13,6 +15,11 @@ exports.getUserProfile = async (req, res) => {
     const user = result.rows[0];
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    // nếu có avatar, build URL đầy đủ (vd http://localhost:5000/uploads/xxx.jpg)
+    if (user.avatar_url) {
+      user.avatar_url = buildImageUrl(user.avatar_url);
+    }
+
     // loại bỏ id và role trước khi trả về client
     const { id, role, ...safeUser } = user;
     res.json(safeUser);
@@ -21,15 +28,16 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
+
 exports.updateUserProfile = async (req, res) => {
   const pool = getPostgresPool();
-  const { name, phone, avatar_url } = req.body;
+  const { name, phone } = req.body;
 
   const updates = [];
   const values = [];
   let i = 1;
 
-  // name: chỉ update nếu khác undefined, và không được rỗng
+  // Name validation
   if (name !== undefined) {
     if (name.trim() === "") {
       return res.status(400).json({ message: 'Name cannot be empty' });
@@ -39,9 +47,9 @@ exports.updateUserProfile = async (req, res) => {
     i++;
   }
 
-  // phone: update nếu client gửi, phải là số hợp lệ
+  //Phone validation
   if (phone !== undefined) {
-    const phonePattern = /^\+?\d+$/; // bắt đầu có thể là +, chỉ chứa số
+    const phonePattern = /^\+?\d+$/;
     if (!phonePattern.test(phone)) {
       return res.status(400).json({ message: 'Phone must contain only numbers and optional leading +' });
     }
@@ -50,10 +58,11 @@ exports.updateUserProfile = async (req, res) => {
     i++;
   }
 
-  // avatar_url: update nếu client gửi
-  if (avatar_url !== undefined) {
+  // Avatar upload handling
+  if (req.file) {
+    const filePath = req.file.path.replace(/\\/g, '/'); // fix Windows path
     updates.push(`avatar_url = $${i}`);
-    values.push(avatar_url);
+    values.push(filePath);
     i++;
   }
 
@@ -61,7 +70,6 @@ exports.updateUserProfile = async (req, res) => {
     return res.status(400).json({ message: 'No fields to update' });
   }
 
-  // luôn update updated_at
   updates.push(`updated_at = NOW()`);
 
   const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${i}`;
@@ -69,7 +77,7 @@ exports.updateUserProfile = async (req, res) => {
 
   try {
     await pool.query(query, values);
-    res.json({ message: 'Profile updated' });
+    res.json({ message: 'Profile updated successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error updating profile', error: err.message });
   }

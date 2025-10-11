@@ -62,6 +62,9 @@ app.use('/api/audit', auditRoutes);
 // ---------------------------
 app.use(errorHandler);
 
+// Cho phép truy cập ảnh upload
+app.use('/uploads', express.static(process.env.UPLOAD_DIR || 'uploads'));
+
 connectMongoDB().then(() => {
   app.listen(PORT, () => {
     console.log(`✅ Server is running on http://localhost:${PORT}`);
