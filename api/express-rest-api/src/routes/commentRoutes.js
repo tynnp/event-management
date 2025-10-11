@@ -12,4 +12,7 @@ router.get('/comments/:eventId', commentController.getCommentsByEvent);
 router.post('/reviews', authMiddleware, reviewController.addReview);
 router.get('/reviews/:eventId', reviewController.getReviewsByEvent);
 
+router.patch('/:commentId', authMiddleware, commentController.updateComment);
+
+
 module.exports = router;

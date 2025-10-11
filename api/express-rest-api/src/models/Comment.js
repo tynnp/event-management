@@ -9,6 +9,8 @@ const commentSchema = new mongoose.Schema({
   isHidden: { type: Boolean, default: false },
   likes: { type: Number, default: 0 },
   dislikes: { type: Number, default: 0 },
+  likedBy: [{ type: String }],     // track userId đã like
+  dislikedBy: [{ type: String }],  // track userId đã dislike
   createdAt: { type: Date, default: Date.now },
   replies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
 });
