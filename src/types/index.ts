@@ -9,6 +9,7 @@ export interface User {
   createdAt: string;
   eventsAttended: number;
   isLocked?: boolean;
+  
 }
 
 export interface Event {

@@ -124,12 +124,19 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="rounded-3xl p-8 shadow-2xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-dark-bg-secondary dark:via-dark-bg-tertiary dark:to-dark-bg-primary animate-fade-in-up">
+    <div className="max-w-2xl mx-auto transition-colors duration-300">
+      <div
+        className="rounded-3xl p-8 shadow-2xl 
+      bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 
+      dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 
+      border border-gray-200 dark:border-gray-700
+      animate-fade-in-up"
+      >
+        {/* Tiêu đề */}
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
             🎟️
-            <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+            <span className="pb-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
               Tạo sự kiện mới
             </span>
           </h2>
@@ -138,79 +145,103 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
           </p>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Tên sự kiện */}
+          {/* --- Tên sự kiện --- */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-              <Type className="h-5 w-5 text-blue-500" /> Tên sự kiện *
+              <Type className="h-5 w-5 text-blue-500 dark:text-blue-400" /> Tên
+              sự kiện *
             </label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
               placeholder="Nhập tên sự kiện..."
-              className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-blue-400 to-purple-500 transition ${
-                errors.title
-                  ? "border-red-500 dark:border-red-400"
-                  : "border-gray-300 dark:border-dark-border"
-              }`}
+              className={`w-full px-4 py-3 rounded-xl border transition 
+            bg-white dark:bg-gray-800 
+            text-gray-900 dark:text-gray-100 
+            focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500
+            ${
+              errors.title
+                ? "border-red-500 dark:border-red-400"
+                : "border-gray-300 dark:border-gray-600"
+            }`}
             />
             {errors.title && (
               <p className="text-red-500 text-sm mt-1">{errors.title}</p>
             )}
           </div>
 
+          {/* --- Ảnh bìa --- */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-pink-500" /> Ảnh bìa sự kiện
+              <ImageIcon className="h-5 w-5 text-pink-500 dark:text-pink-400" />{" "}
+              Ảnh bìa sự kiện
             </label>
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 hover:file:from-blue-300 hover:file:via-purple-300 hover:file:to-pink-300 dark:file:bg-gradient-to-r dark:from-indigo-800 dark:via-purple-800 dark:to-pink-800 dark:file:text-white"
+              className="w-full text-sm text-gray-600 dark:text-gray-400 
+            file:mr-4 file:py-2 file:px-4 file:rounded-xl 
+            file:border-0 file:font-medium 
+            file:bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 
+            hover:file:from-blue-300 hover:file:via-purple-300 hover:file:to-pink-300 
+            dark:file:from-indigo-700 dark:file:via-purple-700 dark:file:to-pink-700 
+            dark:file:text-gray-100 dark:hover:file:opacity-90"
             />
             {preview && (
               <div className="mt-3">
                 <img
                   src={preview}
                   alt="Xem trước ảnh bìa"
-                  className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-dark-border shadow-md"
+                  className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shadow-md"
                 />
               </div>
             )}
           </div>
 
+          {/* --- Mô tả sự kiện --- */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-green-500" /> Mô tả sự kiện *
+              <FileText className="h-5 w-5 text-green-500 dark:text-green-400" />{" "}
+              Mô tả sự kiện *
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               rows={4}
               placeholder="Mô tả chi tiết về sự kiện..."
-              className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-green-400 to-blue-500 transition ${
-                errors.description
-                  ? "border-red-500 dark:border-red-400"
-                  : "border-gray-300 dark:border-dark-border"
-              }`}
+              className={`w-full px-4 py-3 rounded-xl border transition 
+            bg-white dark:bg-gray-800 
+            text-gray-900 dark:text-gray-100 
+            focus:outline-none focus:ring-2 focus:ring-green-400 dark:focus:ring-green-500
+            ${
+              errors.description
+                ? "border-red-500 dark:border-red-400"
+                : "border-gray-300 dark:border-gray-600"
+            }`}
             />
             {errors.description && (
               <p className="text-red-500 text-sm mt-1">{errors.description}</p>
             )}
           </div>
 
-          {/* Category and Max Participants */}
+          {/* --- Danh mục --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Danh mục
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => handleInputChange("category", e.target.value)}
-                className="input-field w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 rounded-xl border 
+              bg-white dark:bg-gray-800 
+              text-gray-900 dark:text-gray-100 
+              focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500
+              border-gray-300 dark:border-gray-600"
               >
                 {categories.map((category) => (
                   <option key={category} value={category}>
@@ -220,41 +251,53 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
               </select>
             </div>
           </div>
+
+          {/* --- Thời gian --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Bắt đầu */}
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-purple-500" /> Thời gian bắt
-                đầu *
+                <Calendar className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+                Thời gian bắt đầu *
               </label>
               <input
                 type="datetime-local"
                 value={formData.startTime}
                 onChange={(e) => handleInputChange("startTime", e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-purple-400 to-pink-500 transition ${
-                  errors.startTime
-                    ? "border-red-500 dark:border-red-400"
-                    : "border-gray-300 dark:border-dark-border"
-                }`}
+                className={`w-full px-4 py-3 rounded-xl border 
+              bg-white dark:bg-gray-800 
+              text-gray-900 dark:text-gray-100 
+              focus:outline-none focus:ring-2 focus:ring-purple-400 dark:focus:ring-purple-500
+              ${
+                errors.startTime
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
               />
               {errors.startTime && (
                 <p className="text-red-500 text-sm mt-1">{errors.startTime}</p>
               )}
             </div>
 
+            {/* Kết thúc */}
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-pink-500" /> Thời gian kết
-                thúc *
+                <Calendar className="h-5 w-5 text-pink-500 dark:text-pink-400" />
+                Thời gian kết thúc *
               </label>
               <input
                 type="datetime-local"
                 value={formData.endTime}
                 onChange={(e) => handleInputChange("endTime", e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-pink-400 to-orange-500 transition ${
-                  errors.endTime
-                    ? "border-red-500 dark:border-red-400"
-                    : "border-gray-300 dark:border-dark-border"
-                }`}
+                className={`w-full px-4 py-3 rounded-xl border 
+              bg-white dark:bg-gray-800 
+              text-gray-900 dark:text-gray-100 
+              focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-500
+              ${
+                errors.endTime
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
               />
               {errors.endTime && (
                 <p className="text-red-500 text-sm mt-1">{errors.endTime}</p>
@@ -262,37 +305,49 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
             </div>
           </div>
 
+          {/* --- Địa điểm --- */}
           <div>
-            <label className="ext-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-orange-500" /> Địa điểm *
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-orange-500 dark:text-orange-400" />{" "}
+              Địa điểm *
             </label>
             <input
               type="text"
               value={formData.location}
               onChange={(e) => handleInputChange("location", e.target.value)}
               placeholder="Nhập địa điểm tổ chức..."
-              className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-orange-400 to-red-500 transition ${
-                errors.location
-                  ? "border-red-500 dark:border-red-400"
-                  : "border-gray-300 dark:border-dark-border"
-              }`}
+              className={`w-full px-4 py-3 rounded-xl border 
+            bg-white dark:bg-gray-800 
+            text-gray-900 dark:text-gray-100 
+            focus:outline-none focus:ring-2 focus:ring-orange-400 dark:focus:ring-orange-500
+            ${
+              errors.location
+                ? "border-red-500 dark:border-red-400"
+                : "border-gray-300 dark:border-gray-600"
+            }`}
             />
             {errors.location && (
               <p className="text-red-500 text-sm mt-1">{errors.location}</p>
             )}
           </div>
 
+          {/* --- Nút hành động --- */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3 rounded-xl bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium"
+              className="px-6 py-3 rounded-xl bg-gray-200 dark:bg-gray-700 
+            hover:bg-gray-300 dark:hover:bg-gray-600 
+            text-gray-800 dark:text-gray-100 
+            transition font-medium"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold hover:scale-105 transform transition-all"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r 
+            from-indigo-500 via-purple-500 to-pink-500 
+            text-white font-bold hover:scale-105 transform transition-all"
             >
               Tạo sự kiện
             </button>

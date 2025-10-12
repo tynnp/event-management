@@ -68,9 +68,9 @@ export function UserManagement() {
     <div className="card rounded-2xl p-6 shadow-xl bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-dark-bg-primary dark:via-dark-bg-secondary dark:to-dark-bg-primary border border-gray-200 dark:border-dark-border transition-all duration-500 hover:shadow-2xl hover:-translate-y-1">
       {/* Title */}
       <h2 className="text-3xl font-[800] text-gray-900 dark:text-dark-text-primary flex items-center gap-3 mb-6">
-        <span className="text-4xl animate-bounce">👤</span> 
-        <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-md transition-all duration-500 hover:from-pink-500 hover:via-orange-500 hover:to-yellow-400">
-          Quản lý người dùng
+        {/* <span className="text-4xl animate-bounce">👤</span>  */}
+        <span className="pb-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-md transition-all duration-500 hover:from-pink-500 hover:via-orange-500 hover:to-yellow-400">
+          👤  Quản lý người dùng
         </span>
       </h2>
 
@@ -160,7 +160,7 @@ export function UserManagement() {
                     </span>
                   ) : (
                     <span className="text-green-600 dark:text-green-400 font-semibold">
-                      ✅ Hoạt động
+                       Hoạt động
                     </span>
                   )}
                 </td>

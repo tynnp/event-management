@@ -121,7 +121,7 @@ export function ForgotPassword({ onBack }: ForgotPasswordProps) {
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-2xl p-10 border border-white/20 dark:border-gray-700">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <h2 className="mt-6 mb-3 text-center text-3xl font-extrabold  text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600 dark:from-indigo-400 dark:to-pink-400 drop-shadow-md">
+              <h2 className="mt-6 pb-1 mb-3 text-center text-3xl font-extrabold  text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600 dark:from-indigo-400 dark:to-pink-400 drop-shadow-md">
                 Quên mật khẩu?
               </h2>
               <p className="mt-2 mb-10 text-center text-sm text-gray-600 dark:text-dark-text-secondary">

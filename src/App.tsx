@@ -13,6 +13,7 @@ import { CheckInPanel } from './components/CheckIn/CheckInPanel';
 import { UserManagement } from './components/Users/UserManagement';
 import { StatisticsPanel } from './components/Statistics/StatisticsPanel';
 import { Event } from './types';
+import { PersonalProfile } from './components/PersonalProfile/PersonalProfile';
 
 function AppContent() {
   const { state } = useApp();
@@ -97,53 +98,7 @@ function AppContent() {
         return <StatisticsPanel />
       
       case 'profile':
-        return (
-          <div className="card rounded-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">Hồ sơ cá nhân</h2>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">Họ và tên</label>
-                  <input
-                    type="text"
-                    value={currentUser.name}
-                    readOnly
-                    className="input-field w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={currentUser.email}
-                    readOnly
-                    className="input-field w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">Số điện thoại</label>
-                  <input
-                    type="tel"
-                    value={currentUser.phone || ''}
-                    readOnly
-                    className="input-field w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">Vai trò</label>
-                  <input
-                    type="text"
-                    value={currentUser.role === 'admin' ? 'Quản trị viên' : 
-                           currentUser.role === 'moderator' ? 'Kiểm duyệt viên' : 'Người dùng'}
-                    readOnly
-                    className="input-field w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary"
-                  />
-                </div>
-              </div>
-              
-            </div>
-          </div>
-        );
+        return <PersonalProfile/>
       
       default:
         return <Dashboard />;

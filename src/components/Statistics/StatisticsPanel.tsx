@@ -210,7 +210,7 @@ export function StatisticsPanel() {
       <div>
         <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
           <span className="text-4xl animate-bounce">📊</span>
-          <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+          <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
             Thống kê chi tiết
           </span>
         </h2>
@@ -312,7 +312,7 @@ export function StatisticsPanel() {
         <div className="space-y-6">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
           <span className="text-4xl animate-bounce">📊</span>
-          <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+          <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
             Thống kê sự kiện tôi tạo
           </span>
         </h2>
@@ -555,7 +555,7 @@ export function StatisticsPanel() {
       <div className="space-y-6">
         <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
           <span className="text-4xl animate-bounce">📊</span>
-          <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+          <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
            Thống kê sự kiện tôi tham gia
           </span>
         </h2>

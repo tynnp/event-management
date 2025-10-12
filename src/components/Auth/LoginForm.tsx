@@ -77,6 +77,7 @@ export function LoginForm() {
       role: "Kiểm duyệt viên",
     },
     { email: "vynu@hcmue.edu.vn", password: "user123", role: "Người dùng" },
+    
   ];
 
   if (showForgotPassword) {
@@ -93,10 +94,10 @@ export function LoginForm() {
       <div className="max-w-md w-full">
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-2xl p-10 border border-white/20 dark:border-gray-700">
           <div className="text-center">
-            <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600 dark:from-indigo-400 dark:to-pink-400 drop-shadow-md">
+            <h2 className="text-4xl font-extrabold text-transparent pb-2 bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600 dark:from-indigo-400 dark:to-pink-400 drop-shadow-md">
               {isRegistering ? "Đăng ký tài khoản" : "Đăng nhập"}
             </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               {isRegistering
                 ? "Tạo tài khoản mới để tham gia sự kiện"
                 : "Quản lý và tham gia sự kiện dễ dàng"}

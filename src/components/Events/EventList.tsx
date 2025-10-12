@@ -102,7 +102,7 @@ export function EventList({
         <div>
           <h2 className="text-3xl md:text-4xl font-extrabold flex items-center justify-center gap-3">
             <span className="text-4xl animate-bounce">🔹</span>
-            <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+            <span className="pb-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
               {showMyEvents ? "Sự kiện của tôi" : "Khám phá sự kiện"}
             </span>
           </h2>
@@ -125,29 +125,50 @@ export function EventList({
       </div>
 
       {/* Filters */}
-      <div className="rounded-xl p-4 shadow-lg bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-dark-bg-secondary dark:via-dark-bg-tertiary dark:to-dark-bg-primary">
+      <div
+        className="rounded-xl p-4 shadow-md bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 
+         dark:from-[#1e1b4b] dark:via-[#312e81] dark:to-[#1e3a8a] border border-gray-200 dark:border-indigo-800/40
+  transition-colors duration-300
+"
+      >
         <div className="flex flex-wrap items-center gap-4">
+          {/* Nhãn lọc */}
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Filter className="h-4 w-4 text-indigo-600 dark:text-indigo-300" />
+            <span className="text-sm font-semibold text-gray-700 dark:text-indigo-200">
               Lọc:
             </span>
           </div>
 
+          {/* Bộ lọc trạng thái */}
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
-            className="px-3 py-1 rounded-lg text-sm border border-gray-300 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-blue-400 to-purple-500 transition"
+            className="
+        px-3 py-1.5 rounded-lg text-sm font-medium
+        bg-white/70 dark:bg-indigo-950/40
+        border border-gray-300 dark:border-indigo-800
+        text-gray-800 dark:text-indigo-100
+        focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500
+        transition-all duration-300
+      "
           >
             <option value="all">Tất cả</option>
             <option value="upcoming">Sắp diễn ra</option>
             <option value="past">Đã kết thúc</option>
           </select>
 
+          {/* Bộ lọc danh mục */}
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="px-3 py-1 rounded-lg text-sm border border-gray-300 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-gradient-to-r from-blue-400 to-purple-500 transition"
+            className="
+        px-3 py-1.5 rounded-lg text-sm font-medium
+        bg-white/70 dark:bg-indigo-950/40
+        border border-gray-300 dark:border-indigo-800
+        text-gray-800 dark:text-indigo-100
+        focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500
+        transition-all duration-300"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>

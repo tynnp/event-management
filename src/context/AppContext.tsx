@@ -13,7 +13,9 @@ type AppAction =
   | { type: 'LOGIN'; payload: User }
   | { type: 'LOGOUT' }
   | { type: 'REGISTER'; payload: User }
+  | { type: 'CHANGE_PASSWORD'; payload: { email: string; newPassword: string } }
   | { type: 'UPDATE_PROFILE'; payload: Partial<User> }
+  | { type: "UPDATE_AVATAR"; payload: { email: string; avatar: string } }
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'UPDATE_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: string }
@@ -609,6 +611,32 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         users: [...state.users, action.payload],
         currentUser: action.payload,
+      };
+    case 'CHANGE_PASSWORD':
+      return {
+        ...state,
+        users: state.users.map((u) =>
+          u.email === action.payload.email
+            ? { ...u, password: action.payload.newPassword }
+            : u
+        ),
+        currentUser:
+          state.currentUser?.email === action.payload.email
+            ? { ...state.currentUser, password: action.payload.newPassword }
+            : state.currentUser,
+      };
+      case "UPDATE_AVATAR":
+      return {
+        ...state,
+        users: state.users.map((u) =>
+          u.email === action.payload.email
+            ? { ...u, avatar: action.payload.avatar }
+            : u
+        ),
+        currentUser:
+          state.currentUser?.email === action.payload.email
+            ? { ...state.currentUser, avatar: action.payload.avatar }
+            : state.currentUser,
       };
 
     case 'UPDATE_PROFILE':
