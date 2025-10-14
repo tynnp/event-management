@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { User } from "../../types/index";
 import {
@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import axios from "axios";
 
 export function UserManagement() {
   const { state, dispatch } = useApp();
@@ -21,11 +22,30 @@ export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await axios.get("http://localhost:5000/api/users", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        dispatch({ type: "SET_USERS", payload: response.data });
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, [dispatch]);
+
   // Filter users based on search and role
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -220,18 +240,20 @@ export function UserManagement() {
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) pageNum = i + 1;
-                else if (currentPage <= 3) pageNum = i + 1;
-                else if (currentPage >= totalPages - 2)
-                  pageNum = totalPages - 4 + i;
-                else pageNum = currentPage - 2 + i;
+                else if (currentPage <= 3)
+                  pageNum = i + 1; // First 3 pages
+                else if (currentPage > totalPages - 3)
+                  pageNum = totalPages - 4 + i; // Last 3 pages
+                else
+                  return null; // Skip rendering
                 return (
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:scale-110 ${
-                      currentPage === pageNum
-                        ? "bg-gradient-to-r from-indigo-600 to-pink-600 text-white shadow-lg"
-                        : "text-gray-500 dark:text-dark-text-tertiary bg-white dark:bg-dark-bg-tertiary border border-gray-300 dark:border-dark-border hover:bg-indigo-50 dark:hover:bg-gray-700"
+                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                      pageNum === currentPage
+                        ? "bg-indigo-600 text-white dark:bg-indigo-400 dark:text-gray-900"
+                        : "bg-white text-gray-700 dark:bg-dark-bg-tertiary dark:text-dark-text-primary hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                     }`}
                   >
                     {pageNum}
@@ -240,14 +262,12 @@ export function UserManagement() {
               })}
             </div>
             <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
               className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 dark:text-dark-text-tertiary bg-white dark:bg-dark-bg-tertiary border border-gray-300 dark:border-dark-border rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
             >
-              Sau
               <ChevronRight className="h-4 w-4 ml-1" />
+              Sau
             </button>
           </div>
         </div>

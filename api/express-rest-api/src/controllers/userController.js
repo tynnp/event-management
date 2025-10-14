@@ -263,3 +263,15 @@ exports.deleteUserAccount = async (req, res) => {
     res.status(500).json({ message: 'Error deleting user', error: err.message });
   }
 };
+
+exports.getAllUsers = async (req, res) => {
+  const pool = getPostgresPool();
+  try {
+    const result = await pool.query(
+      'SELECT id, email, name, role, phone, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching users', error: err.message });
+  }
+};

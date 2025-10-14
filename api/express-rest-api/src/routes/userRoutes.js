@@ -31,4 +31,7 @@ router.post('/request-delete', authMiddleware, userController.requestAccountDele
 // DELETE user account (admin only)
 router.delete('/:userId', authMiddleware, userController.deleteUserAccount);
 
+// Lấy danh sách tất cả người dùng
+router.get('/', authMiddleware, userController.getAllUsers);
+
 module.exports = router;

@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { Link } from "react-router-dom";
 
 interface SidebarProps {
   activeSection: string;
@@ -34,49 +35,57 @@ export function Sidebar({
       label: "Tổng quan",
       icon: Home,
       roles: ["admin", "moderator", "user"],
+      path: "/dashboard",
     },
     {
       id: "events",
       label: "Sự kiện của tôi",
       icon: Calendar,
       roles: ["user", "moderator", "admin"],
+      path: "/events",
     },
     {
       id: "create-event",
       label: "Tạo sự kiện",
       icon: Plus,
       roles: ["user", "moderator", "admin"],
+      path: "/create-event",
     },
     {
       id: "browse-events",
       label: "Khám phá sự kiện",
       icon: Calendar,
       roles: ["user", "moderator", "admin"],
+      path: "/browse-events",
     },
     {
       id: "moderation",
       label: "Kiểm duyệt",
       icon: Shield,
       roles: ["moderator", "admin"],
+      path: "/moderation",
     },
     {
       id: "check-in",
       label: "Điểm danh",
       icon: CheckSquare,
       roles: ["user", "moderator", "admin"],
+      path: "/check-in",
     },
-    { id: "users", label: "Quản lý người dùng", icon: Users, roles: ["admin"] },
+    { id: "users", label: "Quản lý người dùng", icon: Users, roles: ["admin"], path: "/users" },
     {
       id: "statistics",
       label: "Thống kê",
       icon: BarChart3,
       roles: ["admin", "moderator", "user"],
+      path: "/statistics",
     },
     {
       id: "profile",
       label: "Hồ sơ cá nhân",
       icon: Settings,
       roles: ["user", "moderator", "admin"],
+      path: "/profile",
     },
   ];
 
@@ -120,14 +129,18 @@ export function Sidebar({
           <ul className="space-y-2">
             {filteredMenuItems.map((item) => (
               <li key={item.id}>
-                <button
-                  onClick={() => onSectionChange(item.id)}
+                <Link
+                  to={item.path}
                   className={`w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 group
               ${
                 activeSection === item.id
                   ? "bg-gradient-to-r from-indigo-500/10 to-pink-500/10 text-indigo-600 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 shadow-sm"
                   : "text-gray-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-200"
               }`}
+                  onClick={() => {
+                    onSectionChange(item.id);
+                    onClose();
+                  }}
                 >
                   <item.icon
                     className={`mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${
@@ -143,7 +156,7 @@ export function Sidebar({
                       Active
                     </span>
                   )}
-                </button>
+                </Link>
               </li>
             ))}
           </ul>

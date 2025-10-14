@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { User, LogOut, Bell, Settings, Menu, Lock } from "lucide-react";
+import { User, LogOut, Bell, Settings, Menu } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { ThemeToggle } from "./ThemeToggle";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle }: HeaderProps) {
   const { state, dispatch } = useApp();
+  const navigate = useNavigate();
   const { currentUser } = state;
 
   const [showModal, setShowModal] = useState(false);
@@ -20,6 +22,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   const handleLogout = () => {
     dispatch({ type: "LOGOUT" });
+    navigate("/login");
   };
 
   const handleOpenModal = () => {

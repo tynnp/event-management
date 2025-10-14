@@ -42,6 +42,23 @@ export function LoginForm() {
       // Update currentUser in context
       dispatch({ type: "LOGIN", payload: user });
 
+      // Fetch users after login
+      const fetchUsers = async () => {
+        try {
+          const token = localStorage.getItem("authToken");
+          const response = await axios.get("http://localhost:5000/api/users", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          dispatch({ type: "FETCH_USERS", payload: response.data });
+        } catch (error) {
+          console.error("Failed to fetch users:", error);
+        }
+      };
+
+      fetchUsers();
+
       // Redirect to Dashboard
       navigate("/dashboard");
     } catch (error) {
@@ -73,6 +90,10 @@ export function LoginForm() {
       setError("Đăng ký thất bại. Vui lòng thử lại.");
       console.error("Register error:", error);
     }
+  };
+
+  const handleTogglePassword = () => {
+    setShowPassword((prev) => !prev);
   };
 
   if (showForgotPassword) {
@@ -143,7 +164,7 @@ export function LoginForm() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={handleTogglePassword}
                       className="absolute right-3 top-2.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
                     >
                       {showPassword ? (
