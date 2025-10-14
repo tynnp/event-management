@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { useApp } from "../../context/AppContext";
 import { ThemeToggle } from "../Layout/ThemeToggle";
 import { ForgotPassword } from "./ForgotPassword";
+import axios from "axios";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -19,24 +19,31 @@ export function LoginForm() {
     confirmPassword: "",
   });
 
-  const { state, dispatch } = useApp();
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    const user = state.users.find(
-      (u) => u.email === email && u.password === password
-    );
+    try {
+      const response = await axios.post("http://localhost:5000/api/auth/login", {
+        email,
+        password,
+      });
 
-    if (user) {
-      dispatch({ type: "LOGIN", payload: user });
-    } else {
+      // Assuming the API returns user data and a token
+      const { user, token } = response.data;
+
+      // Save token to localStorage or context
+      localStorage.setItem("authToken", token);
+
+      // Redirect or update UI based on successful login
+      console.log("Logged in user:", user);
+    } catch (error) {
       setError("Email hoặc mật khẩu không đúng");
+      console.error("Login error:", error);
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -45,40 +52,21 @@ export function LoginForm() {
       return;
     }
 
-    if (state.users.find((u) => u.email === registerData.email)) {
-      setError("Email đã được sử dụng");
-      return;
+    try {
+      const response = await axios.post("http://localhost:5000/api/auth/register", {
+        name: registerData.name,
+        phone: registerData.phone,
+        email: registerData.email,
+        password: registerData.password,
+      });
+
+      console.log("Registered user:", response.data);
+      setIsRegistering(false); // Switch back to login form
+    } catch (error) {
+      setError("Đăng ký thất bại. Vui lòng thử lại.");
+      console.error("Register error:", error);
     }
-
-    const newUser = {
-      id: Date.now().toString(),
-      email: registerData.email,
-      password: registerData.password,
-      name: registerData.name,
-      phone: registerData.phone,
-      role: "user" as const,
-      createdAt: new Date().toISOString(),
-      eventsAttended: 0,
-      badges: [],
-    };
-
-    dispatch({ type: "REGISTER", payload: newUser });
   };
-
-  const demoAccounts = [
-    {
-      email: "tynnp@hcmue.edu.vn",
-      password: "admin123",
-      role: "Quản trị viên",
-    },
-    {
-      email: "kietcvt@hcmue.edu.vn",
-      password: "mod123",
-      role: "Kiểm duyệt viên",
-    },
-    { email: "vynu@hcmue.edu.vn", password: "user123", role: "Người dùng" },
-    
-  ];
 
   if (showForgotPassword) {
     return <ForgotPassword onBack={() => setShowForgotPassword(false)} />;
@@ -295,47 +283,6 @@ export function LoginForm() {
                   : "Chưa có tài khoản? Đăng ký ngay"}
               </button>
             </div>
-
-            {/* Demo accounts */}
-            {!isRegistering && (
-              <div className="mt-6">
-                <div className="flex items-center justify-center w-full my-4">
-                  <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-
-                  <span
-                    className="mx-2 px-3 py-1 text-sm text-gray-600 dark:text-gray-300 
-                  bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 
-                  rounded-[5px]"
-                  >
-                    Tài khoản demo
-                  </span>
-
-                  <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  {demoAccounts.map((account, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setEmail(account.email);
-                        setPassword(account.password);
-                      }}
-                      className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 hover:from-indigo-100 hover:to-pink-100 dark:hover:from-indigo-900 dark:hover:to-pink-900 text-left transition-all"
-                    >
-                      <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          {account.role}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {account.email}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
