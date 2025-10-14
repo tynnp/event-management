@@ -180,6 +180,7 @@ exports.toggleUserLock = async (req, res) => {
 
     res.json({ message: lock ? 'User locked' : 'User unlocked', user: result.rows[0] });
   } catch (err) {
+    console.error('Error in toggleUserLock:', err);
     res.status(500).json({ message: 'Error locking/unlocking user', error: err.message });
   }
 };
@@ -268,7 +269,7 @@ exports.getAllUsers = async (req, res) => {
   const pool = getPostgresPool();
   try {
     const result = await pool.query(
-      'SELECT id, email, name, role, phone, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, email, name, role, phone, created_at, is_locked, updated_at, last_login FROM users ORDER BY created_at DESC'
     );
     res.json(result.rows);
   } catch (err) {

@@ -8,7 +8,7 @@ export interface User {
   phone?: string;
   createdAt: string;
   eventsAttended: number;
-  isLocked?: boolean;
+  is_locked?: boolean;
   
 }
 

@@ -30,7 +30,7 @@ type AppAction =
   | { type: 'REJECT_EVENT'; payload: { eventId: string; reason: string } }
   | { type: 'DELETE_USER'; payload: string }
   | { type: 'UPDATE_USER_ROLE'; payload: { id: string; role: 'admin' | 'moderator' | 'user' } }
-  | { type: 'TOGGLE_USER_LOCK'; payload: { id: string; isLocked: boolean } }
+  | { type: 'TOGGLE_USER_LOCK'; payload: { id: string; is_locked: boolean } }
   | { type: 'SET_USERS'; payload: User[] }
   | { type: 'FETCH_USERS'; payload: User[] };
 
@@ -74,7 +74,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
             ? { ...state.currentUser, password: action.payload.newPassword }
             : state.currentUser,
       };
-      case "UPDATE_AVATAR":
+    case "UPDATE_AVATAR":
       return {
         ...state,
         users: state.users.map((u) =>
@@ -125,16 +125,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
         events: state.events.map((event) =>
           event.id === action.payload.eventId
             ? {
-                ...event,
-                participants: [
-                  ...event.participants,
-                  {
-                    userId: action.payload.userId,
-                    joinedAt: new Date().toISOString(),
-                    qrCode: action.payload.qrCode,
-                  },
-                ],
-              }
+              ...event,
+              participants: [
+                ...event.participants,
+                {
+                  userId: action.payload.userId,
+                  joinedAt: new Date().toISOString(),
+                  qrCode: action.payload.qrCode,
+                },
+              ],
+            }
             : event
         ),
       };
@@ -145,17 +145,17 @@ function appReducer(state: AppState, action: AppAction): AppState {
         events: state.events.map((event) =>
           event.id === action.payload.eventId
             ? {
-                ...event,
-                participants: event.participants.map((participant) =>
-                  participant.userId === action.payload.userId
-                    ? {
-                        ...participant,
-                        checkedIn: true,
-                        checkInTime: new Date().toISOString(),
-                      }
-                    : participant
-                ),
-              }
+              ...event,
+              participants: event.participants.map((participant) =>
+                participant.userId === action.payload.userId
+                  ? {
+                    ...participant,
+                    checkedIn: true,
+                    checkInTime: new Date().toISOString(),
+                  }
+                  : participant
+              ),
+            }
             : event
         ),
       };
@@ -222,10 +222,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
         events: state.events.map((event) =>
           event.id === action.payload.eventId
             ? {
-                ...event,
-                status: 'rejected' as const,
-                rejectionReason: action.payload.reason,
-              }
+              ...event,
+              status: 'rejected' as const,
+              rejectionReason: action.payload.reason,
+            }
             : event
         ),
       };
@@ -235,6 +235,28 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case "FETCH_USERS": {
       return { ...state, users: action.payload };
     }
+
+    case 'UPDATE_USER_ROLE':
+      return {
+        ...state,
+        users: state.users.map(user =>
+          user.id === action.payload.id
+            ? { ...user, role: action.payload.role }
+            : user
+        ),
+        currentUser:
+          state.currentUser?.id === action.payload.id
+            ? { ...state.currentUser, role: action.payload.role }
+            : state.currentUser,
+      };
+
+    case "TOGGLE_USER_LOCK":
+      return {
+        ...state,
+        users: state.users.map(u =>
+          u.id === action.payload.id ? { ...u, is_locked: action.payload.is_locked } : u
+        ),
+      };
 
     default:
       return state;

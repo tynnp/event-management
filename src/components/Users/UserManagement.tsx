@@ -67,21 +67,67 @@ export function UserManagement() {
     setCurrentPage(1);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
-      dispatch({ type: "DELETE_USER", payload: id });
+      try {
+        const token = localStorage.getItem("authToken");
+        await axios.delete(`http://localhost:5000/api/users/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        dispatch({ type: "DELETE_USER", payload: id });
+      } catch (error) {
+        console.error("Failed to delete user:", error);
+      }
     }
   };
 
-  const handleRoleChange = (
+  const handleRoleChange = async (
     id: string,
     newRole: "admin" | "moderator" | "user"
   ) => {
-    dispatch({ type: "UPDATE_USER_ROLE", payload: { id, role: newRole } });
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.put(
+        `http://localhost:5000/api/users/${id}/role`,
+        { newRole: newRole },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      dispatch({
+        type: "UPDATE_USER_ROLE",
+        payload: { id, role: response.data.user.role },
+      });
+    } catch (error) {
+      console.error("Failed to update user role:", error);
+    }
   };
 
-  const handleToggleLock = (id: string, isLocked: boolean) => {
-    dispatch({ type: "TOGGLE_USER_LOCK", payload: { id, isLocked } });
+  const handleToggleLock = async (id: string, isLocked: boolean) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.put(
+        `http://localhost:5000/api/users/${id}/lock`,
+        { lock: isLocked },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const updatedUser = response.data.user;
+
+      dispatch({
+        type: "TOGGLE_USER_LOCK",
+        payload: {
+          id: updatedUser.id,
+          is_locked: updatedUser.is_locked,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to toggle user lock:", error);
+    }
   };
 
   return (
@@ -174,13 +220,13 @@ export function UserManagement() {
                   </select>
                 </td>
                 <td className="px-4 py-3">
-                  {user.isLocked ? (
+                  {user.is_locked ? (
                     <span className="text-red-600 dark:text-red-400 font-semibold">
-                      🔒 Đã khóa
+                      Đã khóa
                     </span>
                   ) : (
                     <span className="text-green-600 dark:text-green-400 font-semibold">
-                       Hoạt động
+                      Hoạt động
                     </span>
                   )}
                 </td>
@@ -199,15 +245,14 @@ export function UserManagement() {
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleToggleLock(user.id, !user.isLocked)}
-                    className={`p-2 rounded-lg transition-all duration-300 hover:scale-110 active:scale-95 ${
-                      user.isLocked
+                    onClick={() => handleToggleLock(user.id, !user.is_locked)}
+                    className={`p-2 rounded-lg transition-all duration-300 hover:scale-110 active:scale-95 ${user.is_locked
                         ? "text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
                         : "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
-                    }`}
-                    title={user.isLocked ? "Mở khóa" : "Khóa"}
+                      }`}
+                    title={user.is_locked ? "Mở khóa" : "Khóa"}
                   >
-                    {user.isLocked ? (
+                    {user.is_locked ? (
                       <Unlock className="h-4 w-4" />
                     ) : (
                       <Lock className="h-4 w-4" />
@@ -239,22 +284,23 @@ export function UserManagement() {
             <div className="flex space-x-1">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
-                if (totalPages <= 5) pageNum = i + 1;
-                else if (currentPage <= 3)
-                  pageNum = i + 1; // First 3 pages
-                else if (currentPage > totalPages - 3)
-                  pageNum = totalPages - 4 + i; // Last 3 pages
-                else
-                  return null; // Skip rendering
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage > totalPages - 3) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
                 return (
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                      pageNum === currentPage
+                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${pageNum === currentPage
                         ? "bg-indigo-600 text-white dark:bg-indigo-400 dark:text-gray-900"
                         : "bg-white text-gray-700 dark:bg-dark-bg-tertiary dark:text-dark-text-primary hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
-                    }`}
+                      }`}
                   >
                     {pageNum}
                   </button>
