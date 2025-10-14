@@ -14,6 +14,7 @@ import { UserManagement } from './components/Users/UserManagement';
 import { StatisticsPanel } from './components/Statistics/StatisticsPanel';
 import { Event } from './types';
 import { PersonalProfile } from './components/PersonalProfile/PersonalProfile';
+import { BrowserRouter } from "react-router-dom";
 
 function AppContent() {
   const { state } = useApp();
@@ -129,11 +130,13 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 

@@ -3,6 +3,8 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "../Layout/ThemeToggle";
 import { ForgotPassword } from "./ForgotPassword";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useApp } from "../../context/AppContext";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -18,6 +20,8 @@ export function LoginForm() {
     password: "",
     confirmPassword: "",
   });
+  const navigate = useNavigate();
+  const { dispatch } = useApp();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +39,11 @@ export function LoginForm() {
       // Save token to localStorage or context
       localStorage.setItem("authToken", token);
 
-      // Redirect or update UI based on successful login
-      console.log("Logged in user:", user);
+      // Update currentUser in context
+      dispatch({ type: "LOGIN", payload: user });
+
+      // Redirect to Dashboard
+      navigate("/dashboard");
     } catch (error) {
       setError("Email hoặc mật khẩu không đúng");
       console.error("Login error:", error);
