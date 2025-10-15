@@ -6,6 +6,7 @@ const authMiddleware = require('./middleware/authMiddleware');
 const auditLogger = require('./middleware/auditLogger');
 const errorHandler = require('./middleware/errorHandler');
 const { generalLimiter } = require('./middleware/rateLimiter'); // Thêm dòng này
+const { connectRedis } = require('./config/redis');
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -74,8 +75,9 @@ app.use(errorHandler);
 // Cho phép truy cập ảnh upload
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || 'uploads'));
 
-connectMongoDB().then(() => {
+connectMongoDB().then(async() => {
+  await connectRedis();
   app.listen(PORT, () => {
-    console.log(`✅ Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
   });
 });

@@ -13,8 +13,8 @@ async function connectRedis() {
       password: process.env.REDIS_PASSWORD || undefined,
     });
 
-    client.on('error', (err) => console.error('❌ Redis Client Error:', err));
-    client.on('connect', () => console.log('✅ Redis connected'));
+    client.on('error', (err) => console.error('Redis Client Error:', err));
+    client.on('connect', () => console.log('Redis connected'));
 
     await client.connect();
   }
