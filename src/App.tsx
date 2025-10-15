@@ -22,16 +22,21 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg-primary">
-      <Header onMenuToggle={() => setSidebarOpen(true)} />
-      <div className="flex relative">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg-primary transition-all duration-300">
+      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <div className="flex relative transition-all duration-300">
         <Sidebar
           activeSection={activeSection}
           onSectionChange={setActiveSection}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <main className="flex-1 p-8">
+
+        <main
+          className={`flex-1 p-8 transition-all duration-300 ${
+            sidebarOpen ? 'ml-[250px]' : 'ml-0'
+          }`}
+        >
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<UserManagement />} />
@@ -45,6 +50,7 @@ function AppContent() {
     </div>
   );
 }
+
 
 function App() {
   return (

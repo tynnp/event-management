@@ -131,30 +131,31 @@ export function Sidebar({
               <li key={item.id}>
                 <Link
                   to={item.path}
-                  className={`w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 group
-              ${
-                activeSection === item.id
-                  ? "bg-gradient-to-r from-indigo-500/10 to-pink-500/10 text-indigo-600 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 shadow-sm"
-                  : "text-gray-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-200"
-              }`}
+                  className={`w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-lg
+                      transition-colors ease-in-out duration-150 transition-shadow duration-150 group select-none
+                      active:bg-transparent focus:bg-transparent
+                      ${activeSection === item.id
+                      ? "bg-gradient-to-r from-indigo-500/10 to-pink-500/10 text-indigo-600 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 shadow-sm"
+                      : "text-gray-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-200"
+                    }`}
                   onClick={() => {
                     onSectionChange(item.id);
-                    onClose();
+
+                    if (window.innerWidth < 1024) {
+                      onClose();
+                    }
                   }}
                 >
                   <item.icon
-                    className={`mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${
-                      activeSection === item.id
-                        ? "text-indigo-500 dark:text-indigo-300"
-                        : "text-gray-500 dark:text-indigo-400/70 group-hover:text-indigo-500 dark:group-hover:text-indigo-300"
-                    }`}
+                    className={`mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${activeSection === item.id
+                      ? "text-indigo-500 dark:text-indigo-300"
+                      : "text-gray-500 dark:text-indigo-400/70 group-hover:text-indigo-500 dark:group-hover:text-indigo-300"
+                      }`}
                   />
                   {item.label}
 
                   {activeSection === item.id && (
-                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300 animate-pulse">
-                      Active
-                    </span>
+                    <span className="ml-auto w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
                   )}
                 </Link>
               </li>
