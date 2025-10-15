@@ -40,7 +40,7 @@ export function LoginForm() {
       localStorage.setItem("authToken", token);
 
       // Update currentUser in context
-      dispatch({ type: "LOGIN", payload: user });
+      dispatch({ type: "LOGIN", payload: { user, token } });
 
       // Fetch users after login
       const fetchUsers = async () => {

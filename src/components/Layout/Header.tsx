@@ -110,17 +110,15 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   title="Đổi mật khẩu"
                 >
                   <div className="relative w-9 h-9 rounded-full ring-2 ring-indigo-400 dark:ring-indigo-500 shadow overflow-hidden">
-                    {currentUser?.avatar ? (
-                      <img
-                        src={currentUser.avatar}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center w-full h-full bg-gradient-to-r from-indigo-400 via-pink-400 to-purple-500 animate-gradient-xy">
-                        <User className="h-4 w-4 text-white" />
-                      </div>
-                    )}
+                    <img
+                      src={
+                        currentUser?.avatar && currentUser.avatar !== ""
+                          ? currentUser.avatar
+                          : "/default-avatar.png"
+                      }
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="leading-tight">
                     <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">

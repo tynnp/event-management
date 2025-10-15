@@ -7,10 +7,11 @@ interface AppState {
   events: Event[];
   comments: Comment[];
   ratings: Rating[];
+  token: string | null;
 }
 
 type AppAction =
-  | { type: 'LOGIN'; payload: User }
+  | { type: 'LOGIN'; payload: { user: User; token: string } }
   | { type: 'LOGOUT' }
   | { type: 'REGISTER'; payload: User }
   | { type: 'CHANGE_PASSWORD'; payload: { email: string; newPassword: string } }
@@ -40,6 +41,7 @@ const initialState: AppState = {
   events: [],
   comments: [],
   ratings: [],
+  token: null,
 };
 
 const AppContext = createContext<{
@@ -50,10 +52,10 @@ const AppContext = createContext<{
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'LOGIN':
-      return { ...state, currentUser: action.payload };
+      return { ...state, currentUser: action.payload.user, token: action.payload.token };
 
     case 'LOGOUT':
-      return { ...state, currentUser: null };
+      return { ...state, currentUser: null, token: null };
 
     case 'REGISTER':
       return {
@@ -267,6 +269,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   useEffect(() => {
+    const savedToken = localStorage.getItem("authToken");
+    const savedUser = localStorage.getItem("currentUser");
+
+    if (savedToken && savedUser) {
+      dispatch({
+        type: "LOGIN",
+        payload: { user: JSON.parse(savedUser), token: savedToken },
+      });
+    }
   }, []);
 
   return (

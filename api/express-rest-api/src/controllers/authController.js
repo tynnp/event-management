@@ -39,6 +39,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const pool = getPostgresPool();
   const { email, password } = req.body;
+
   try {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
@@ -57,23 +58,31 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // Tạo session record (best-effort, không chặn login nếu fail)
     (async () => {
       try {
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); 
         await createSession(user.id, token, expiresAt);
       } catch (sessErr) {
-        // Log rõ ràng để dev biết (không trả lỗi cho client)
         console.error('createSession failed:', sessErr && sessErr.stack ? sessErr.stack : sessErr);
       }
     })();
 
-    // Trả token và user info cho client
-    res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        phone: user.phone || "",
+        avatar_url: user.avatar_url || null
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 };
+
 
 exports.logout = async (req, res) => {
   const pool = getPostgresPool();

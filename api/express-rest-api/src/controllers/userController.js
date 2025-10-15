@@ -77,7 +77,10 @@ exports.updateUserProfile = async (req, res) => {
 
   try {
     await pool.query(query, values);
-    res.json({ message: 'Profile updated successfully' });
+    res.json({
+      message: 'Profile updated successfully',
+      avatar_url: req.file ? filePath : undefined
+    });
   } catch (err) {
     res.status(500).json({ message: 'Error updating profile', error: err.message });
   }
@@ -269,7 +272,7 @@ exports.getAllUsers = async (req, res) => {
   const pool = getPostgresPool();
   try {
     const result = await pool.query(
-      'SELECT id, email, name, role, phone, created_at, is_locked, updated_at, last_login FROM users ORDER BY created_at DESC'
+      'SELECT id, email, name, role, phone, avatar_url, created_at, is_locked, updated_at, last_login FROM users ORDER BY created_at DESC'
     );
     res.json(result.rows);
   } catch (err) {
