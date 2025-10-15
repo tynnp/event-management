@@ -24,6 +24,7 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipFailedRequests: false, // có thể set true để chỉ đếm successful requests nếu muốn
+  skipSuccessfulRequests: true,
   handler: (req, res) => {
     res.status(429).json({
       status: 429,
