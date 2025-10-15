@@ -13,6 +13,7 @@ import { StatisticsPanel } from './components/Statistics/StatisticsPanel';
 import { PersonalProfile } from './components/PersonalProfile/PersonalProfile';
 import { ModerationPanel } from "./components/Moderation/ModerationPanel";
 import { CheckInPanel } from "./components/CheckIn/CheckInPanel";
+import { NotFound } from "./components/Layout/NotFound";
 import { useState } from 'react';
 
 
@@ -52,7 +53,7 @@ function AppContent() {
             <Route path="/users" element={<UserManagement />} />
             <Route path="/statistics" element={<StatisticsPanel />} />
             <Route path="/profile" element={<PersonalProfile />} />
-            <Route path="*" element={<Dashboard />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>
