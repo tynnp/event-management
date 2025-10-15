@@ -60,7 +60,7 @@ export function LoginForm() {
       fetchUsers();
 
       // Redirect to Dashboard
-      // navigate("/dashboard");
+      navigate("/dashboard");
     } catch (error) {
       setError("Email hoặc mật khẩu không đúng");
       console.error("Login error:", error);
