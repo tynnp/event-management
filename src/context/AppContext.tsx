@@ -86,7 +86,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ),
         currentUser:
           state.currentUser?.email === action.payload.email
-            ? { ...state.currentUser, avatar: action.payload.avatar }
+            ? { ...state.currentUser, avatar_url: action.payload.avatar }
             : state.currentUser,
       };
 

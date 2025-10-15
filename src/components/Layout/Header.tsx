@@ -20,6 +20,12 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const getAvatarUrl = (url?: string) => {
+    if (!url) return "/default-avatar.png";
+    if (url.startsWith("http")) return url;
+    return `http://localhost:5000/${url}`; 
+  };
+
   const handleLogout = () => {
     dispatch({ type: "LOGOUT" });
     navigate("/login");
@@ -111,11 +117,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 >
                   <div className="relative w-9 h-9 rounded-full ring-2 ring-indigo-400 dark:ring-indigo-500 shadow overflow-hidden">
                     <img
-                      src={
-                        currentUser?.avatar && currentUser.avatar !== ""
-                          ? currentUser.avatar
-                          : "/default-avatar.png"
-                      }
+                      src={getAvatarUrl(currentUser?.avatar_url)}
                       alt="Avatar"
                       className="w-full h-full object-cover"
                     />

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useApp } from "../../context/AppContext";
 import { Eye, EyeOff, Lock, Camera, X } from "lucide-react";
 import Cropper, { Area } from "react-easy-crop";
@@ -49,8 +49,22 @@ export function PersonalProfile() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [avatarPreview, setAvatarPreview] = useState(
-    currentUser?.avatar || "/default-avatar.png"
+    currentUser?.avatar_url ? getAvatarUrl(currentUser.avatar_url) : "/default-avatar.png"
   );
+
+  function getAvatarUrl(url?: string) {
+    if (!url) return "/default-avatar.png";
+    if (url.startsWith("http")) return url;
+    return `http://localhost:5000/${url}`;
+  }
+
+  useEffect(() => {
+    if (currentUser?.avatar_url) {
+      setAvatarPreview(getAvatarUrl(currentUser.avatar_url));
+    } else {
+      setAvatarPreview("/default-avatar.png");
+    }
+  }, [currentUser]);
 
   // --- Crop Modal ---
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -106,15 +120,14 @@ export function PersonalProfile() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Lỗi cập nhật avatar");
 
-      const avatarUrl = data.avatar_url
-        ? `http://localhost:5000/${data.avatar_url}`
-        : croppedImage;
+      const avatarUrl = data.avatar_url || croppedImage;
 
       setAvatarPreview(croppedImage);
       dispatch({
         type: "UPDATE_PROFILE",
-        payload: { avatar: avatarUrl },
+        payload: { avatar_url: avatarUrl },
       });
+
       setCropModalOpen(false);
       setMessage("Cập nhật ảnh đại diện thành công!");
       setIsSuccess(true);

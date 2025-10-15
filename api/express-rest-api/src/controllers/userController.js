@@ -4,6 +4,8 @@ const { sendMail } = require('../utils/emailService');
 const bcrypt = require('bcryptjs');
 const { buildImageUrl } = require('../middleware/uploadMiddleware');
 
+const fs = require('fs');
+const path = require('path');
 
 exports.getUserProfile = async (req, res) => {
   const pool = getPostgresPool();
@@ -28,7 +30,6 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
-
 exports.updateUserProfile = async (req, res) => {
   const pool = getPostgresPool();
   const { name, phone } = req.body;
@@ -36,8 +37,8 @@ exports.updateUserProfile = async (req, res) => {
   const updates = [];
   const values = [];
   let i = 1;
+  let filePath;
 
-  // Name validation
   if (name !== undefined) {
     if (name.trim() === "") {
       return res.status(400).json({ message: 'Name cannot be empty' });
@@ -47,7 +48,6 @@ exports.updateUserProfile = async (req, res) => {
     i++;
   }
 
-  //Phone validation
   if (phone !== undefined) {
     const phonePattern = /^\+?\d+$/;
     if (!phonePattern.test(phone)) {
@@ -58,9 +58,28 @@ exports.updateUserProfile = async (req, res) => {
     i++;
   }
 
-  // Avatar upload handling
   if (req.file) {
-    const filePath = req.file.path.replace(/\\/g, '/'); // fix Windows path
+    filePath = req.file.path.replace(/\\/g, '/');
+
+    try {
+      const old = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [req.user.id]);
+      const oldPath = old.rows[0]?.avatar_url;
+
+      if (oldPath) {
+        const fileName = path.basename(oldPath);
+        const fullPath = path.resolve(__dirname, '..', '..', 'uploads', fileName);
+        if (fs.existsSync(fullPath)) {
+          fs.unlink(fullPath, (err) => {
+            if (err) console.warn('Không thể xóa avatar cũ:', err.message);
+          });
+        } else {
+          console.warn('File cũ không tồn tại:', fullPath);
+        }
+      }
+    } catch (err) {
+      console.error('Error removing old avatar:', err);
+    }
+
     updates.push(`avatar_url = $${i}`);
     values.push(filePath);
     i++;
@@ -71,15 +90,16 @@ exports.updateUserProfile = async (req, res) => {
   }
 
   updates.push(`updated_at = NOW()`);
-
   const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${i}`;
   values.push(req.user.id);
 
   try {
     await pool.query(query, values);
+    const updatedAvatarUrl = req.file ? buildImageUrl(filePath) : undefined;
+
     res.json({
       message: 'Profile updated successfully',
-      avatar_url: req.file ? filePath : undefined
+      avatar_url: updatedAvatarUrl
     });
   } catch (err) {
     res.status(500).json({ message: 'Error updating profile', error: err.message });
