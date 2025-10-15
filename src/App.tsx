@@ -14,14 +14,34 @@ import { PersonalProfile } from './components/PersonalProfile/PersonalProfile';
 import { ModerationPanel } from "./components/Moderation/ModerationPanel";
 import { CheckInPanel } from "./components/CheckIn/CheckInPanel";
 import { NotFound } from "./components/Layout/NotFound";
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
+import { useLocation } from "react-router-dom";
 
 function AppContent() {
   const { state } = useApp();
   const { currentUser } = state;
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation(); 
+
+  useEffect(() => {
+    const pathToSection: Record<string, string> = {
+      '/dashboard': 'dashboard',
+      '/events': 'events',
+      '/create-event': 'create-event',
+      '/browse-events': 'browse-events',
+      '/moderation': 'moderation',
+      '/check-in': 'check-in',
+      '/users': 'users',
+      '/statistics': 'statistics',
+      '/profile': 'profile',
+    };
+
+    const matchedSection = pathToSection[location.pathname];
+    if (matchedSection) {
+      setActiveSection(matchedSection);
+    }
+  }, [location.pathname]); 
 
   if (!currentUser) {
     return <LoginForm />;
@@ -60,7 +80,6 @@ function AppContent() {
     </div>
   );
 }
-
 
 function App() {
   return (
