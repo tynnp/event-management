@@ -13,8 +13,8 @@ import { useApp } from "../../context/AppContext";
 import { Event } from "../../types";
 
 interface CreateEventProps {
-  onCancel: () => void;
-  onSuccess: () => void;
+  onCancel?: () => void;
+  onSuccess?: () => void;
 }
 
 export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
@@ -102,7 +102,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
     };
 
     dispatch({ type: "CREATE_EVENT", payload: newEvent });
-    onSuccess();
+    onSuccess?.();
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {

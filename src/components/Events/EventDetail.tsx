@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Share2, 
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Share2,
   MessageSquare,
   Star,
   QrCode,
@@ -20,11 +20,40 @@ import { useApp } from '../../context/AppContext';
 import { Event, Comment, Rating } from '../../types';
 
 interface EventDetailProps {
-  event: Event;
-  onBack: () => void;
+  event?: Event;
+  onBack?: () => void;
 }
 
 export function EventDetail({ event, onBack }: EventDetailProps) {
+  if (!event) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[70vh] text-center px-4">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-[1px] rounded-2xl mb-6 w-full max-w-md">
+          <div className="bg-white dark:bg-dark-bg-secondary rounded-2xl p-8 shadow-lg">
+            <div className="flex items-center justify-center mb-4">
+              <Calendar className="h-12 w-12 text-blue-500 dark:text-blue-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">
+              Bạn chưa tạo sự kiện nào
+            </h2>
+            <p className="text-gray-600 dark:text-dark-text-secondary mb-6">
+              Vui lòng tạo sự kiện để mới!
+            </p>
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="inline-flex items-center bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Quay lại danh sách
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const { state, dispatch } = useApp();
   const { currentUser, comments, ratings, users } = state;
   const [newComment, setNewComment] = useState('');
@@ -60,7 +89,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
 
   const visibleComments = Object.values(groupedComments).filter(c => !c.isHidden);
   const hiddenComments = Object.values(groupedComments).filter(c => c.isHidden);
-  
+
   const allComments = showHiddenComments ? [...visibleComments, ...hiddenComments] : visibleComments;
 
   const eventRatings = ratings.filter(r => r.eventId === event.id);
@@ -292,7 +321,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Đã tham gia sự kiện
                     </div>
-                    
+
                     <button
                       onClick={() => setShowQR(true)}
                       className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-gray-900 transition-colors font-medium"
@@ -380,7 +409,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                 <MessageSquare className="h-5 w-5 mr-2" />
                 Bình luận ({allComments.length})
               </h3>
-              
+
               {hiddenComments.length > 0 && (
                 <button
                   onClick={() => setShowHiddenComments(!showHiddenComments)}
@@ -430,7 +459,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                 const user = users.find(u => u.id === comment.userId);
                 const isHidden = comment.isHidden;
                 const canModerate = currentUser?.role === 'admin' || currentUser?.role === 'moderator';
-                
+
                 return (
                   <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? 'bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400' : 'bg-white dark:bg-dark-bg-secondary'}`}>
                     <div className="w-8 h-8 bg-gray-300 dark:bg-dark-bg-tertiary rounded-full flex-shrink-0" />
@@ -447,7 +476,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                             </span>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
                           {/* Reply button */}
                           <button
@@ -457,7 +486,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                           >
                             <Reply className="h-4 w-4" />
                           </button>
-                          
+
                           {canModerate && (
                             <>
                               {isHidden ? (
