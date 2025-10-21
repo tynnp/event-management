@@ -8,7 +8,7 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Gửi OTP để đổi email
+// Gửi OTP để đổi email ????
 exports.sendChangeEmailOTP = async (req, res) => {
   const { newEmail } = req.body;
   if (!newEmail) return res.status(400).json({ message: 'New email required' });
@@ -79,7 +79,7 @@ exports.sendResetPasswordOTP = async (req, res) => {
   const otp = generateOTP();
   await client.setEx(`resetPassword:${user.id}`, 300, otp);
 
-  await sendMail(email, 'Reset your password', `Your OTP code is: ${otp}`);
+  await sendMail(email, 'Reset your password', `Hãy nhập mã này để reset mật khẩu bạn nhé! Mã OTP của bạn là: ${otp}`);
 
   res.json({ message: 'OTP sent to your email' });
 };

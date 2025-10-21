@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { toast } from "react-hot-toast"; 
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "../Layout/ThemeToggle";
 import { ForgotPassword } from "./ForgotPassword";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 
@@ -71,24 +72,50 @@ export function LoginForm() {
     e.preventDefault();
     setError("");
 
+    if (!registerData.name || !registerData.email || !registerData.password) {
+      setError("Vui lòng điền đầy đủ thông tin bắt buộc");
+      return;
+    }
+
+    if (registerData.password.length < 6) {
+      setError("Mật khẩu phải có ít nhất 6 ký tự");
+      return;
+    }
+
     if (registerData.password !== registerData.confirmPassword) {
       setError("Mật khẩu xác nhận không khớp");
       return;
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/register", {
+      const res = await axios.post("http://localhost:5000/api/auth/register", {
         name: registerData.name,
         phone: registerData.phone,
         email: registerData.email,
         password: registerData.password,
       });
 
-      console.log("Registered user:", response.data);
-      setIsRegistering(false); // Switch back to login form
-    } catch (error) {
-      setError("Đăng ký thất bại. Vui lòng thử lại.");
-      console.error("Register error:", error);
+      if (res.status === 201 || res.status === 200) {
+        toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+        setIsRegistering(false); // chuyển về trang đăng nhập
+        setRegisterData({
+          name: "",
+          phone: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        });
+      } else {
+        throw new Error(res.data.message || "Lỗi không xác định");
+      }
+    } catch (err: any) {
+      console.error("Register error:", err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Đăng ký thất bại. Vui lòng thử lại sau.");
+      }
+      toast.error("Đăng ký thất bại!");
     }
   };
 
@@ -293,7 +320,7 @@ export function LoginForm() {
 
                 <button
                   type="submit"
-                   className="w-full py-2 px-4 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 shadow-lg hover:shadow-indigo-500/40 dark:hover:shadow-pink-500/30 font-medium transition-all transform hover:scale-[1.02]"
+                  className="w-full py-2 px-4 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 shadow-lg hover:shadow-indigo-500/40 dark:hover:shadow-pink-500/30 font-medium transition-all transform hover:scale-[1.02]"
                 >
                   Đăng ký
                 </button>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, KeyRound } from "lucide-react";
 import { ThemeToggle } from "../Layout/ThemeToggle";
 
 interface ForgotPasswordProps {
@@ -8,103 +8,75 @@ interface ForgotPasswordProps {
 
 export function ForgotPassword({ onBack }: ForgotPasswordProps) {
   const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [step, setStep] = useState<"email" | "otp" | "done">("email");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/email";
+
+  // --- Gửi OTP ---
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/forgot-password/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Lỗi khi gửi email");
+      setStep("otp");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-      if (email.trim()) {
-        setIsSubmitted(true);
-      } else {
-        setError("Vui lòng nhập email");
-      }
-    }, 1500);
+    }
   };
 
-  const handleResendEmail = () => {
+  // --- Đặt lại mật khẩu ---
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/forgot-password/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Không thể đặt lại mật khẩu");
+      setStep("done");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-      // Reset để có thể gửi lại
-    }, 1000);
+    }
   };
 
-  if (isSubmitted) {
+  // --- Giao diện các bước ---
+  if (step === "done") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary py-12 px-4 sm:px-6 lg:px-8">
-        {/* Theme Toggle Button */}
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="absolute top-6 right-6">
           <ThemeToggle />
         </div>
-
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
-              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-            </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary">
-              Email đã được gửi!
-            </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
-              Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến{" "}
-              <strong>{email}</strong>
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-xl p-8 border border-gray-200 dark:border-dark-border">
-            <div className="space-y-4">
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
-                  Bước tiếp theo:
-                </h3>
-                <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                  <li>• Kiểm tra hộp thư đến của bạn</li>
-                  <li>• Mở email từ hệ thống</li>
-                  <li>• Nhấp vào liên kết đặt lại mật khẩu</li>
-                  <li>• Tạo mật khẩu mới</li>
-                </ul>
-              </div>
-
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Lưu ý:</strong> Email có thể mất vài phút để đến. Nếu
-                  không thấy email, hãy kiểm tra thư mục spam.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={handleResendEmail}
-                  disabled={isLoading}
-                  className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-dark-border text-sm font-medium rounded-lg text-gray-700 dark:text-dark-text-secondary bg-white dark:bg-dark-bg-tertiary hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-300 mr-2"></div>
-                      Đang gửi...
-                    </>
-                  ) : (
-                    "Gửi lại email"
-                  )}
-                </button>
-
-                <button
-                  onClick={onBack}
-                  className="flex-1 flex justify-center items-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Quay lại đăng nhập
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className="max-w-md w-full bg-white dark:bg-dark-bg-secondary rounded-lg shadow-xl p-8 text-center space-y-6">
+          <CheckCircle className="h-16 w-16 mx-auto text-green-500" />
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Đặt lại mật khẩu thành công!</h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Bạn có thể quay lại đăng nhập với mật khẩu mới.
+          </p>
+          <button
+            onClick={onBack}
+            className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+          >
+            Quay lại đăng nhập
+          </button>
         </div>
       </div>
     );
@@ -112,100 +84,92 @@ export function ForgotPassword({ onBack }: ForgotPasswordProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-indigo-300 via-purple-400 to-pink-400 dark:from-gray-900 dark:via-gray-800 dark:to-black py-12 px-4 sm:px-6 lg:px-8">
-      {/* Theme Toggle Button */}
       <div className="absolute top-6 right-6">
         <ThemeToggle />
       </div>
 
-      <div className="max-w-md w-full space-y-8 ">
+      <div className="max-w-md w-full space-y-8">
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-2xl p-10 border border-white/20 dark:border-gray-700">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <h2 className="mt-6 pb-1 mb-3 text-center text-3xl font-extrabold  text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600 dark:from-indigo-400 dark:to-pink-400 drop-shadow-md">
+          {step === "email" ? (
+            <form className="space-y-6" onSubmit={handleSendOtp}>
+              <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">
                 Quên mật khẩu?
               </h2>
-              <p className="mt-2 mb-10 text-center text-sm text-gray-600 dark:text-dark-text-secondary">
-                Nhập email của bạn để nhận hướng dẫn đặt lại mật khẩu
+              <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+                Nhập email để nhận mã OTP đặt lại mật khẩu
               </p>
-            </div>
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary"
-              >
-                Email đăng ký
-              </label>
-              <div className="mt-1 relative">
+              {error && (
+                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{error}</div>
+              )}
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
-                  id="email"
-                  name="email"
                   type="email"
-                  required
-                  className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
                   placeholder="Nhập email của bạn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
                 />
-                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2 px-4 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 shadow-lg hover:shadow-indigo-500/40 dark:hover:shadow-pink-500/30 font-medium transition-all transform hover:scale-[1.02] disabled:opacity-50"
-              // className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors "
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Đang gửi...
-                </>
-              ) : (
-                "Gửi hướng dẫn đặt lại mật khẩu"
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+              >
+                {isLoading ? "Đang gửi..." : "Gửi mã OTP"}
+              </button>
+            </form>
+          ) : (
+            <form className="space-y-6" onSubmit={handleResetPassword}>
+              <h2 className="text-center text-2xl font-bold text-gray-800 dark:text-white">
+                Xác nhận mã OTP
+              </h2>
+              {error && (
+                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{error}</div>
               )}
-            </button>
-          </form>
+              <div>
+                <label className="block text-sm mb-1">Mã OTP</label>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="Nhập mã OTP 6 số"
+                  className="w-full p-2 border rounded-lg"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Mật khẩu mới</label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu mới"
+                    className="w-full pl-10 p-2 border rounded-lg"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+              >
+                {isLoading ? "Đang đặt lại..." : "Đặt lại mật khẩu"}
+              </button>
+            </form>
+          )}
 
-          <div className="mt-6">
+          <div className="mt-6 text-center">
             <button
               onClick={onBack}
-              className="w-full flex justify-center items-center text-sm text-blue-600 hover:text-blue-500 transition-colors"
+              className="text-blue-600 hover:text-blue-500 text-sm"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại đăng nhập
+              <ArrowLeft className="inline h-4 w-4 mr-1" /> Quay lại đăng nhập
             </button>
-          </div>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-dark-border" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-dark-bg-secondary text-gray-500 dark:text-dark-text-tertiary">
-                  Cần hỗ trợ?
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
-                Liên hệ với chúng tôi qua email:{" "}
-                <a
-                  href="mailto:support@eventmanager.com"
-                  className="text-blue-600 hover:text-blue-500"
-                >
-                  support@eventmanager.com
-                </a>
-              </p>
-            </div>
           </div>
         </div>
       </div>
