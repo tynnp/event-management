@@ -239,12 +239,6 @@ export function UserManagement() {
                     <Trash className="h-4 w-4" />
                   </button>
                   <button
-                    className="p-2 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-300 hover:scale-110 active:scale-95"
-                    title="Chỉnh sửa"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
                     onClick={() => handleToggleLock(user.id, !user.is_locked)}
                     className={`p-2 rounded-lg transition-all duration-300 hover:scale-110 active:scale-95 ${user.is_locked
                         ? "text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
