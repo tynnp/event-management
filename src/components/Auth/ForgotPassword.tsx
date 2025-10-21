@@ -108,7 +108,11 @@ export function ForgotPassword({ onBack }: ForgotPasswordProps) {
                   placeholder="Nhập email của bạn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-10 p-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                    bg-white/90 dark:bg-gray-800/70 
+                    text-gray-900 dark:text-gray-100 
+                    placeholder-gray-400 
+                    focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                   required
                 />
               </div>
