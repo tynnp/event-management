@@ -5,121 +5,203 @@ import {
   Users,
   Type,
   FileText,
-  Globe,
-  Lock,
   Image as ImageIcon,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { Event } from "../../types";
+import { useNavigate } from "react-router-dom";
 
 interface CreateEventProps {
   onCancel?: () => void;
   onSuccess?: () => void;
 }
 
+interface FormData {
+  title: string;
+  description: string;
+  category: string;
+  maxParticipants: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  isPublic: boolean;
+  image?: File;
+}
+
+interface FormErrors {
+  title?: string;
+  description?: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  maxParticipants?: string;
+}
+
+const categories = ['Hội thảo', 'Triển lãm', 'Workshop', 'Networking', 'Khác'];
+
 export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
   const { state, dispatch } = useApp();
   const { currentUser } = state;
+  const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
     startTime: "",
     endTime: "",
     location: "",
-    category: "Công nghệ",
+    category: categories[0],
     isPublic: true,
     maxParticipants: "",
-    image: "",
+    image: undefined,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [preview, setPreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const categories = [
-    "Công nghệ",
-    "Giáo dục",
-    "Thể thao",
-    "Âm nhạc",
-    "Nghệ thuật",
-    "Kinh doanh",
-    "Sức khỏe",
-  ];
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.title.trim()) newErrors.title = "Vui lòng nhập tên sự kiện";
-    if (!formData.description.trim())
-      newErrors.description = "Vui lòng nhập mô tả sự kiện";
-    if (!formData.startTime)
-      newErrors.startTime = "Vui lòng chọn thời gian bắt đầu";
-    if (!formData.endTime)
-      newErrors.endTime = "Vui lòng chọn thời gian kết thúc";
-    if (formData.startTime && formData.endTime) {
-      if (new Date(formData.endTime) <= new Date(formData.startTime)) {
-        newErrors.endTime = "Thời gian kết thúc phải sau thời gian bắt đầu";
+  const getToken = (): string | null => {
+    const keys = ['token', 'accessToken', 'authToken', 'currentUser', 'user'];
+    for (const k of keys) {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      try {
+        const obj = JSON.parse(raw);
+        if (obj?.token) return obj.token;
+        if (obj?.accessToken) return obj.accessToken;
+        if (obj?.data?.token) return obj.data.token;
+      } catch {
+        // non-JSON value (e.g. raw token)
+        if (k !== 'currentUser' && k !== 'user') return raw;
       }
     }
-    if (!formData.location.trim())
-      newErrors.location = "Vui lòng nhập địa điểm";
-    if (formData.maxParticipants && parseInt(formData.maxParticipants) < 1) {
-      newErrors.maxParticipants = "Số lượng người tham gia phải lớn hơn 0";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return null;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm() || !currentUser) return;
-
-    let eventStatus: "approved" | "pending" = "approved";
-
-    if (currentUser.role === "user") {
-      eventStatus = formData.isPublic ? "pending" : "approved";
-    }
-
-    const newEvent: Event = {
-      id: Date.now().toString(),
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      location: formData.location.trim(),
-      category: formData.category,
-      isPublic: formData.isPublic,
-      maxParticipants: formData.maxParticipants
-        ? parseInt(formData.maxParticipants)
-        : undefined,
-      createdBy: currentUser.id,
-      createdAt: new Date().toISOString(),
-      status: eventStatus,
-      participants: [],
-      comments: [],
-      ratings: [],
-      averageRating: 0,
-      image: formData.image || undefined,
-    };
-
-    dispatch({ type: "CREATE_EVENT", payload: newEvent });
-    onSuccess?.();
+  const clearAuth = () => {
+    try {
+      ['token','accessToken','authToken','currentUser','user'].forEach(k => localStorage.removeItem(k));
+    } catch {}
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  const handleInputChange = (field: keyof FormData, value: string | boolean | File | undefined) => {
+    setFormData((prev) => ({ ...prev, [field]: value as any }));
+    if ((errors as any)[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 5MB");
+        return;
+      }
+      setFormData((prev) => ({ ...prev, image: file }));
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setFormData((prev) => ({ ...prev, image: base64 }));
-        setPreview(base64);
-      };
+      reader.onloadend = () => setPreview(reader.result as string);
       reader.readAsDataURL(file);
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    if (!formData.title.trim()) newErrors.title = "Vui lòng nhập tên sự kiện";
+    if (!formData.description.trim()) newErrors.description = "Vui lòng nhập mô tả sự kiện";
+    if (!formData.startTime) newErrors.startTime = "Vui lòng chọn thời gian bắt đầu";
+    if (!formData.endTime) newErrors.endTime = "Vui lòng chọn thời gian kết thúc";
+
+    if (formData.startTime && formData.endTime) {
+      const start = new Date(formData.startTime);
+      const end = new Date(formData.endTime);
+      if (end <= start) {
+        newErrors.endTime = "Thời gian kết thúc phải sau thời gian bắt đầu";
+      }
+    }
+
+    if (!formData.location.trim()) newErrors.location = "Vui lòng nhập địa điểm";
+    if (formData.maxParticipants && parseInt(formData.maxParticipants) < 1) {
+      newErrors.maxParticipants = "Số người tham gia phải lớn hơn 0";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+      const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
+
+      const token = getToken();
+      if (!token) {
+        clearAuth();
+        navigate('/login');
+        return;
+      }
+
+      const payload = new FormData();
+      payload.append('title', formData.title);
+      payload.append('description', formData.description);
+      payload.append('category', formData.category);
+      payload.append('start_time', formData.startTime);
+payload.append('end_time', formData.endTime);
+
+      payload.append('location', formData.location);
+      payload.append('isPublic', String(formData.isPublic));
+      if (formData.maxParticipants) payload.append('maxParticipants', formData.maxParticipants);
+      if (formData.image) payload.append('image', formData.image);
+
+      const res = await fetch(`${BASE}/events`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}` // do NOT set Content-Type when sending FormData
+        },
+        body: payload,
+        credentials: 'include'
+      });
+
+      // debug: if not ok, read full body (json or text)
+      if (!res.ok) {
+        const status = res.status;
+        let bodyText = '';
+        try {
+          bodyText = JSON.stringify(await res.json());
+        } catch {
+          try {
+            bodyText = await res.text();
+          } catch {
+            bodyText = res.statusText || 'No response body';
+          }
+        }
+        console.error(`[CreateEvent] Server returned ${status}:`, bodyText);
+        if (status === 401) {
+          clearAuth();
+          navigate('/login', { replace: true });
+          return;
+        }
+        throw new Error(`Server ${status}: ${bodyText}`);
+      }
+
+      const created = await res.json().catch(() => null);
+      if (created && dispatch) {
+        try {
+          const ev = created.event ?? created.data ?? created;
+          dispatch({ type: 'CREATE_EVENT', payload: ev });
+        } catch {}
+      }
+
+      if (onSuccess) onSuccess();
+    } catch (err: any) {
+      console.error("Error creating event:", err);
+      alert(err?.message || "Có lỗi xảy ra khi tạo sự kiện");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -252,6 +334,38 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
             </div>
           </div>
 
+          {/* --- Số người tham gia --- */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+              <Users className="h-5 w-5 text-teal-500 dark:text-teal-400" />
+              Số người tham gia tối đa
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={formData.maxParticipants}
+              onChange={(e) => handleInputChange("maxParticipants", e.target.value)}
+              placeholder="Để trống nếu không giới hạn..."
+              className={`w-full px-4 py-3 rounded-xl border transition 
+      bg-white dark:bg-gray-800 
+      text-gray-900 dark:text-gray-100 
+      focus:outline-none focus:ring-2 focus:ring-teal-400 dark:focus:ring-teal-500
+      ${
+        errors.maxParticipants
+          ? "border-red-500 dark:border-red-400"
+          : "border-gray-300 dark:border-gray-600"
+      }`}
+            />
+            {errors.maxParticipants && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.maxParticipants}
+              </p>
+            )}
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+              Để trống nếu bạn không muốn giới hạn số người tham gia
+            </p>
+          </div>
+
           {/* --- Thời gian --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Bắt đầu */}
@@ -336,20 +450,22 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
             <button
               type="button"
               onClick={onCancel}
+              disabled={loading}
               className="px-6 py-3 rounded-xl bg-gray-200 dark:bg-gray-700 
             hover:bg-gray-300 dark:hover:bg-gray-600 
             text-gray-800 dark:text-gray-100 
-            transition font-medium"
+            transition font-medium disabled:opacity-50"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
+              disabled={loading}
               className="px-6 py-3 rounded-xl bg-gradient-to-r 
             from-indigo-500 via-purple-500 to-pink-500 
-            text-white font-bold hover:scale-105 transform transition-all"
+            text-white font-bold hover:scale-105 transform transition-all disabled:opacity-50"
             >
-              Tạo sự kiện
+              {loading ? 'Đang tạo...' : 'Tạo sự kiện'}
             </button>
           </div>
         </form>
