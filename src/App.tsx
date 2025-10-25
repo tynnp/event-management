@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoginForm } from './components/Auth/LoginForm';
@@ -64,8 +64,10 @@ function AppContent() {
           }`}
         >
           <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/events" element={<EventDetail />} />
+            <Route path="/events" element={<EventList />} />               {/* list */}
+            <Route path="/events/:id" element={<EventDetail />} />         {/* detail */}
             <Route path="/create-event" element={<CreateEvent />} />
             <Route path="/browse-events" element={<EventList />} />
             <Route path="/moderation" element={<ModerationPanel />} />
