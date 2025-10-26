@@ -1,3 +1,4 @@
+//file: src/components/Events/CreateEvent.tsx
 import React, { useState } from "react";
 import {
   Calendar,
@@ -36,7 +37,50 @@ interface FormErrors {
   maxParticipants?: string;
 }
 
-const categories = ['Hội thảo', 'Triển lãm', 'Workshop', 'Networking', 'Khác'];
+const categories = [
+  {
+    id: "550e8400-e29b-41d4-a716-446655440001",
+    name: "Công nghệ",
+    description: "Sự kiện về công nghệ, lập trình, AI",
+    color: "#3B82F6",
+    icon: "laptop",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440002",
+    name: "Giáo dục",
+    description: "Hội thảo, khóa học, workshop",
+    color: "#10B981",
+    icon: "book-open",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440003",
+    name: "Thể thao",
+    description: "Các sự kiện thể thao, fitness",
+    color: "#F59E0B",
+    icon: "dumbbell",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440004",
+    name: "Văn hóa",
+    description: "Triển lãm, biểu diễn, nghệ thuật",
+    color: "#8B5CF6",
+    icon: "palette",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440005",
+    name: "Kinh doanh",
+    description: "Networking, startup, đầu tư",
+    color: "#EF4444",
+    icon: "briefcase",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440006",
+    name: "Giải trí",
+    description: "Party, concert, game",
+    color: "#EC4899",
+    icon: "music",
+  },
+];
 
 export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
   const { state, dispatch } = useApp();
@@ -52,7 +96,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
     startTime: "",
     endTime: "",
     location: "",
-    category: categories[0],
+    category: categories[0].id, 
     isPublic: true,
     maxParticipants: "",
     image: undefined,
@@ -130,80 +174,83 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
   };
 
 const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    setLoading(true);
-    try {
-      const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
-      const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
+  setLoading(true);
+  try {
+    const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+    const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
 
-      const token = getToken();
-      if (!token) {
+    const token = getToken();
+    if (!token) {
+      clearAuth();
+      navigate('/login');
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append('title', formData.title);
+    payload.append('description', formData.description);
+    payload.append('start_time', formData.startTime);
+    payload.append('end_time', formData.endTime);
+    payload.append('location', formData.location);
+    payload.append('is_public', String(formData.isPublic));
+    if (formData.maxParticipants)
+      payload.append('max_participants', formData.maxParticipants);
+    payload.append('category_id', formData.category);
+    if (formData.image) payload.append('image', formData.image);
+
+    const res = await fetch(`${BASE}/events`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: payload,
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      const status = res.status;
+      let bodyText = '';
+      try {
+        bodyText = JSON.stringify(await res.json());
+      } catch {
+        bodyText = await res.text();
+      }
+      console.error(`[CreateEvent] Server returned ${status}:`, bodyText);
+
+      if (status === 401) {
         clearAuth();
-        navigate('/login');
+        navigate('/login', { replace: true });
         return;
       }
 
-      const payload = new FormData();
-      payload.append('title', formData.title);
-      payload.append('description', formData.description);
-      payload.append('category', formData.category);
-      payload.append('start_time', formData.startTime);
-payload.append('end_time', formData.endTime);
-
-      payload.append('location', formData.location);
-      payload.append('isPublic', String(formData.isPublic));
-      if (formData.maxParticipants) payload.append('maxParticipants', formData.maxParticipants);
-      if (formData.image) payload.append('image', formData.image);
-
-      const res = await fetch(`${BASE}/events`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}` // do NOT set Content-Type when sending FormData
-        },
-        body: payload,
-        credentials: 'include'
-      });
-
-      // debug: if not ok, read full body (json or text)
-      if (!res.ok) {
-        const status = res.status;
-        let bodyText = '';
-        try {
-          bodyText = JSON.stringify(await res.json());
-        } catch {
-          try {
-            bodyText = await res.text();
-          } catch {
-            bodyText = res.statusText || 'No response body';
-          }
-        }
-        console.error(`[CreateEvent] Server returned ${status}:`, bodyText);
-        if (status === 401) {
-          clearAuth();
-          navigate('/login', { replace: true });
-          return;
-        }
-        throw new Error(`Server ${status}: ${bodyText}`);
-      }
-
-      const created = await res.json().catch(() => null);
-      if (created && dispatch) {
-        try {
-          const ev = created.event ?? created.data ?? created;
-          dispatch({ type: 'CREATE_EVENT', payload: ev });
-        } catch {}
-      }
-
-      if (onSuccess) onSuccess();
-    } catch (err: any) {
-      console.error("Error creating event:", err);
-      alert(err?.message || "Có lỗi xảy ra khi tạo sự kiện");
-    } finally {
-      setLoading(false);
+      // ⚠️ thêm alert báo lỗi
+      alert("Không thể tạo sự kiện. Vui lòng thử lại!");
+      throw new Error(`Server ${status}: ${bodyText}`);
     }
-  };
+
+    // ✅ thêm alert khi thành công
+    alert("🎉 Sự kiện đã được tạo thành công! Đang chờ duyệt...");
+
+    const created = await res.json().catch(() => null);
+    if (created && dispatch) {
+      try {
+        const ev = created.event ?? created.data ?? created;
+        dispatch({ type: 'CREATE_EVENT', payload: ev });
+      } catch {}
+    }
+
+    if (onSuccess) onSuccess();
+  } catch (err: any) {
+    console.error("Error creating event:", err);
+    // ⚠️ thêm alert nếu gặp lỗi bất ngờ
+    alert(err?.message || "Có lỗi xảy ra khi tạo sự kiện");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <div className="max-w-2xl mx-auto transition-colors duration-300">
@@ -317,20 +364,20 @@ payload.append('end_time', formData.endTime);
                 Danh mục
               </label>
               <select
-                value={formData.category}
-                onChange={(e) => handleInputChange("category", e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border 
-              bg-white dark:bg-gray-800 
-              text-gray-900 dark:text-gray-100 
-              focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500
-              border-gray-300 dark:border-gray-600"
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+              value={formData.category}
+              onChange={(e) => handleInputChange("category", e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border 
+                bg-white dark:bg-gray-800 
+                text-gray-900 dark:text-gray-100 
+                focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500
+                border-gray-300 dark:border-gray-600"
+            >
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
             </div>
           </div>
 

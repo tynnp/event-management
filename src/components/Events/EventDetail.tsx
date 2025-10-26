@@ -1,3 +1,4 @@
+//file: src/components/Events/EventDetail.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Calendar,
@@ -117,17 +118,47 @@ export function EventDetail({ event: propEvent, onBack }: EventDetailProps) {
         }
 
         if (!res.ok) {
-          const body = await res.json().catch(() => ({ message: res.statusText }));
-          throw new Error(body?.message || `Lỗi ${res.status}`);
+          let bodyText = await res.text();
+          try {
+            const json = JSON.parse(bodyText);
+            throw new Error(json.message || json.error || res.statusText);
+          } catch {
+            throw new Error(bodyText || res.statusText);
+          }
         }
 
         const data = await res.json().catch(() => null);
         if (!mounted) return;
-        const ev: Event = data?.event ?? data?.data ?? data;
-        if (!ev) {
+        const raw = data?.event ?? data?.data ?? data;
+        if (!raw) {
           setRemoteError('Dữ liệu sự kiện không hợp lệ');
           return;
         }
+
+        // Chuẩn hóa key cho frontend
+        const ev: Event = {
+          id: raw.id ?? raw._id,
+          title: raw.title,
+          description: raw.description,
+          location: raw.location,
+          startTime: raw.startTime ?? raw.start_time,
+          endTime: raw.endTime ?? raw.end_time,
+          createdBy: raw.createdBy ?? raw.created_by,
+          isPublic: raw.isPublic ?? raw.is_public,
+          maxParticipants: raw.maxParticipants ?? raw.max_participants,
+          category: raw.category ?? raw.categoryId ?? raw.category_id,
+          image: raw.imageUrl ?? raw.image_url,
+          rejectionReason: raw.rejectionReason ?? raw.rejection_reason,
+          averageRating: raw.averageRating ?? raw.average_rating ?? 0,
+          comments: raw.comments ?? [],
+          participants: raw.participants ?? [],
+          createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
+          status: raw.status ?? 'pending',
+          ratings: raw.ratings ?? []
+        };
+        setRemoteEvent(ev);
+
+
 
         if ((ev as any)._id && !(ev as any).id) {
           (ev as any).id = (ev as any)._id;
@@ -335,8 +366,13 @@ export function EventDetail({ event: propEvent, onBack }: EventDetailProps) {
       </button>
 
       <div className="rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="aspect-video bg-gradient-to-r from-blue-500 to-purple-600 relative">
-          <div className="absolute inset-0 bg-black/20" />
+        <div className="aspect-video relative bg-gray-200 dark:bg-dark-bg-tertiary">
+  {event.image ? (
+    <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
+  ) : (
+    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600" />
+  )}
+  <div className="absolute inset-0 bg-black/20" />
           <div className="absolute top-6 left-6">
             <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${eventStatus.color}`}>{eventStatus.text}</span>
           </div>
@@ -371,16 +407,22 @@ export function EventDetail({ event: propEvent, onBack }: EventDetailProps) {
                   </div>
                   <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
                     <Users className="h-5 w-5 mr-3 text-gray-400 dark:text-dark-text-tertiary" />
-                    <p>{participants.length}{event.maxParticipants ? `/${event.maxParticipants}` : ''} người tham gia</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="bg-gray-50 dark:bg-dark-bg-tertiary rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-2">Thông tin tổ chức</h3>
-                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Người tạo: {users.find(u => u.id === event.createdBy)?.name}</p>
-                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Loại: {event.isPublic ? 'Công khai' : 'Riêng tư'}</p>
-                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Danh mục: {event.category}</p>
+                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
+  Người tạo: {users.find(u => u.id === event.createdBy)?.name || 'Không xác định'}
+</p>
+<p className="text-sm text-gray-600 dark:text-dark-text-secondary">
+  Loại: {event.isPublic ? 'Công khai' : 'Riêng tư'}
+</p>
+<p className="text-sm text-gray-600 dark:text-dark-text-secondary">
+   Danh mục:{' '}
+  {event.category === '550e8400-e29b-41d4-a716-446655440001' ? 'Công nghệ' :
+   event.category === '550e8400-e29b-41d4-a716-446655440002' ? 'Giáo dục' :
+   event.category === '550e8400-e29b-41d4-a716-446655440003' ? 'Thể thao' :
+   event.category === '550e8400-e29b-41d4-a716-446655440004' ? 'Văn hóa' :
+   event.category === '550e8400-e29b-41d4-a716-446655440005' ? 'Kinh doanh' :
+   event.category === '550e8400-e29b-41d4-a716-446655440006' ? 'Giải trí' :
+   'Chưa phân loại'}
+</p>
                   </div>
                 </div>
               </div>
