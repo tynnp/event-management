@@ -30,7 +30,10 @@ class Event {
   static async findById(eventId) {
     const pool = getPostgresPool();
     const result = await pool.query(
-      'SELECT * FROM events WHERE id = $1',
+      `SELECT e.*, c.name as category_name 
+       FROM events e
+       LEFT JOIN categories c ON e.category_id = c.id
+       WHERE e.id = $1`,
       [eventId]
     );
     return result.rows[0];
@@ -42,12 +45,20 @@ class Event {
     let result;
     
     if (userRole === 'admin' || userRole === 'moderator') {
-      result = await pool.query('SELECT * FROM events ORDER BY created_at DESC');
+      result = await pool.query(`
+        SELECT e.*, c.name as category_name 
+        FROM events e
+        LEFT JOIN categories c ON e.category_id = c.id
+        ORDER BY e.created_at DESC
+      `);
     } else {
-      result = await pool.query(
-        'SELECT * FROM events WHERE status = $1 OR created_by = $2 ORDER BY created_at DESC',
-        ['approved', userId]
-      );
+      result = await pool.query(`
+        SELECT e.*, c.name as category_name 
+        FROM events e
+        LEFT JOIN categories c ON e.category_id = c.id
+        WHERE e.status = $1 OR e.created_by = $2
+        ORDER BY e.created_at DESC
+      `, ['approved', userId]);
     }
     
     return result.rows;

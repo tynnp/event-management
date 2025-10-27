@@ -114,17 +114,45 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       setLoading(true);
       setError(null);
       try {
-        const res = await axios.get(`${BASE}/events/${id}`, {
+        // Fetch event details
+        const eventRes = await axios.get(`${BASE}/events/${id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           signal: controller.signal as any,
         });
+        
+        // Fetch comments for this event from MongoDB
+        let comments = [];
+        try {
+          const commentRes = await axios.get(`${BASE}/chats/comments/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          });
+          // Map MongoDB comments to frontend format
+          comments = (commentRes.data || []).map((c: any) => ({
+            id: c._id || c.id,
+            eventId: c.eventId,
+            userId: c.userId,
+            content: c.content,
+            createdAt: c.createdAt,
+            isHidden: c.isHidden || false,
+            parentId: c.parentId,
+            replies: c.replies || []
+          }));
+        } catch (err) {
+          console.warn('Could not fetch comments:', err);
+        }
+        
         if (!mounted) return;
-        const raw = res.data?.event ?? res.data?.data ?? res.data;
+        const raw = eventRes.data?.event ?? eventRes.data?.data ?? eventRes.data;
         if (!raw) {
           setError("Dữ liệu sự kiện không hợp lệ.");
           return;
         }
-        setRemoteEvent(normalizeEvent(raw));
+        
+        // Add comments to event
+        const normalizedEvent = normalizeEvent(raw);
+        normalizedEvent.comments = comments;
+        
+        setRemoteEvent(normalizedEvent);
       } catch (err: any) {
         if (!mounted) return;
         if (axios.isCancel(err)) return;
@@ -221,8 +249,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     try {
       setSendingComment(true);
       const res = await axios.post(
-        `${BASE}/comments`,
-        { ...payload },
+        `${BASE}/chats/comments`,
+        { eventId: payload.eventId, content: payload.content, parentId: payload.parentId },
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
       const created: Comment = res.data?.data ?? res.data;
@@ -337,7 +365,11 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
     try {
-      await axios.delete(`${BASE}/comments/${commentId}`, { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+      await axios.patch(
+        `${BASE}/chats/${commentId}`, 
+        { action: 'delete' },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
       // update local
       setRemoteEvent((prev) => {
         if (!prev) return prev;

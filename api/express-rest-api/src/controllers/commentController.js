@@ -4,6 +4,11 @@ const Comment = require('../models/Comment');
 exports.addComment = async (req, res) => {
   try {
     const { eventId, content, parentId } = req.body;
+    
+    if (!eventId || !content) {
+      return res.status(400).json({ message: 'eventId and content are required' });
+    }
+    
     const comment = new Comment({
       eventId,
       userId: req.user.id,

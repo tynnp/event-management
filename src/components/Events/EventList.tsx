@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar, MapPin, Users, Filter, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Event } from "../../types";
+import { useApp } from "../../context/AppContext";
 
 interface EventWithExtras extends Event {
   category_name?: string;
+  category_id?: string;
 }
 
 interface Category {
@@ -21,6 +23,12 @@ export function EventList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { state } = useApp();
+  const { currentUser } = state;
+  
+  // Xác định là "Sự kiện của tôi" hay "Khám phá sự kiện"
+  const isMyEvents = location.pathname === "/events";
 
   const RAW_BASE =
     (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
@@ -66,18 +74,56 @@ export function EventList() {
         const eventData = await eventRes.json();
         const categoryData = await categoryRes.json();
 
-        const list: EventWithExtras[] = Array.isArray(eventData)
+        // Tạo map category_id -> category_name
+        const categoryMap: Record<string, string> = {};
+        if (Array.isArray(categoryData)) {
+          categoryData.forEach((cat: Category) => {
+            categoryMap[cat.id] = cat.name;
+          });
+          setCategories(categoryData);
+        }
+
+        // Process events - map fields from API
+        let list: EventWithExtras[] = Array.isArray(eventData)
           ? eventData
           : eventData.events ?? [];
 
-        const approvedEvents = list.filter((e) => e.status === "approved");
-        setEvents(approvedEvents);
-        setFilteredEvents(approvedEvents);
+        // Map API fields to frontend Event type
+        list = list.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          startTime: event.start_time || event.startTime,
+          endTime: event.end_time || event.endTime,
+          location: event.location,
+          image: event.image_url || event.image,
+          isPublic: event.is_public ?? true,
+          maxParticipants: event.max_participants || event.maxParticipants,
+          createdBy: event.created_by || event.createdBy,
+          createdAt: event.created_at || event.createdAt,
+          status: event.status,
+          rejectionReason: event.rejection_reason || event.rejectionReason,
+          participants: event.participants || [],
+          comments: event.comments || [],
+          ratings: event.ratings || [],
+          averageRating: typeof event.average_rating === 'number' ? event.average_rating : parseFloat(event.average_rating) || 0,
+          category: event.category_name || categoryMap[event.category_id] || "",
+          category_id: event.category_id,
+          category_name: event.category_name || categoryMap[event.category_id] || "",
+        }));
 
-        // set danh mục
-        if (Array.isArray(categoryData)) {
-          setCategories(categoryData);
+        // Filter events based on route
+        let filteredList: EventWithExtras[];
+        if (isMyEvents && currentUser) {
+          // "Sự kiện của tôi" - chỉ hiển thị events user đã tạo
+          filteredList = list.filter((e) => e.createdBy === currentUser.id);
+        } else {
+          // "Khám phá sự kiện" - hiển thị tất cả events đã approved
+          filteredList = list.filter((e) => e.status === "approved");
         }
+
+        setEvents(filteredList);
+        setFilteredEvents(filteredList);
       } catch (err: any) {
         setError(err.message || "Lỗi tải dữ liệu sự kiện");
       } finally {
@@ -86,7 +132,7 @@ export function EventList() {
     };
 
     fetchEvents();
-  }, []);
+  }, [isMyEvents, currentUser?.id]);
 
   // Lọc theo thời gian và danh mục
   useEffect(() => {
@@ -147,21 +193,25 @@ export function EventList() {
           <h2 className="text-3xl md:text-4xl font-extrabold flex items-center gap-3">
             <span className="text-4xl animate-bounce">🔹</span>
             <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
-              Khám phá sự kiện
+              {isMyEvents ? "Sự kiện của tôi" : "Khám phá sự kiện"}
             </span>
           </h2>
           <p className="text-gray-600 dark:text-gray-300 mt-1">
-            Tìm kiếm và tham gia các sự kiện thú vị
+            {isMyEvents 
+              ? "Quản lý các sự kiện mà bạn đã tạo"
+              : "Tìm kiếm và tham gia các sự kiện thú vị"}
           </p>
         </div>
 
-        <button
-          onClick={() => navigate("/events/create")}
-          className="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold hover:scale-105 transform transition-all"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Tạo sự kiện mới
-        </button>
+        {!isMyEvents && (
+          <button
+            onClick={() => navigate("/create-event")}
+            className="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold hover:scale-105 transform transition-all"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Tạo sự kiện mới
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -274,7 +324,7 @@ export function EventList() {
                 </div>
 
                 <div className="flex items-center justify-end text-yellow-500">
-                  {event.averageRating > 0 && (
+                  {event.averageRating > 0 && typeof event.averageRating === 'number' && (
                     <>
                       <span className="text-sm font-medium">
                         {event.averageRating.toFixed(1)}
