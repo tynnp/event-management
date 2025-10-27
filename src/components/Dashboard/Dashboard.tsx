@@ -6,15 +6,17 @@ export function Dashboard() {
   const { state } = useApp();
   const { currentUser, events, users } = state;
 
-  const userEvents = events.filter(
+  const safeEvents = events ?? [];
+
+  const userEvents = safeEvents.filter(
     (event) =>
       event.createdBy === currentUser?.id ||
-      event.participants.some((p) => p.userId === currentUser?.id)
+      (event.participants ?? []).some((p) => p.userId === currentUser?.id)
   );
 
-  const approvedEvents = events.filter((event) => event.status === "approved");
-  const pendingEvents = events.filter((event) => event.status === "pending");
-  const myCreatedEvents = events.filter(
+  const approvedEvents = safeEvents.filter((event) => event.status === "approved");
+  const pendingEvents = safeEvents.filter((event) => event.status === "pending");
+  const myCreatedEvents = safeEvents.filter(
     (event) => event.createdBy === currentUser?.id
   );
 
@@ -22,7 +24,7 @@ export function Dashboard() {
     {
       title: "Sự kiện đã tham gia",
       value: userEvents.filter((event) =>
-        event.participants.some(
+        (event.participants ?? []).some(
           (p) => p.userId === currentUser?.id && p.checkedIn
         )
       ).length,
@@ -35,7 +37,7 @@ export function Dashboard() {
       value: approvedEvents.filter(
         (event) =>
           new Date(event.startTime) > new Date() &&
-          event.participants.some((p) => p.userId === currentUser?.id)
+          (event.participants ?? []).some((p) => p.userId === currentUser?.id)
       ).length,
       icon: Calendar,
       color: "bg-blue-500",
@@ -76,7 +78,7 @@ export function Dashboard() {
       case "moderator":
         return "Kiểm duyệt viên";
       default:
-        return null; // Không hiển thị role cho user thường
+        return null; 
     }
   };
 
@@ -96,7 +98,6 @@ export function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div
@@ -120,12 +121,10 @@ export function Dashboard() {
               </div>
             </div>
 
-            {/* Trend / mô tả */}
             <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-4 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
               {stat.trend}
             </p>
 
-            {/* Hiệu ứng glow nền khi hover */}
             <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-indigo-500/10 via-pink-500/10 to-purple-500/10 blur-xl transition duration-700 pointer-events-none"></div>
           </div>
         ))}
@@ -136,7 +135,6 @@ export function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Pending Events */}
           <div className="relative rounded-xl p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/10 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 ease-in-out cursor-pointer overflow-hidden group">
-            {/* Hiệu ứng viền nổi bật */}
             <div className="absolute inset-0 border border-transparent group-hover:border-orange-300 dark:group-hover:border-orange-500 rounded-xl transition-all duration-300"></div>
 
             <div className="flex items-center justify-between relative z-10">
@@ -179,8 +177,8 @@ export function Dashboard() {
                   Tổng tham gia
                 </p>
                 <p className="text-3xl font-extrabold mt-1 bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-                  {events.reduce(
-                    (sum, event) => sum + event.participants.length,
+                  {safeEvents.reduce(
+                    (sum, event) => sum + ((event.participants ?? []).length || 0),
                     0
                   )}
                 </p>
@@ -201,14 +199,12 @@ export function Dashboard() {
         </div>
 
         {/* Event List */}
-
         <div className="divide-y divide-gray-200 dark:divide-dark-border">
           {recentEvents.map((event) => (
             <div
               key={event.id}
               className="p-6 cursor-pointer group relative transition-all duration-300 ease-in-out hover:bg-gradient-to-r hover:from-indigo-50 hover:to-pink-50 dark:hover:from-indigo-900/20 dark:hover:to-pink-900/20"
             >
-              {/* Hiệu ứng border khi hover */}
               <div className="absolute inset-0 border border-transparent group-hover:border-indigo-300 dark:group-hover:border-pink-400 rounded-lg pointer-events-none transition-all duration-300" />
 
               <div className="flex items-center justify-between relative z-10">
@@ -225,7 +221,7 @@ export function Dashboard() {
                       📅 {new Date(event.startTime).toLocaleDateString("vi-VN")}
                     </span>
                     <span className="flex items-center gap-1 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
-                      👥 {event.participants.length} người tham gia
+                      👥 {(event.participants ?? []).length} người tham gia
                     </span>
                   </div>
                 </div>
