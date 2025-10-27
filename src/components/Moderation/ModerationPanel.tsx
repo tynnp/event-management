@@ -1,25 +1,22 @@
 import { useState, useEffect } from "react";
-import {
-  Eye,
-  Check,
-  X,
-  Clock,
-} from "lucide-react";
+import { Globe, Lock, Users, Tag, Eye, Check, X, Clock } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event } from "../../types";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export function ModerationPanel() {
   const { state, dispatch } = useApp();
   const { users } = state;
-  
+  const navigate = useNavigate();
+
   const [pendingEvents, setPendingEvents] = useState<Event[]>([]);
   const [allEventsStats, setAllEventsStats] = useState<Event[]>([]);
   const [allUsers, setAllUsers] = useState(users || []);
-  
+
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
-  
+
   const getToken = (): string | null => {
     const keys = ['token', 'accessToken', 'authToken', 'currentUser', 'user'];
     for (const key of keys) {
@@ -36,16 +33,16 @@ export function ModerationPanel() {
     }
     return null;
   };
-  
+
   useEffect(() => {
-  const fetchEvents = async () => {
-    try {
+    const fetchEvents = async () => {
+      try {
         const token = getToken();
         const res = await axios.get(`${BASE}/events`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         const rawEvents = res.data || [];
-        
+
         // Normalize events from backend (snake_case -> camelCase)
         const normalizedEvents = rawEvents.map((e: any) => ({
           id: e.id,
@@ -67,15 +64,15 @@ export function ModerationPanel() {
           averageRating: 0,
           category: e.category_name || e.category
         }));
-        
+
         setAllEventsStats(normalizedEvents);
         const pending = normalizedEvents.filter((e: Event) => e.status === 'pending');
         setPendingEvents(pending);
-    } catch (err) {
-      console.error('Error fetching events:', err);
-    }
-  };
-    
+      } catch (err) {
+        console.error('Error fetching events:', err);
+      }
+    };
+
     const fetchUsers = async () => {
       try {
         const token = getToken();
@@ -87,7 +84,7 @@ export function ModerationPanel() {
         console.error('Error fetching users:', err);
       }
     };
-    
+
     fetchEvents();
     fetchUsers();
   }, []);
@@ -103,7 +100,7 @@ export function ModerationPanel() {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
     const rawEvents = res.data || [];
-    
+
     // Normalize events from backend (snake_case -> camelCase)
     const normalizedEvents = rawEvents.map((e: any) => ({
       id: e.id,
@@ -125,7 +122,7 @@ export function ModerationPanel() {
       averageRating: 0,
       category: e.category_name || e.category
     }));
-    
+
     setAllEventsStats(normalizedEvents);
     const pending = normalizedEvents.filter((e: Event) => e.status === 'pending');
     setPendingEvents(pending);
@@ -139,10 +136,10 @@ export function ModerationPanel() {
         {},
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
-      
+
       // Refresh events
       await refreshEvents();
-      
+
       alert("Sự kiện đã được duyệt thành công!");
       dispatch({ type: "APPROVE_EVENT", payload: eventId });
     } catch (err: any) {
@@ -158,12 +155,12 @@ export function ModerationPanel() {
         { reason },
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
-      
+
       // Refresh events
       await refreshEvents();
-      
+
       alert("Sự kiện đã bị từ chối.");
-      
+
       setShowRejectModal(false);
       setRejectionReason("");
       setSelectedEvent(null);
@@ -212,7 +209,7 @@ export function ModerationPanel() {
             return (
               <div
                 key={event.id}
-                className="p-6 hover:bg-gradient-to-r hover:from-indigo-50 hover:via-purple-50 hover:to-pink-50 dark:hover:from-indigo-900 dark:hover:via-purple-900 dark:hover:to-pink-900 rounded-xl transition-all duration-300 mb-4"
+                className="p-6 transition-all duration-200 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary border-b border-gray-100 dark:border-dark-border last:border-b-0"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -244,45 +241,83 @@ export function ModerationPanel() {
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-4">
+                      {/* Công khai / Riêng tư */}
                       <span
-                        className={`px-2 py-1 text-xs rounded-full font-medium transition-all ${
-                          event.isPublic
-                            ? "bg-gradient-to-r from-green-400 to-green-600 text-white hover:from-green-500 hover:to-green-700"
-                            : "bg-gradient-to-r from-orange-400 to-orange-600 text-white hover:from-orange-500 hover:to-orange-700"
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium shadow-sm border transition-all duration-200
+                            ${event.isPublic
+                            ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/30"
+                            : "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800 dark:hover:bg-yellow-900/30"
+                          }`}
                       >
+                        {event.isPublic
+                          ? <Globe className="h-3.5 w-3.5" />
+                          : <Lock className="h-3.5 w-3.5" />}
                         {event.isPublic ? "Công khai" : "Riêng tư"}
                       </span>
-                      <span className="px-2 py-1 text-xs rounded-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 text-gray-800 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 dark:text-gray-300">
-                        {event.category}
+
+                      {/* Danh mục */}
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium shadow-sm border
+                        bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 transition-all duration-200
+                        dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800/60"
+                      >
+                        <Tag className="h-3.5 w-3.5" /> {event.category}
                       </span>
+
+                      {/* Số người tham gia */}
                       {event.maxParticipants && (
-                        <span className="px-2 py-1 text-xs rounded-full bg-gradient-to-r from-blue-400 to-blue-600 text-white hover:from-blue-500 hover:to-blue-700">
-                          Giới hạn: {event.maxParticipants} người
+                        <span
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium shadow-sm border
+                          bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200 transition-all duration-200
+                          dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900/30"
+                        >
+                          <Users className="h-3.5 w-3.5" /> {event.maxParticipants} người
                         </span>
                       )}
                     </div>
+
+
                   </div>
 
                   {/* Buttons */}
                   <div className="flex flex-col space-y-2 ml-6">
+                    {/* Nút Duyệt */}
                     <button
                       onClick={() => handleApproveEvent(event.id)}
-                      className="flex items-center px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm"
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm 
+               bg-green-50 text-green-700 border border-green-200
+               hover:bg-green-100 hover:shadow-md transition-all duration-200
+               dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/30"
                     >
-                      <Check className="h-4 w-4 mr-1" /> Duyệt
+                      <Check className="w-4 h-4" />
+                      <span>Duyệt</span>
                     </button>
+
+                    {/* Nút Từ chối */}
                     <button
                       onClick={() => {
                         setSelectedEvent(event);
                         setShowRejectModal(true);
                       }}
-                      className="flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm 
+               bg-red-50 text-red-700 border border-red-200
+               hover:bg-red-100 hover:shadow-md transition-all duration-200
+               dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/30"
                     >
-                      <X className="h-4 w-4 mr-1" /> Từ chối
+                      <X className="w-4 h-4" />
+                      <span>Từ chối</span>
                     </button>
-                    <button className="flex items-center px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm">
-                      <Eye className="h-4 w-4 mr-1" /> Chi tiết
+
+                    {/* Nút Chi tiết */}
+                    <button
+                      onClick={() => navigate(`/events/${event.id}`)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm 
+               bg-gray-50 text-gray-700 border border-gray-200
+               hover:bg-gray-100 hover:shadow-md transition-all duration-200
+               dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800/60"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>Chi tiết</span>
                     </button>
                   </div>
                 </div>
@@ -302,7 +337,7 @@ export function ModerationPanel() {
 
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
           {
             title: "Chờ duyệt",

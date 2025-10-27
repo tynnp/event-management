@@ -23,7 +23,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const getAvatarUrl = (url?: string) => {
     if (!url) return "/default-avatar.png";
     if (url.startsWith("http")) return url;
-    return `http://localhost:5000/${url}`; 
+    return `http://localhost:5000/${url}`;
   };
 
   const handleLogout = () => {
@@ -111,9 +111,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               {/* User */}
               <div className="flex items-center space-x-3">
                 <div
-                  className="flex items-center space-x-2 cursor-pointer"
-                  onClick={handleOpenModal}
-                  title="Đổi mật khẩu"
+                  className="flex items-center space-x-2 select-none"
                 >
                   <div className="relative w-9 h-9 rounded-full ring-2 ring-indigo-400 dark:ring-indigo-500 shadow overflow-hidden">
                     <img
@@ -134,9 +132,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
                 {/* Settings */}
                 <button
+                  onClick={() => navigate("/profile")}
                   className="p-2 rounded-full text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 
-                dark:text-dark-text-tertiary dark:hover:text-indigo-400 dark:hover:bg-dark-bg-tertiary transition transform hover:rotate-90"
-                  title="Cài đặt"
+                  dark:text-dark-text-tertiary dark:hover:text-indigo-400 dark:hover:bg-dark-bg-tertiary 
+                  transition transform hover:rotate-90"
+                  title="Hồ sơ cá nhân"
                 >
                   <Settings className="h-5 w-5" />
                 </button>

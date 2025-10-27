@@ -25,3 +25,6 @@ dist-ssr
 .env
 #file upload directory
 uploads/
+
+#redis
+dump.rdb

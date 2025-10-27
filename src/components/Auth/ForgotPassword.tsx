@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, ArrowLeft, CheckCircle, KeyRound } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, Lock, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "../Layout/ThemeToggle";
 
 interface ForgotPasswordProps {
@@ -13,6 +13,7 @@ export function ForgotPassword({ onBack }: ForgotPasswordProps) {
   const [step, setStep] = useState<"email" | "otp" | "done">("email");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/email";
 
@@ -126,7 +127,7 @@ export function ForgotPassword({ onBack }: ForgotPasswordProps) {
             </form>
           ) : (
             <form className="space-y-6" onSubmit={handleResetPassword}>
-              <h2 className="text-center text-2xl font-bold text-gray-800 dark:text-white">
+              <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">
                 Xác nhận mã OTP
               </h2>
               {error && (
@@ -151,21 +152,29 @@ export function ForgotPassword({ onBack }: ForgotPasswordProps) {
               <div>
                 <label className="block text-sm mb-1">Mật khẩu mới</label>
                 <div className="relative">
-                  <KeyRound className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Nhập mật khẩu mới"
                     className="w-full pl-10 pr-10 p-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                      bg-white/90 dark:bg-gray-800/80
-                      text-gray-900 dark:text-gray-100
-                      placeholder-gray-400
-                      focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-                      transition-all"
+                    bg-white/90 dark:bg-gray-800/80
+                    text-gray-900 dark:text-gray-100
+                    placeholder-gray-400
+                    focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+                    transition-all"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
+
               </div>
               <button
                 type="submit"

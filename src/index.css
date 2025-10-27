@@ -28,6 +28,16 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400 dark:bg-gray-600;
   }
+
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none !important;
+  }
+
+  input::-webkit-credentials-auto-fill-button {
+    visibility: hidden !important;
+    display: none !important;
+  }
 }
 
 /* Dark mode component styles */

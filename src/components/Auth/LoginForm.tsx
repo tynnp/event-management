@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-hot-toast"; 
+import { toast } from "react-hot-toast";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "../Layout/ThemeToggle";
 import { ForgotPassword } from "./ForgotPassword";
@@ -14,6 +14,8 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registerData, setRegisterData] = useState({
     name: "",
     phone: "",
@@ -182,6 +184,7 @@ export function LoginForm() {
                   <div className="relative mt-1">
                     <Lock className="absolute left-3 top-2.5 h-5 w-5 text-indigo-500 dark:text-indigo-400" />
                     <input
+                      key={showPassword ? "text" : "password"}
                       type={showPassword ? "text" : "password"}
                       required
                       value={password}
@@ -286,36 +289,69 @@ export function LoginForm() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                     Mật khẩu
                   </label>
-                  <input
-                    type="password"
-                    required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    value={registerData.password}
-                    onChange={(e) =>
-                      setRegisterData((prev) => ({
-                        ...prev,
-                        password: e.target.value,
-                      }))
-                    }
-                  />
+                  <div className="relative mt-1">
+                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-indigo-500 dark:text-indigo-400" />
+                    <input
+                      type={showRegisterPassword ? "text" : "password"}
+                      required
+                      className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 
+                      bg-white/90 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 
+                      placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                      value={registerData.password}
+                      onChange={(e) =>
+                        setRegisterData((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      placeholder="Nhập mật khẩu"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                    >
+                      {showRegisterPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </div>
 
-                <div>
+                <div className="relative mt-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                     Xác nhận mật khẩu
                   </label>
-                  <input
-                    type="password"
-                    required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    value={registerData.confirmPassword}
-                    onChange={(e) =>
-                      setRegisterData((prev) => ({
-                        ...prev,
-                        confirmPassword: e.target.value,
-                      }))
-                    }
-                  />
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-indigo-500 dark:text-indigo-400" />
+
+                    {/* Ô nhập xác nhận mật khẩu */}
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 
+                      bg-white/90 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 
+                      placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                      value={registerData.confirmPassword}
+                      onChange={(e) =>
+                        setRegisterData((prev) => ({
+                          ...prev,
+                          confirmPassword: e.target.value,
+                        }))
+                      }
+                      placeholder="Nhập lại mật khẩu"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <button

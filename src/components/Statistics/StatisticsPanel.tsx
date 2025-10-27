@@ -1,5 +1,5 @@
 import { useApp } from "../../context/AppContext";
-import { Users, Calendar, CheckCircle, Clock, Star } from "lucide-react";
+import { Users, Calendar, CheckCircle, Clock, Star, XCircle } from "lucide-react";
 import {
   PieChart,
   Pie,
@@ -62,12 +62,12 @@ export function StatisticsPanel() {
       icon: Calendar,
       color: "bg-red-500",
     },
-    {
-      title: "Tổng lượt tham gia",
-      value: events.reduce((sum, e) => sum + e.participants.length, 0),
-      icon: Users,
-      color: "bg-purple-500",
-    },
+    // {
+    //   title: "Tổng lượt tham gia",
+    //   value: events.reduce((sum, e) => sum + e.participants.length, 0),
+    //   icon: Users,
+    //   color: "bg-purple-500",
+    // },
   ];
 
   const organizerStats = [
@@ -90,6 +90,12 @@ export function StatisticsPanel() {
       color: "bg-orange-500",
     },
     {
+      title: "Sự kiện bị từ chối",
+      value: myEvents.filter((e) => e.status === "cancelled").length,
+      icon: XCircle,
+      color: "bg-red-500"
+    },
+    {
       title: "Người tham gia sự kiện của tôi",
       value: myEvents.reduce((sum, e) => sum + e.participants.length, 0),
       icon: Users,
@@ -100,9 +106,9 @@ export function StatisticsPanel() {
       value:
         myEvents.length > 0
           ? (
-              myEvents.reduce((sum, e) => sum + (e.averageRating || 0), 0) /
-              myEvents.length
-            ).toFixed(1) + "/5.0"
+            myEvents.reduce((sum, e) => sum + (e.averageRating || 0), 0) /
+            myEvents.length
+          ).toFixed(1) + "/5.0"
           : "N/A",
       icon: Star,
       color: "bg-yellow-500",
@@ -142,6 +148,12 @@ export function StatisticsPanel() {
       value: myEvents.filter((e) => e.status === "pending").length,
       icon: Clock,
       color: "bg-orange-500",
+    },
+    {
+      title: "Sự kiện bị từ chối",
+      value: myEvents.filter((e) => e.status === "cancelled").length,
+      icon: XCircle,
+      color: "bg-red-500"
     },
     {
       title: "Người tham gia",
@@ -206,34 +218,27 @@ export function StatisticsPanel() {
 
   return (
     <div className="space-y-12">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
-          <span className="text-4xl animate-bounce">📊</span>
-          <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
-            Thống kê chi tiết
-          </span>
-        </h2>
-
-        <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
-          {currentUser.role === "admin"
-            ? "Tổng quan hệ thống + sự kiện đã tạo + sự kiện tham gia"
-            : currentUser.role === "moderator"
-            ? "Hoạt động tổ chức & tham gia sự kiện"
-            : "Hoạt động cá nhân của bạn"}
-        </p>
-      </div>
+      {currentUser?.role === "admin" && (
+        <div className="mb-8">
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
+            <span className="text-4xl animate-bounce">📊</span>
+            <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+              Thống kê tổng quan
+            </span>
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Tổng quan hoạt động người dùng và sự kiện trong toàn hệ thống
+          </p>
+        </div>
+      )}
 
       {/* --- Admin block --- */}
       {currentUser.role === "admin" && (
         <>
           {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6">
             {adminStats.map((stat, i) => (
-              <div
-                key={i}
-                className="relative group rounded-2xl p-6 bg-white dark:bg-dark-bg-secondary shadow-lg hover:shadow-2xl hover:-translate-y-2 transform transition-all duration-500 ease-[cubic-bezier(.2,1,.22,1)]"
-              >
+              <div key={i} className="card p-6 rounded-2xl shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-500 dark:text-dark-text-secondary">
@@ -311,12 +316,12 @@ export function StatisticsPanel() {
       {(currentUser.role === "admin" || currentUser.role === "moderator") && (
         <div className="space-y-6">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
-          <span className="text-4xl animate-bounce">📊</span>
-          <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
-            Thống kê sự kiện tôi tạo
-          </span>
-        </h2>
-          
+            <span className="text-4xl animate-bounce">📊</span>
+            <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+              Thống kê sự kiện tôi tạo
+            </span>
+          </h2>
+
 
           {/* Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -512,23 +517,22 @@ export function StatisticsPanel() {
                       </td>
                       <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border">
                         <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            event.status === "approved"
-                              ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
-                              : event.status === "pending"
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${event.status === "approved"
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                            : event.status === "pending"
                               ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
                               : event.status === "rejected"
-                              ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
-                              : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
-                          }`}
+                                ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+                                : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
+                            }`}
                         >
                           {event.status === "approved"
                             ? "Đã duyệt"
                             : event.status === "pending"
-                            ? "Chờ duyệt"
-                            : event.status === "rejected"
-                            ? "Bị từ chối"
-                            : "Đã hủy"}
+                              ? "Chờ duyệt"
+                              : event.status === "rejected"
+                                ? "Bị từ chối"
+                                : "Đã hủy"}
                         </span>
                       </td>
                       <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
@@ -556,10 +560,10 @@ export function StatisticsPanel() {
         <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
           <span className="text-4xl animate-bounce">📊</span>
           <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
-           Thống kê sự kiện tôi tham gia
+            Thống kê sự kiện tôi tham gia
           </span>
         </h2>
-      
+
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

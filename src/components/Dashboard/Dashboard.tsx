@@ -1,23 +1,25 @@
 import { useState, useEffect } from "react";
-import { Calendar, Users, Clock, Star, CheckCircle } from "lucide-react";
+import { Calendar, Users, Clock, Star, CheckCircle, Eye, MapPin, Pin } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export function Dashboard() {
   const { state } = useApp();
   const { currentUser } = state;
-  
+  const navigate = useNavigate();
+
   // API states
   const [events, setEvents] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [statistics, setStatistics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // API configuration
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
-  
+
   // Token function
   const getToken = (): string | null => {
     const keys = ['token', 'accessToken', 'authToken', 'currentUser', 'user'];
@@ -41,25 +43,25 @@ export function Dashboard() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const token = getToken();
         const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-        
+
         // Fetch events, users and statistics in parallel
         const promises = [
           axios.get(`${BASE}/events`, { headers }),
           axios.get(`${BASE}/users`, { headers })
         ];
-        
+
         // Only fetch statistics if user is admin
         if (currentUser?.role === 'admin') {
           promises.push(axios.get(`${BASE}/stats/system`, { headers }));
         }
-        
+
         const responses = await Promise.all(promises);
         const [eventsRes, usersRes, statsRes] = responses;
-        
+
         // Normalize events from backend (snake_case -> camelCase)
         const normalizedEvents = eventsRes.data?.map((e: any) => ({
           id: e.id,
@@ -81,10 +83,10 @@ export function Dashboard() {
           averageRating: e.average_rating || e.averageRating || 0,
           category: e.category_name || e.category
         })) || [];
-        
+
         setEvents(normalizedEvents);
         setUsers(usersRes.data || []);
-        
+
         // Set statistics if available (admin only)
         if (statsRes) {
           setStatistics(statsRes.data);
@@ -96,7 +98,7 @@ export function Dashboard() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -148,8 +150,8 @@ export function Dashboard() {
       title:
         currentUser?.role === "admin" ? "Tổng người dùng" : "Sự kiện đã tạo",
       value:
-        currentUser?.role === "admin" 
-          ? (statistics?.total_users ?? users.length) 
+        currentUser?.role === "admin"
+          ? (statistics?.total_users ?? users.length)
           : myCreatedEvents.length,
       icon: currentUser?.role === "admin" ? Users : Calendar,
       color: "bg-purple-500",
@@ -174,7 +176,7 @@ export function Dashboard() {
       case "moderator":
         return "Kiểm duyệt viên";
       default:
-        return null; 
+        return null;
     }
   };
 
@@ -332,7 +334,8 @@ export function Dashboard() {
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gradient-to-r from-indigo-500/10 to-pink-500/10">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
-            📌 Sự kiện gần đây
+            <Pin className="w-5 h-5 text-pink-500" />
+            <span>Sự kiện gần đây</span>
           </h2>
         </div>
 
@@ -351,35 +354,39 @@ export function Dashboard() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-dark-text-primary group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {event.title}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-1 flex items-center gap-1 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
-                    📍 {event.location}
+                  <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-1 flex items-center gap-1.5 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location}</span>
                   </p>
+
                   <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500 dark:text-dark-text-tertiary">
-                    <span className="flex items-center gap-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                      📅 {new Date(event.startTime).toLocaleDateString("vi-VN")}
+                    <span className="flex items-center gap-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(event.startTime).toLocaleDateString("vi-VN")}</span>
                     </span>
-                    <span className="flex items-center gap-1 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
-                      👥 {(event.participants ?? []).length} người tham gia
+                    <span className="flex items-center gap-1.5 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
+                      <Users className="w-4 h-4" />
+                      <span>{(event.participants ?? []).length} người tham gia</span>
                     </span>
                   </div>
                 </div>
 
-                {/* Status Badge */}
-                <span
-                  className={`px-3 py-1 text-xs font-semibold rounded-full shadow-md transition-all duration-300 ${
-                    event.status === "approved"
-                      ? "bg-gradient-to-r from-green-400 to-green-500 text-white group-hover:shadow-lg"
+                <button
+                  onClick={() => navigate(`/events/${event.id}`)}
+                  className={`relative inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm overflow-hidden transition-all duration-500 ease-in-out
+                  ${event.status === "approved"
+                      ? "bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-green-900/10 text-green-700 dark:text-green-300"
                       : event.status === "pending"
-                      ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-white group-hover:shadow-lg"
-                      : "bg-gradient-to-r from-red-400 to-red-500 text-white group-hover:shadow-lg"
-                  }`}
+                        ? "bg-gradient-to-r from-yellow-50 to-amber-100 dark:from-yellow-900/20 dark:to-amber-900/10 text-yellow-700 dark:text-yellow-300"
+                        : "bg-gradient-to-r from-red-50 to-pink-100 dark:from-red-900/20 dark:to-pink-900/10 text-red-700 dark:text-red-300"
+                    }
+                  hover:scale-105 hover:shadow-xl`}
                 >
-                  {event.status === "approved"
-                    ? "Đã duyệt"
-                    : event.status === "pending"
-                    ? "Chờ duyệt"
-                    : "Bị từ chối"}
-                </span>
+                  <div className="absolute inset-0 rounded-xl border border-transparent transition-all duration-300 group-hover:border-current" />
+                  <Eye className="w-4 h-4" />
+                  <span>Xem chi tiết</span>
+                </button>
+
               </div>
             </div>
           ))}
