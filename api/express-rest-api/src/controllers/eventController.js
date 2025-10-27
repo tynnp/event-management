@@ -1,14 +1,14 @@
 // file: api/express-rest-api/src/controllers/eventController.js
-const { getPostgresPool } = require('../config/database');
+const Event = require('../models/Event');
+const Category = require('../models/Category');
 const { v4: uuidv4 } = require('uuid');
-const { sendNotification } = require('./notificationController'); // 🔔 thêm dòng này
+const { sendNotification } = require('./notificationController');
 
 // CREATE: user tạo được nhưng chỉ moderator duyệt
 exports.createEvent = async (req, res) => {
-  const pool = getPostgresPool();
-  const { title, description, start_time, end_time, location, is_public, max_participants, category_id } = req.body;
-
   try {
+    const { title, description, start_time, end_time, location, is_public, max_participants, category_id } = req.body;
+
     // Nếu có upload hình
     let image_url = null;
     if (req.file) {
@@ -17,20 +17,17 @@ exports.createEvent = async (req, res) => {
     }
 
     const id = uuidv4();
-    await pool.query(
-      `INSERT INTO events (id, title, description, start_time, end_time, location, image_url, 
-        is_public, max_participants, created_by, category_id, status, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending',NOW())`,
-      [id, title, description, start_time, end_time, location, image_url, is_public, max_participants, req.user.id, category_id]
-    );
+    const eventData = {
+      id, title, description, start_time, end_time, location, image_url,
+      is_public, max_participants, created_by: req.user.id, category_id
+    };
+
+    await Event.create(eventData);
 
     // Nếu có ảnh upload -> chèn vào event_images
     if (image_url) {
       const imageId = uuidv4();
-      await pool.query(
-        'INSERT INTO event_images (id, event_id, image_url, uploaded_at) VALUES ($1, $2, $3, NOW())',
-        [imageId, id, image_url]
-      );
+      await Event.addImage(imageId, id, image_url);
     }
 
     res.status(201).json({ message: 'Event created and pending approval', eventId: id });
@@ -41,19 +38,9 @@ exports.createEvent = async (req, res) => {
 
 // READ: chỉ lấy các event được duyệt hoặc của chính mình
 exports.getEvents = async (req, res) => {
-  const pool = getPostgresPool();
-
   try {
-    let result;
-    if (req.user.role === 'admin' || req.user.role === 'moderator') {
-      result = await pool.query('SELECT * FROM events');
-    } else {
-      result = await pool.query(
-        'SELECT * FROM events WHERE status = $1 OR created_by = $2',
-        ['approved', req.user.id]
-      );
-    }
-    res.json(result.rows);
+    const events = await Event.findAll(req.user.id, req.user.role);
+    res.json(events);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching events', error: err.message });
   }
@@ -61,10 +48,8 @@ exports.getEvents = async (req, res) => {
 
 // DETAIL
 exports.getEventDetail = async (req, res) => {
-  const pool = getPostgresPool();
   try {
-    const result = await pool.query('SELECT * FROM events WHERE id = $1', [req.params.id]);
-    const event = result.rows[0];
+    const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: 'Event not found' });
 
     if (event.status !== 'approved' && event.created_by !== req.user.id && req.user.role === 'user') {
@@ -79,16 +64,13 @@ exports.getEventDetail = async (req, res) => {
 
 // APPROVE
 exports.approveEvent = async (req, res) => {
-  const pool = getPostgresPool();
-
   if (req.user.role !== 'moderator' && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Only moderator or admin can approve events' });
   }
 
   try {
-    const result = await pool.query('UPDATE events SET status=$1 WHERE id=$2 RETURNING *', ['approved', req.params.id]);
-    if (result.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
-    const event = result.rows[0];
+    const event = await Event.approve(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
 
     // 🔔 Gửi thông báo cho user tạo event
     await sendNotification(
@@ -107,20 +89,14 @@ exports.approveEvent = async (req, res) => {
 
 // REJECT
 exports.rejectEvent = async (req, res) => {
-  const pool = getPostgresPool();
-
   if (req.user.role !== 'moderator' && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Only moderator or admin can reject events' });
   }
 
   const { reason } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE events SET status=$1, rejection_reason=$2 WHERE id=$3 RETURNING *',
-      ['rejected', reason, req.params.id]
-    );
-    if (result.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
-    const event = result.rows[0];
+    const event = await Event.reject(req.params.id, reason);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
 
     // 🔔 Gửi thông báo cho user tạo event
     await sendNotification(
@@ -139,12 +115,10 @@ exports.rejectEvent = async (req, res) => {
 
 // UPDATE - improved
 exports.updateEvent = async (req, res) => {
-  const pool = getPostgresPool();
   const allowedFields = ['title','description','start_time','end_time','location','image_url','is_public','max_participants','category_id'];
   const payload = req.body;
 
   try {
-
     // Nếu có upload hình
     if (req.file) {
       const { buildImageUrl } = require('../middleware/uploadMiddleware');
@@ -152,41 +126,30 @@ exports.updateEvent = async (req, res) => {
 
       // Chèn vào event_images
       const imageId = uuidv4();
-      await pool.query(
-        'INSERT INTO event_images (id, event_id, image_url, uploaded_at) VALUES ($1, $2, $3, NOW())',
-        [imageId, req.params.id, payload.image_url]
-      );
+      await Event.addImage(imageId, req.params.id, payload.image_url);
     }
 
-    const check = await pool.query('SELECT created_by FROM events WHERE id = $1', [req.params.id]);
-    if (check.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
 
-    const event = check.rows[0];
-    const isOwner = event.created_by === req.user.id;
-    const canEdit = isOwner || req.user.role === 'moderator' || req.user.role === 'admin';
-
+    const canEdit = await Event.canEdit(req.params.id, req.user.id, req.user.role);
     if (!canEdit) return res.status(403).json({ message: 'Not authorized to edit this event' });
 
-    const updates = [];
-    const values = [];
-    let i = 1;
-
+    // Build updates object
+    const updates = {};
     for (const field of allowedFields) {
       if (Object.prototype.hasOwnProperty.call(payload, field) && payload[field] !== undefined) {
-        updates.push(`${field} = $${i++}`);
-        values.push(payload[field]);
+        updates[field] = payload[field];
       }
     }
 
-    if (updates.length === 0) {
+    if (Object.keys(updates).length === 0) {
       return res.status(400).json({ message: 'No valid fields to update' });
     }
 
-    values.push(req.params.id);
-    const query = `UPDATE events SET ${updates.join(', ')}, updated_at = NOW(), status = 'pending' WHERE id = $${i} RETURNING *`;
-    const result = await pool.query(query, values);
+    const updatedEvent = await Event.update(req.params.id, updates);
 
-    res.json({ message: 'Event updated and pending re-approval', event: result.rows[0] });
+    res.json({ message: 'Event updated and pending re-approval', event: updatedEvent });
   } catch (err) {
     res.status(500).json({ message: 'Error updating event', error: err.message });
   }
@@ -194,19 +157,16 @@ exports.updateEvent = async (req, res) => {
 
 // DELETE
 exports.deleteEvent = async (req, res) => {
-  const pool = getPostgresPool();
-
   try {
-    const result = await pool.query('SELECT created_by, title FROM events WHERE id = $1', [req.params.id]);
-    if (result.rowCount === 0) return res.status(404).json({ message: 'Event not found' });
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
 
-    const event = result.rows[0];
     const isOwner = event.created_by === req.user.id;
-    const canDelete = isOwner || req.user.role === 'moderator' || req.user.role === 'admin';
+    const canDelete = await Event.canDelete(req.params.id, req.user.id, req.user.role);
 
     if (!canDelete) return res.status(403).json({ message: 'Not authorized to delete this event' });
 
-    await pool.query('DELETE FROM events WHERE id = $1', [req.params.id]);
+    await Event.delete(req.params.id);
 
     // 🔔 Thông báo nếu moderator/admin xóa sự kiện của người khác
     if (!isOwner) {
@@ -226,12 +186,9 @@ exports.deleteEvent = async (req, res) => {
 };
 
 exports.getCategories = async (req, res) => {
-  const pool = getPostgresPool();
   try {
-    const result = await pool.query(
-      'SELECT id, name, description, color, icon, created_at FROM categories ORDER BY created_at DESC'
-    );
-    res.json(result.rows);
+    const categories = await Category.findAll();
+    res.json(categories);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching categories', error: err.message });
   }

@@ -1,14 +1,14 @@
 // file: api/express-rest-api/src/controllers/emailVerificationController.js
 const { connectRedis } = require('../config/redis');
 const { sendMail } = require('../utils/emailService');
-const { getPostgresPool } = require('../config/database');
+const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Gửi OTP để đổi email ????
+// Gửi OTP để đổi email
 exports.sendChangeEmailOTP = async (req, res) => {
   const { newEmail } = req.body;
   if (!newEmail) return res.status(400).json({ message: 'New email required' });
@@ -19,11 +19,9 @@ exports.sendChangeEmailOTP = async (req, res) => {
     return res.status(400).json({ message: 'Invalid email format' });
   }
 
-  const pool = getPostgresPool();
-
   // Kiểm tra email có bị trùng với người khác không
-  const exists = await pool.query('SELECT id FROM users WHERE email = $1', [newEmail]);
-  if (exists.rowCount > 0) {
+  const exists = await User.findByEmail(newEmail);
+  if (exists) {
     return res.status(400).json({ message: 'This email is already in use' });
   }
 
@@ -32,8 +30,8 @@ exports.sendChangeEmailOTP = async (req, res) => {
   await client.setEx(`changeEmail:${req.user.id}`, 300, JSON.stringify({ otp, newEmail }));
 
   // Lấy email hiện tại của user
-  const result = await pool.query('SELECT email FROM users WHERE id = $1', [req.user.id]);
-  const currentEmail = result.rows[0]?.email;
+  const user = await User.findById(req.user.id);
+  const currentEmail = user?.email;
   if (!currentEmail) {
     return res.status(404).json({ message: 'User email not found' });
   }
@@ -55,11 +53,7 @@ exports.verifyChangeEmailOTP = async (req, res) => {
   const { otp: storedOtp, newEmail } = JSON.parse(data);
   if (otp !== storedOtp) return res.status(400).json({ message: 'Invalid OTP' });
 
-  const pool = getPostgresPool();
-  await pool.query(
-    'UPDATE users SET email = $1, updated_at = NOW() WHERE id = $2',
-    [newEmail, req.user.id]
-  );
+  await User.updateProfile(req.user.id, { email: newEmail });
   await client.del(`changeEmail:${req.user.id}`);
 
   res.json({ message: 'Email changed successfully' });
@@ -70,9 +64,7 @@ exports.sendResetPasswordOTP = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: 'Email required' });
 
-  const pool = getPostgresPool();
-  const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-  const user = result.rows[0];
+  const user = await User.findByEmail(email);
   if (!user) return res.status(404).json({ message: 'Email not found' });
 
   const client = await connectRedis();
@@ -88,9 +80,7 @@ exports.sendResetPasswordOTP = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
 
-  const pool = getPostgresPool();
-  const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-  const user = result.rows[0];
+  const user = await User.findByEmail(email);
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   const client = await connectRedis();
@@ -99,10 +89,7 @@ exports.resetPassword = async (req, res) => {
   if (storedOtp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await pool.query(
-    'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
-    [hashedPassword, user.id]
-  );
+  await User.updatePassword(user.id, hashedPassword);
   await client.del(`resetPassword:${user.id}`);
 
   res.json({ message: 'Password reset successful' });

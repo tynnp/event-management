@@ -1,6 +1,10 @@
 //file: api/express-rest-api/src/controllers/statsController.js
 const { getPostgresPool } = require('../config/database');
 const Comment = require('../models/Comment');
+const User = require('../models/User');
+const Event = require('../models/Event');
+const Attendance = require('../models/Attendance');
+const Rating = require('../models/Rating');
 
 exports.eventStatistics = async (req, res) => {
   if (req.user.role !== 'admin') {
@@ -8,6 +12,7 @@ exports.eventStatistics = async (req, res) => {
   }
   const pool = getPostgresPool();
   try {
+    // Using database view for complex statistics
     const result = await pool.query('SELECT * FROM event_statistics');
     res.json(result.rows);
   } catch (err) {
@@ -36,32 +41,38 @@ exports.systemStatistics = async (req, res) => {
   const pool = getPostgresPool();
 
   try {
-    const [
-      totalUsers,
-      totalEvents,
-      pendingEvents,
-      approvedEvents,
-      totalParticipants,
-      upcomingEvents,
-      avgRating
-    ] = await Promise.all([
-      pool.query('SELECT COUNT(*) AS total FROM users'),
-      pool.query('SELECT COUNT(*) AS total FROM events'),
-      pool.query(`SELECT COUNT(*) AS total FROM events WHERE status = 'pending'`),
-      pool.query(`SELECT COUNT(*) AS total FROM events WHERE status = 'approved'`),
-      pool.query('SELECT COUNT(*) AS total FROM participants'),
-      pool.query('SELECT COUNT(*) AS total FROM events WHERE start_time > NOW() AND status = \'approved\''),
-      pool.query('SELECT COALESCE(AVG(rating), 0)::numeric(10,2) AS average FROM ratings'),
-    ]);
+    // Get all events to calculate statistics
+    const allEvents = await Event.findAll(null, 'admin'); // Get all events for admin
+    
+    const allUsers = await User.findAll();
+    
+    // Count events by status
+    const pendingEvents = allEvents.filter(e => e.status === 'pending').length;
+    const approvedEvents = allEvents.filter(e => e.status === 'approved').length;
+    
+    // Count upcoming approved events
+    const now = new Date();
+    const upcomingEvents = allEvents.filter(e => 
+      e.status === 'approved' && new Date(e.start_time) > now
+    ).length;
+
+    // Get average rating using view or direct query
+    const avgRatingResult = await pool.query(
+      'SELECT COALESCE(AVG(rating), 0)::numeric(10,2) AS average FROM ratings'
+    );
+    
+    // Get total participants count
+    const allParticipants = await Attendance.findByEvent(null); // Would need to modify model for this
+    const totalParticipantsResult = await pool.query('SELECT COUNT(*) AS total FROM participants');
 
     res.json({
-      total_users: parseInt(totalUsers.rows[0].total, 10),
-      total_events: parseInt(totalEvents.rows[0].total, 10),
-      pending_events: parseInt(pendingEvents.rows[0].total, 10),
-      approved_events: parseInt(approvedEvents.rows[0].total, 10),
-      total_participations: parseInt(totalParticipants.rows[0].total, 10),
-      upcoming_events: parseInt(upcomingEvents.rows[0].total, 10),
-      average_rating: parseFloat(avgRating.rows[0].average),
+      total_users: allUsers.length,
+      total_events: allEvents.length,
+      pending_events: pendingEvents,
+      approved_events: approvedEvents,
+      total_participations: parseInt(totalParticipantsResult.rows[0].total, 10),
+      upcoming_events: upcomingEvents,
+      average_rating: parseFloat(avgRatingResult.rows[0].average),
     });
   } catch (err) {
     console.error('Error fetching system statistics:', err);

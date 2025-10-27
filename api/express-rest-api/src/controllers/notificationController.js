@@ -1,15 +1,18 @@
-const { getPostgresPool } = require('../config/database');
+const Notification = require('../models/Notification');
 const { v4: uuidv4 } = require('uuid');
+const { getPostgresPool } = require('../config/database');
 
 // Gửi thông báo (dùng nội bộ)
 exports.sendNotification = async (userId, title, message, type, relatedEventId = null) => {
-  const pool = getPostgresPool();
   try {
-    await pool.query(
-      `INSERT INTO notifications (id, user_id, title, message, type, related_event_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [uuidv4(), userId, title, message, type, relatedEventId]
-    );
+    await Notification.create({
+      id: uuidv4(),
+      user_id: userId,
+      title,
+      message,
+      type,
+      related_event_id: relatedEventId
+    });
   } catch (err) {
     console.error('Error sending notification:', err.message);
   }
@@ -22,7 +25,7 @@ exports.getAllNotifications = async (req, res) => {
     let result;
 
     if (req.user.role === 'admin' || req.user.role === 'moderator') {
-      // Admin/mod xem tất cả
+      // Admin/mod xem tất cả - cần join với users để lấy name
       result = await pool.query(`
         SELECT n.*, u.name AS user_name
         FROM notifications n
@@ -30,14 +33,17 @@ exports.getAllNotifications = async (req, res) => {
         ORDER BY n.created_at DESC
       `);
     } else {
-      // User thường chỉ xem của chính mình
-      result = await pool.query(`
-        SELECT n.*, u.name AS user_name
-        FROM notifications n
-        LEFT JOIN users u ON n.user_id = u.id
-        WHERE n.user_id = $1
-        ORDER BY n.created_at DESC
-      `, [req.user.id]);
+      // User thường chỉ xem của chính mình với user_name
+      const notifications = await Notification.findByUser(req.user.id);
+      const User = require('../models/User');
+      const user = await User.findById(req.user.id);
+      
+      result = {
+        rows: notifications.map(n => ({
+          ...n,
+          user_name: user.name
+        }))
+      };
     }
 
     res.json(result.rows);
@@ -49,31 +55,24 @@ exports.getAllNotifications = async (req, res) => {
 
 // Đánh dấu đã đọc
 exports.markAsRead = async (req, res) => {
-  const pool = getPostgresPool();
   const notificationId = req.params.id;
 
   try {
     // Kiểm tra xem thông báo có tồn tại và thuộc về user không
-    const check = await pool.query(
-      `SELECT user_id FROM notifications WHERE id = $1`,
-      [notificationId]
-    );
+    const notification = await Notification.findById(notificationId);
 
-    if (check.rows.length === 0) {
+    if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
 
-    const ownerId = check.rows[0].user_id;
+    const ownerId = notification.user_id;
 
     // Nếu user không phải admin hoặc chủ sở hữu thì không được đánh dấu
     if (req.user.role !== 'admin' && req.user.id !== ownerId) {
       return res.status(403).json({ message: 'Not authorized to mark this notification' });
     }
 
-    await pool.query(
-      `UPDATE notifications SET is_read = true WHERE id = $1`,
-      [notificationId]
-    );
+    await Notification.markAsRead(notificationId);
 
     res.json({ message: 'Notification marked as read' });
   } catch (err) {
@@ -84,13 +83,12 @@ exports.markAsRead = async (req, res) => {
 
 // Xóa thông báo
 exports.deleteNotification = async (req, res) => {
-  const pool = getPostgresPool();
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Admins only' });
   }
 
   try {
-    await pool.query(`DELETE FROM notifications WHERE id = $1`, [req.params.id]);
+    await Notification.delete(req.params.id);
     res.json({ message: 'Notification deleted' });
   } catch (err) {
     console.error('Error deleting notification:', err.message);

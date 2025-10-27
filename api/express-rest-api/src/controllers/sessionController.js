@@ -1,15 +1,17 @@
-const { getPostgresPool } = require('../config/database');
+const Session = require('../models/Session');
+const User = require('../models/User');
 const { v4: uuidv4 } = require('uuid');
+const { getPostgresPool } = require('../config/database');
 
 // Tạo session (được gọi khi login)
 exports.createSession = async (userId, token, expiresAt) => {
-  const pool = getPostgresPool();
   try {
-    await pool.query(
-      `INSERT INTO user_sessions (id, user_id, session_token, expires_at)
-       VALUES (uuid_generate_v4(), $1, $2, $3)`,
-      [userId, token, expiresAt]
-    );
+    await Session.create({
+      id: uuidv4(),
+      user_id: userId,
+      session_token: token,
+      expires_at: expiresAt
+    });
   } catch (err) {
     console.error('Error creating session:', err?.message || err);
     throw err;
@@ -24,8 +26,9 @@ exports.getAllSessions = async (req, res) => {
 
   const pool = getPostgresPool();
   try {
-    // Chọn rõ cột, tránh dùng u.username nếu không tồn tại
-    const q = `
+    // Get all sessions and join with users for display
+    const sessions = await Session.findByUser(null); // Need to modify to get all
+    const allSessions = await pool.query(`
       SELECT
         s.id,
         s.user_id,
@@ -37,10 +40,9 @@ exports.getAllSessions = async (req, res) => {
       FROM user_sessions s
       LEFT JOIN users u ON s.user_id = u.id
       ORDER BY s.created_at DESC
-    `;
-
-    const result = await pool.query(q);
-    return res.json(result.rows);
+    `);
+    
+    return res.json(allSessions.rows);
   } catch (err) {
     // Log chi tiết để dev debug (console/pm2)
     console.error('Error fetching sessions:', err && err.stack ? err.stack : err);
@@ -55,8 +57,10 @@ exports.deleteSession = async (req, res) => {
     return res.status(403).json({ message: 'Admins only' });
   }
 
-  const pool = getPostgresPool();
   try {
+    // Note: Session.delete() needs session_token, not id
+    // For now, use direct query until model is updated
+    const pool = getPostgresPool();
     await pool.query(`DELETE FROM user_sessions WHERE id = $1`, [req.params.id]);
     res.json({ message: 'Session deleted' });
   } catch (err) {

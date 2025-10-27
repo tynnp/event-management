@@ -1,38 +1,152 @@
 //file: api/express-rest-api/src/models/Event.js
-const mongoose = require('mongoose');
+const { getPostgresPool } = require('../config/database');
 
-const eventSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true,
-    },
-    description: {
-        type: String,
-        required: true,
-    },
-    date: {
-        type: Date,
-        required: true,
-    },
-    location: {
-        type: String,
-        required: true,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now,
-    },
-});
+class Event {
+  // Create new event
+  static async create(eventData) {
+    const pool = getPostgresPool();
+    const { id, title, description, start_time, end_time, location, image_url, is_public, max_participants, created_by, category_id } = eventData;
+    
+    const result = await pool.query(
+      `INSERT INTO events (id, title, description, start_time, end_time, location, image_url, 
+        is_public, max_participants, created_by, category_id, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', NOW()) RETURNING *`,
+      [id, title, description, start_time, end_time, location, image_url, is_public, max_participants, created_by, category_id]
+    );
+    
+    return result.rows[0];
+  }
 
-eventSchema.pre('save', function(next) {
-    this.updatedAt = Date.now();
-    next();
-});
+  // Add event image
+  static async addImage(imageId, eventId, imageUrl) {
+    const pool = getPostgresPool();
+    await pool.query(
+      'INSERT INTO event_images (id, event_id, image_url, uploaded_at) VALUES ($1, $2, $3, NOW())',
+      [imageId, eventId, imageUrl]
+    );
+  }
 
-const Event = mongoose.model('Event', eventSchema);
+  // Find by ID
+  static async findById(eventId) {
+    const pool = getPostgresPool();
+    const result = await pool.query(
+      'SELECT * FROM events WHERE id = $1',
+      [eventId]
+    );
+    return result.rows[0];
+  }
+
+  // Find all events (with filters)
+  static async findAll(userId, userRole) {
+    const pool = getPostgresPool();
+    let result;
+    
+    if (userRole === 'admin' || userRole === 'moderator') {
+      result = await pool.query('SELECT * FROM events ORDER BY created_at DESC');
+    } else {
+      result = await pool.query(
+        'SELECT * FROM events WHERE status = $1 OR created_by = $2 ORDER BY created_at DESC',
+        ['approved', userId]
+      );
+    }
+    
+    return result.rows;
+  }
+
+  // Update event
+  static async update(eventId, updates) {
+    const pool = getPostgresPool();
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+
+    for (const [key, value] of Object.entries(updates)) {
+      fields.push(`${key} = $${paramIndex}`);
+      values.push(value);
+      paramIndex++;
+    }
+
+    if (fields.length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    fields.push(`updated_at = NOW()`);
+    fields.push(`status = 'pending'`);
+    values.push(eventId);
+    
+    const query = `UPDATE events SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+    
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  }
+
+  // Approve event
+  static async approve(eventId) {
+    const pool = getPostgresPool();
+    const result = await pool.query(
+      'UPDATE events SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      ['approved', eventId]
+    );
+    return result.rows[0];
+  }
+
+  // Reject event
+  static async reject(eventId, reason) {
+    const pool = getPostgresPool();
+    const result = await pool.query(
+      'UPDATE events SET status = $1, rejection_reason = $2, updated_at = NOW() WHERE id = $3 RETURNING *',
+      ['rejected', reason, eventId]
+    );
+    return result.rows[0];
+  }
+
+  // Delete event
+  static async delete(eventId) {
+    const pool = getPostgresPool();
+    const result = await pool.query('DELETE FROM events WHERE id = $1', [eventId]);
+    return result.rowCount > 0;
+  }
+
+  // Get event statistics
+  static async getStatistics(eventId) {
+    const pool = getPostgresPool();
+    const result = await pool.query(
+      `SELECT e.*, 
+         COUNT(p.id) as current_participants,
+         u.name as creator_name,
+         c.name as category_name
+       FROM events e
+       LEFT JOIN participants p ON e.id = p.event_id
+       LEFT JOIN users u ON e.created_by = u.id
+       LEFT JOIN categories c ON e.category_id = c.id
+       WHERE e.id = $1
+       GROUP BY e.id, u.name, c.name`,
+      [eventId]
+    );
+    return result.rows[0];
+  }
+
+  // Check if user can edit event
+  static async canEdit(eventId, userId, userRole) {
+    const pool = getPostgresPool();
+    const result = await pool.query('SELECT created_by FROM events WHERE id = $1', [eventId]);
+    
+    if (result.rows.length === 0) return false;
+    
+    const event = result.rows[0];
+    return event.created_by === userId || userRole === 'moderator' || userRole === 'admin';
+  }
+
+  // Check if user can delete event
+  static async canDelete(eventId, userId, userRole) {
+    const pool = getPostgresPool();
+    const result = await pool.query('SELECT created_by FROM events WHERE id = $1', [eventId]);
+    
+    if (result.rows.length === 0) return false;
+    
+    const event = result.rows[0];
+    return event.created_by === userId || userRole === 'moderator' || userRole === 'admin';
+  }
+}
 
 module.exports = Event;
