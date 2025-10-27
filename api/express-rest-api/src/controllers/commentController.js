@@ -16,7 +16,23 @@ exports.addComment = async (req, res) => {
       parentId: parentId || null,
     });
     await comment.save();
-    res.status(201).json(comment);
+    
+    // Nếu là reply, thêm comment này vào danh sách replies của parent
+    if (parentId) {
+      const parentComment = await Comment.findById(parentId);
+      if (!parentComment) {
+        return res.status(404).json({ message: 'Parent comment not found' });
+      }
+      // Kiểm tra xem comment đã có trong replies chưa
+      const commentIdStr = comment._id.toString();
+      const existingReply = parentComment.replies.find(r => r.toString() === commentIdStr);
+      if (!existingReply) {
+        parentComment.replies.push(comment._id);
+        await parentComment.save();
+      }
+    }
+    
+    res.status(201).json({ data: comment });
   } catch (err) {
     res.status(500).json({ message: 'Error adding comment', error: err.message });
   }
@@ -26,14 +42,23 @@ exports.getCommentsByEvent = async (req, res) => {
   try {
     const userRole = req.user?.role || 'user'; // optional auth
     let filter = { eventId: req.params.eventId };
-
+    
+    // Chỉ lấy parent comments (không có parentId), populate replies
+    let parentFilter = { ...filter, parentId: null };
+    
     // Nếu không phải admin, chỉ show comment chưa bị ẩn
     if (userRole !== 'admin') {
-      filter.isHidden = false;
+      parentFilter.isHidden = false;
     }
 
-    const comments = await Comment.find(filter).populate('replies');
-    res.json(comments);
+    const parentComments = await Comment.find(parentFilter)
+      .populate({
+        path: 'replies',
+        match: userRole === 'admin' ? {} : { isHidden: false }
+      })
+      .sort({ createdAt: -1 });
+    
+    res.json(parentComments);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching comments', error: err.message });
   }

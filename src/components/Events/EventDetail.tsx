@@ -136,7 +136,15 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             createdAt: c.createdAt,
             isHidden: c.isHidden || false,
             parentId: c.parentId,
-            replies: c.replies || []
+            replies: (c.replies || []).map((r: any) => ({
+              id: r._id || r.id,
+              eventId: r.eventId,
+              userId: r.userId,
+              content: r.content,
+              createdAt: r.createdAt,
+              isHidden: r.isHidden || false,
+              parentId: r.parentId
+            }))
           }));
         } catch (err) {
           console.warn('Could not fetch comments:', err);
@@ -236,15 +244,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const userParticipant = participants.find((p: any) => p.userId === currentUser?.id);
 
   // comments grouping and visibility
-  const allEventComments: Comment[] = [...(commentsOfEvent || []), ...(comments.filter((c: Comment) => c.eventId === event.id) || [])];
-  const groupedComments = allEventComments.reduce<Record<string, Comment & { replies: Comment[] }>>((acc, comment) => {
-    if (!comment.parentId) {
-      acc[comment.id] = { ...comment, replies: allEventComments.filter((c) => c.parentId === comment.id) };
-    }
-    return acc;
-  }, {});
-  const visibleComments = Object.values(groupedComments).filter((c) => !c.isHidden);
-  const hiddenComments = Object.values(groupedComments).filter((c) => c.isHidden);
+  // Backend đã trả về comments với replies đã populated, chỉ cần filter hidden/visible
+  const visibleComments = (commentsOfEvent || []).filter((c) => !c.isHidden);
+  const hiddenComments = (commentsOfEvent || []).filter((c) => c.isHidden);
   const allComments = showHiddenComments ? [...visibleComments, ...hiddenComments] : visibleComments;
 
   // formatting
@@ -267,10 +269,42 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
       const created: Comment = res.data?.data ?? res.data;
-      setRemoteEvent((prev) => {
-        if (!prev) return prev;
-        return { ...prev, comments: [...(prev.comments ?? []), created] };
-      });
+      
+      // Refetch comments từ backend để có đúng structure (cả comment mới và reply)
+      try {
+        const commentRes = await axios.get(`${BASE}/chats/comments/${payload.eventId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const comments = (commentRes.data || []).map((c: any) => ({
+          id: c._id || c.id,
+          eventId: c.eventId,
+          userId: c.userId,
+          content: c.content,
+          createdAt: c.createdAt,
+          isHidden: c.isHidden || false,
+          parentId: c.parentId,
+          replies: (c.replies || []).map((r: any) => ({
+            id: r._id || r.id,
+            eventId: r.eventId,
+            userId: r.userId,
+            content: r.content,
+            createdAt: r.createdAt,
+            isHidden: r.isHidden || false,
+            parentId: r.parentId
+          }))
+        }));
+        setRemoteEvent((prev) => {
+          if (!prev) return prev;
+          return { ...prev, comments };
+        });
+      } catch (err) {
+        console.warn('Could not refetch comments:', err);
+        // Fallback: add to local state anyway
+        setRemoteEvent((prev) => {
+          if (!prev) return prev;
+          return { ...prev, comments: [...(prev.comments ?? []), created] };
+        });
+      }
 
       dispatch?.({ type: "ADD_COMMENT", payload: created });
       setNewComment("");
