@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Eye,
   Check,
@@ -10,40 +10,160 @@ import {
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event } from "../../types";
+import axios from "axios";
 
 export function ModerationPanel() {
   const { state, dispatch } = useApp();
   const { events, users, comments, currentUser } = state;
+  
+  const [loading, setLoading] = useState(false);
+  const [pendingEvents, setPendingEvents] = useState<Event[]>([]);
+  const [allEventsStats, setAllEventsStats] = useState<Event[]>([]);
+  
+  const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+  const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
+  
+  const getToken = (): string | null => {
+    const keys = ['token', 'accessToken', 'authToken', 'currentUser', 'user'];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.token) return parsed.token;
+        if (parsed?.accessToken) return parsed.accessToken;
+        if (parsed?.data?.token) return parsed.data.token;
+      } catch {
+        if (raw && raw.length < 500) return raw;
+      }
+    }
+    return null;
+  };
+  
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      try {
+        const token = getToken();
+        const res = await axios.get(`${BASE}/events`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const allEvents = res.data || [];
+        setAllEventsStats(allEvents);
+        const pending = allEvents.filter((e: Event) => e.status === 'pending');
+        setPendingEvents(pending);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEvents();
+  }, []);
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
 
-  const pendingEvents = events.filter((event) => event.status === "pending");
   const reportedComments = comments.filter((comment) => !comment.isHidden);
 
-  const handleApproveEvent = (eventId: string) => {
-    dispatch({ type: "APPROVE_EVENT", payload: eventId });
+  const refreshEvents = async () => {
+    const token = getToken();
+    const res = await axios.get(`${BASE}/events`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    const allEvents = res.data || [];
+    setAllEventsStats(allEvents);
+    const pending = allEvents.filter((e: Event) => e.status === 'pending');
+    setPendingEvents(pending);
   };
 
-  const handleRejectEvent = (eventId: string, reason: string) => {
-    dispatch({ type: "REJECT_EVENT", payload: { eventId, reason } });
-    setShowRejectModal(false);
-    setRejectionReason("");
-    setSelectedEvent(null);
+  const handleApproveEvent = async (eventId: string) => {
+    try {
+      const token = getToken();
+      await axios.put(
+        `${BASE}/events/${eventId}/approve`,
+        {},
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      
+      // Refresh events
+      await refreshEvents();
+      
+      alert("Sự kiện đã được duyệt thành công!");
+      dispatch({ type: "APPROVE_EVENT", payload: eventId });
+    } catch (err: any) {
+      alert(err.response?.data?.message ?? "Không thể duyệt sự kiện.");
+    }
   };
 
-  const handleHideComment = (commentId: string) => {
-    dispatch({ type: "HIDE_COMMENT", payload: commentId });
+  const handleRejectEvent = async (eventId: string, reason: string) => {
+    try {
+      const token = getToken();
+      await axios.put(
+        `${BASE}/events/${eventId}/reject`,
+        { reason },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      
+      // Refresh events
+      await refreshEvents();
+      
+      alert("Sự kiện đã bị từ chối.");
+      
+      setShowRejectModal(false);
+      setRejectionReason("");
+      setSelectedEvent(null);
+      dispatch({ type: "REJECT_EVENT", payload: { eventId, reason } });
+    } catch (err: any) {
+      alert(err.response?.data?.message ?? "Không thể từ chối sự kiện.");
+    }
   };
 
-  const handleUnhideComment = (commentId: string) => {
-    dispatch({ type: "UNHIDE_COMMENT", payload: commentId });
+  const handleHideComment = async (commentId: string) => {
+    try {
+      const token = getToken();
+      await axios.patch(
+        `${BASE}/chats/${commentId}`,
+        { action: 'hide' },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      dispatch({ type: "HIDE_COMMENT", payload: commentId });
+      alert("Đã ẩn bình luận");
+    } catch (err: any) {
+      alert(err.response?.data?.message ?? "Không thể ẩn bình luận.");
+    }
   };
 
-  const handleDeleteComment = (commentId: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa bình luận này?")) {
+  const handleUnhideComment = async (commentId: string) => {
+    try {
+      const token = getToken();
+      await axios.patch(
+        `${BASE}/chats/${commentId}`,
+        { action: 'unhide' },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      dispatch({ type: "UNHIDE_COMMENT", payload: commentId });
+      alert("Đã hiện lại bình luận");
+    } catch (err: any) {
+      alert(err.response?.data?.message ?? "Không thể hiện bình luận.");
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+    try {
+      const token = getToken();
+      await axios.patch(
+        `${BASE}/chats/${commentId}`,
+        { action: 'delete' },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
       dispatch({ type: "DELETE_COMMENT", payload: commentId });
+      alert("Đã xóa bình luận");
+    } catch (err: any) {
+      alert(err.response?.data?.message ?? "Không thể xóa bình luận.");
     }
   };
 
@@ -263,13 +383,13 @@ export function ModerationPanel() {
           },
           {
             title: "Đã duyệt",
-            count: events.filter((e) => e.status === "approved").length,
+            count: allEventsStats.filter((e) => e.status === "approved").length,
             icon: Check,
             color: "green",
           },
           {
             title: "Bị từ chối",
-            count: events.filter((e) => e.status === "rejected").length,
+            count: allEventsStats.filter((e) => e.status === "rejected").length,
             icon: X,
             color: "red",
           },
