@@ -20,6 +20,7 @@ const emailRoutes = require('./routes/emailRoutes');
 const notificationRoutes = require('./routes/notifications');
 const sessionRoutes = require('./routes/sessions');
 const auditRoutes = require('./routes/audit');
+const categoryRoutes = require('./routes/categoryRoutes');
 
 dotenv.config();
 
@@ -66,6 +67,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/categories', authMiddleware, categoryRoutes);
 
 // ---------------------------
 // ERROR HANDLER

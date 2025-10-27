@@ -224,3 +224,15 @@ exports.deleteEvent = async (req, res) => {
     res.status(500).json({ message: 'Error deleting event', error: err.message });
   }
 };
+
+exports.getCategories = async (req, res) => {
+  const pool = getPostgresPool();
+  try {
+    const result = await pool.query(
+      'SELECT id, name, description, color, icon, created_at FROM categories ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching categories', error: err.message });
+  }
+};

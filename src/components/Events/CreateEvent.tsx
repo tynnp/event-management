@@ -1,5 +1,5 @@
-//file: src/components/Events/CreateEvent.tsx
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   MapPin,
@@ -37,51 +37,6 @@ interface FormErrors {
   maxParticipants?: string;
 }
 
-const categories = [
-  {
-    id: "550e8400-e29b-41d4-a716-446655440001",
-    name: "Công nghệ",
-    description: "Sự kiện về công nghệ, lập trình, AI",
-    color: "#3B82F6",
-    icon: "laptop",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440002",
-    name: "Giáo dục",
-    description: "Hội thảo, khóa học, workshop",
-    color: "#10B981",
-    icon: "book-open",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440003",
-    name: "Thể thao",
-    description: "Các sự kiện thể thao, fitness",
-    color: "#F59E0B",
-    icon: "dumbbell",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440004",
-    name: "Văn hóa",
-    description: "Triển lãm, biểu diễn, nghệ thuật",
-    color: "#8B5CF6",
-    icon: "palette",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440005",
-    name: "Kinh doanh",
-    description: "Networking, startup, đầu tư",
-    color: "#EF4444",
-    icon: "briefcase",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440006",
-    name: "Giải trí",
-    description: "Party, concert, game",
-    color: "#EC4899",
-    icon: "music",
-  },
-];
-
 export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
   const { state, dispatch } = useApp();
   const { currentUser } = state;
@@ -90,19 +45,57 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
+  const [categories, setCategories] = useState<
+    { id: string; name: string; description: string }[]
+  >([]);
+
   const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
     startTime: "",
     endTime: "",
     location: "",
-    category: categories[0].id, 
+    category: "",
     isPublic: true,
     maxParticipants: "",
     image: undefined,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const RAW_BASE =
+          (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+        const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
+
+        const token = getToken();
+        if (!token) {
+          console.warn("Không có token, không thể tải danh mục");
+          return;
+        }
+
+        const res = await axios.get(`${BASE}/categories`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (Array.isArray(res.data)) {
+          setCategories(res.data);
+          if (res.data.length > 0)
+            setFormData((prev) => ({ ...prev, category: res.data[0].id }));
+        } else {
+          console.warn("API /categories trả về dữ liệu không hợp lệ:", res.data);
+        }
+      } catch (err) {
+        console.error("Không thể tải danh mục:", err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const getToken = (): string | null => {
     const keys = ['token', 'accessToken', 'authToken', 'currentUser', 'user'];
@@ -124,8 +117,8 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
 
   const clearAuth = () => {
     try {
-      ['token','accessToken','authToken','currentUser','user'].forEach(k => localStorage.removeItem(k));
-    } catch {}
+      ['token', 'accessToken', 'authToken', 'currentUser', 'user'].forEach(k => localStorage.removeItem(k));
+    } catch { }
   };
 
   const handleInputChange = (field: keyof FormData, value: string | boolean | File | undefined) => {
@@ -173,82 +166,82 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  setLoading(true);
-  try {
-    const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
-    const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
+    setLoading(true);
+    try {
+      const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+      const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
 
-    const token = getToken();
-    if (!token) {
-      clearAuth();
-      navigate('/login');
-      return;
-    }
-
-    const payload = new FormData();
-    payload.append('title', formData.title);
-    payload.append('description', formData.description);
-    payload.append('start_time', formData.startTime);
-    payload.append('end_time', formData.endTime);
-    payload.append('location', formData.location);
-    payload.append('is_public', String(formData.isPublic));
-    if (formData.maxParticipants)
-      payload.append('max_participants', formData.maxParticipants);
-    payload.append('category_id', formData.category);
-    if (formData.image) payload.append('image', formData.image);
-
-    const res = await fetch(`${BASE}/events`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: payload,
-      credentials: 'include',
-    });
-
-    if (!res.ok) {
-      const status = res.status;
-      let bodyText = '';
-      try {
-        bodyText = JSON.stringify(await res.json());
-      } catch {
-        bodyText = await res.text();
-      }
-      console.error(`[CreateEvent] Server returned ${status}:`, bodyText);
-
-      if (status === 401) {
+      const token = getToken();
+      if (!token) {
         clearAuth();
-        navigate('/login', { replace: true });
+        navigate('/login');
         return;
       }
 
-      // ⚠️ thêm alert báo lỗi
-      alert("Không thể tạo sự kiện. Vui lòng thử lại!");
-      throw new Error(`Server ${status}: ${bodyText}`);
+      const payload = new FormData();
+      payload.append('title', formData.title);
+      payload.append('description', formData.description);
+      payload.append('start_time', formData.startTime);
+      payload.append('end_time', formData.endTime);
+      payload.append('location', formData.location);
+      payload.append('is_public', String(formData.isPublic));
+      if (formData.maxParticipants)
+        payload.append('max_participants', formData.maxParticipants);
+      payload.append('category_id', formData.category);
+      if (formData.image) payload.append('image', formData.image);
+
+      const res = await fetch(`${BASE}/events`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: payload,
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const status = res.status;
+        let bodyText = '';
+        try {
+          bodyText = JSON.stringify(await res.json());
+        } catch {
+          bodyText = await res.text();
+        }
+        console.error(`[CreateEvent] Server returned ${status}:`, bodyText);
+
+        if (status === 401) {
+          clearAuth();
+          navigate('/login', { replace: true });
+          return;
+        }
+
+        // ⚠️ thêm alert báo lỗi
+        alert("Không thể tạo sự kiện. Vui lòng thử lại!");
+        throw new Error(`Server ${status}: ${bodyText}`);
+      }
+
+      // ✅ thêm alert khi thành công
+      alert("🎉 Sự kiện đã được tạo thành công! Đang chờ duyệt...");
+
+      const created = await res.json().catch(() => null);
+      if (created && dispatch) {
+        try {
+          const ev = created.event ?? created.data ?? created;
+          dispatch({ type: 'CREATE_EVENT', payload: ev });
+        } catch { }
+      }
+
+      if (onSuccess) onSuccess();
+    } catch (err: any) {
+      console.error("Error creating event:", err);
+      // ⚠️ thêm alert nếu gặp lỗi bất ngờ
+      alert(err?.message || "Có lỗi xảy ra khi tạo sự kiện");
+    } finally {
+      setLoading(false);
     }
-
-    // ✅ thêm alert khi thành công
-    alert("🎉 Sự kiện đã được tạo thành công! Đang chờ duyệt...");
-
-    const created = await res.json().catch(() => null);
-    if (created && dispatch) {
-      try {
-        const ev = created.event ?? created.data ?? created;
-        dispatch({ type: 'CREATE_EVENT', payload: ev });
-      } catch {}
-    }
-
-    if (onSuccess) onSuccess();
-  } catch (err: any) {
-    console.error("Error creating event:", err);
-    // ⚠️ thêm alert nếu gặp lỗi bất ngờ
-    alert(err?.message || "Có lỗi xảy ra khi tạo sự kiện");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
@@ -291,11 +284,10 @@ const handleSubmit = async (e: React.FormEvent) => {
             bg-white dark:bg-gray-800 
             text-gray-900 dark:text-gray-100 
             focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500
-            ${
-              errors.title
-                ? "border-red-500 dark:border-red-400"
-                : "border-gray-300 dark:border-gray-600"
-            }`}
+            ${errors.title
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
+                }`}
             />
             {errors.title && (
               <p className="text-red-500 text-sm mt-1">{errors.title}</p>
@@ -346,11 +338,10 @@ const handleSubmit = async (e: React.FormEvent) => {
             bg-white dark:bg-gray-800 
             text-gray-900 dark:text-gray-100 
             focus:outline-none focus:ring-2 focus:ring-green-400 dark:focus:ring-green-500
-            ${
-              errors.description
-                ? "border-red-500 dark:border-red-400"
-                : "border-gray-300 dark:border-gray-600"
-            }`}
+            ${errors.description
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
+                }`}
             />
             {errors.description && (
               <p className="text-red-500 text-sm mt-1">{errors.description}</p>
@@ -364,20 +355,20 @@ const handleSubmit = async (e: React.FormEvent) => {
                 Danh mục
               </label>
               <select
-              value={formData.category}
-              onChange={(e) => handleInputChange("category", e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border 
+                value={formData.category}
+                onChange={(e) => handleInputChange("category", e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border 
                 bg-white dark:bg-gray-800 
                 text-gray-900 dark:text-gray-100 
                 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500
                 border-gray-300 dark:border-gray-600"
-            >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              >
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -397,11 +388,10 @@ const handleSubmit = async (e: React.FormEvent) => {
       bg-white dark:bg-gray-800 
       text-gray-900 dark:text-gray-100 
       focus:outline-none focus:ring-2 focus:ring-teal-400 dark:focus:ring-teal-500
-      ${
-        errors.maxParticipants
-          ? "border-red-500 dark:border-red-400"
-          : "border-gray-300 dark:border-gray-600"
-      }`}
+      ${errors.maxParticipants
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
+                }`}
             />
             {errors.maxParticipants && (
               <p className="text-red-500 text-sm mt-1">
@@ -429,11 +419,10 @@ const handleSubmit = async (e: React.FormEvent) => {
               bg-white dark:bg-gray-800 
               text-gray-900 dark:text-gray-100 
               focus:outline-none focus:ring-2 focus:ring-purple-400 dark:focus:ring-purple-500
-              ${
-                errors.startTime
-                  ? "border-red-500 dark:border-red-400"
-                  : "border-gray-300 dark:border-gray-600"
-              }`}
+              ${errors.startTime
+                    ? "border-red-500 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
+                  }`}
               />
               {errors.startTime && (
                 <p className="text-red-500 text-sm mt-1">{errors.startTime}</p>
@@ -454,11 +443,10 @@ const handleSubmit = async (e: React.FormEvent) => {
               bg-white dark:bg-gray-800 
               text-gray-900 dark:text-gray-100 
               focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-500
-              ${
-                errors.endTime
-                  ? "border-red-500 dark:border-red-400"
-                  : "border-gray-300 dark:border-gray-600"
-              }`}
+              ${errors.endTime
+                    ? "border-red-500 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
+                  }`}
               />
               {errors.endTime && (
                 <p className="text-red-500 text-sm mt-1">{errors.endTime}</p>
@@ -481,11 +469,10 @@ const handleSubmit = async (e: React.FormEvent) => {
             bg-white dark:bg-gray-800 
             text-gray-900 dark:text-gray-100 
             focus:outline-none focus:ring-2 focus:ring-orange-400 dark:focus:ring-orange-500
-            ${
-              errors.location
-                ? "border-red-500 dark:border-red-400"
-                : "border-gray-300 dark:border-gray-600"
-            }`}
+            ${errors.location
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
+                }`}
             />
             {errors.location && (
               <p className="text-red-500 text-sm mt-1">{errors.location}</p>
