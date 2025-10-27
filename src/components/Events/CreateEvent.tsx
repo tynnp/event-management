@@ -201,17 +201,13 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
         credentials: 'include',
       });
 
+      // Parse response
+      const created = await res.json().catch(() => null);
+      
       if (!res.ok) {
-        const status = res.status;
-        let bodyText = '';
-        try {
-          bodyText = JSON.stringify(await res.json());
-        } catch {
-          bodyText = await res.text();
-        }
-        console.error(`[CreateEvent] Server returned ${status}:`, bodyText);
+        console.error(`[CreateEvent] Server returned ${res.status}:`, created);
 
-        if (status === 401) {
+        if (res.status === 401) {
           clearAuth();
           navigate('/login', { replace: true });
           return;
@@ -219,13 +215,16 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
 
         // ⚠️ thêm alert báo lỗi
         alert("Không thể tạo sự kiện. Vui lòng thử lại!");
-        throw new Error(`Server ${status}: ${bodyText}`);
+        throw new Error(`Server ${res.status}: ${JSON.stringify(created)}`);
       }
 
-      // ✅ thêm alert khi thành công
-      alert("🎉 Sự kiện đã được tạo thành công! Đang chờ duyệt...");
+      // ✅ Hiển thị message phù hợp
+      if (created?.status === 'approved') {
+        alert("🎉 Sự kiện đã được tạo thành công! Sự kiện của bạn đã được hiển thị ngay lập tức.");
+      } else {
+        alert("✅ Sự kiện đã được tạo thành công! Đang chờ Admin/Moderator duyệt...");
+      }
 
-      const created = await res.json().catch(() => null);
       if (created && dispatch) {
         try {
           const ev = created.event ?? created.data ?? created;
@@ -348,7 +347,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
             )}
           </div>
 
-          {/* --- Danh mục --- */}
+          {/* --- Danh mục và Chế độ --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -369,6 +368,44 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                   </option>
                 ))}
               </select>
+            </div>
+            
+            {/* Chế độ: Công khai/Riêng tư */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Chế độ sự kiện
+              </label>
+              <div className="flex gap-4 items-center">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="eventMode"
+                    value="public"
+                    checked={formData.isPublic === true}
+                    onChange={() => handleInputChange("isPublic", true)}
+                    className="mr-2"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">Công khai</span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="eventMode"
+                    value="private"
+                    checked={formData.isPublic === false}
+                    onChange={() => handleInputChange("isPublic", false)}
+                    className="mr-2"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">Riêng tư</span>
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {formData.isPublic 
+                  ? (currentUser?.role === 'admin' || currentUser?.role === 'moderator'
+                      ? 'Sự kiện sẽ được hiển thị công khai ngay lập tức'
+                      : 'Sự kiện công khai cần được duyệt bởi Admin/Mod')
+                  : 'Sự kiện riêng tư sẽ được hiển thị ngay lập tức (không cần duyệt)'}
+              </p>
             </div>
           </div>
 

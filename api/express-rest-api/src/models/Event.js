@@ -5,13 +5,16 @@ class Event {
   // Create new event
   static async create(eventData) {
     const pool = getPostgresPool();
-    const { id, title, description, start_time, end_time, location, image_url, is_public, max_participants, created_by, category_id } = eventData;
+    const { id, title, description, start_time, end_time, location, image_url, is_public, max_participants, created_by, category_id, status } = eventData;
+    
+    // Sử dụng status từ eventData, mặc định là 'pending'
+    const eventStatus = status || 'pending';
     
     const result = await pool.query(
       `INSERT INTO events (id, title, description, start_time, end_time, location, image_url, 
         is_public, max_participants, created_by, category_id, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', NOW()) RETURNING *`,
-      [id, title, description, start_time, end_time, location, image_url, is_public, max_participants, created_by, category_id]
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()) RETURNING *`,
+      [id, title, description, start_time, end_time, location, image_url, is_public, max_participants, created_by, category_id, eventStatus]
     );
     
     return result.rows[0];
