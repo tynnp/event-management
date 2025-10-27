@@ -79,7 +79,19 @@ exports.getEventDetail = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: 'Event not found' });
 
-    if (event.status !== 'approved' && event.created_by !== req.user.id && req.user.role === 'user') {
+    // Admin/Mod có thể xem tất cả events
+    if (req.user.role === 'admin' || req.user.role === 'moderator') {
+      res.json(event);
+      return;
+    }
+
+    // User thường chỉ xem:
+    // 1. Sự kiện do chính mình tạo
+    // 2. Sự kiện công khai đã được duyệt (status = 'approved' AND is_public = true)
+    const isOwner = event.created_by === req.user.id;
+    const isPublicAndApproved = event.status === 'approved' && event.is_public === true;
+    
+    if (!isOwner && !isPublicAndApproved) {
       return res.status(403).json({ message: 'Not allowed to view this event' });
     }
 

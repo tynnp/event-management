@@ -48,6 +48,7 @@ class Event {
     let result;
     
     if (userRole === 'admin' || userRole === 'moderator') {
+      // Admin/Mod xem tất cả events
       result = await pool.query(`
         SELECT e.*, c.name as category_name 
         FROM events e
@@ -55,13 +56,16 @@ class Event {
         ORDER BY e.created_at DESC
       `);
     } else {
+      // User thường chỉ xem:
+      // 1. Sự kiện công khai đã được duyệt (status = 'approved' AND is_public = true)
+      // 2. Sự kiện do chính mình tạo (bất kỳ trạng thái nào)
       result = await pool.query(`
         SELECT e.*, c.name as category_name 
         FROM events e
         LEFT JOIN categories c ON e.category_id = c.id
-        WHERE e.status = $1 OR e.created_by = $2
+        WHERE (e.status = $1 AND e.is_public = $2) OR e.created_by = $3
         ORDER BY e.created_at DESC
-      `, ['approved', userId]);
+      `, ['approved', true, userId]);
     }
     
     return result.rows;
