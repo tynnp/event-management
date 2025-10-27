@@ -1,17 +1,111 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Users, Clock, Star, CheckCircle } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import axios from "axios";
 
 export function Dashboard() {
   const { state } = useApp();
-  const { currentUser, events, users } = state;
+  const { currentUser } = state;
+  
+  // API states
+  const [events, setEvents] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [statistics, setStatistics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // API configuration
+  const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+  const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
+  
+  // Token function
+  const getToken = (): string | null => {
+    const keys = ['token', 'accessToken', 'authToken', 'currentUser', 'user'];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.token) return parsed.token;
+        if (parsed?.accessToken) return parsed.accessToken;
+        if (parsed?.data?.token) return parsed.data.token;
+      } catch {
+        if (raw && raw.length < 500) return raw;
+      }
+    }
+    return null;
+  };
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const token = getToken();
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        
+        // Fetch events, users and statistics in parallel
+        const promises = [
+          axios.get(`${BASE}/events`, { headers }),
+          axios.get(`${BASE}/users`, { headers })
+        ];
+        
+        // Only fetch statistics if user is admin
+        if (currentUser?.role === 'admin') {
+          promises.push(axios.get(`${BASE}/stats/system`, { headers }));
+        }
+        
+        const responses = await Promise.all(promises);
+        const [eventsRes, usersRes, statsRes] = responses;
+        
+        // Normalize events from backend (snake_case -> camelCase)
+        const normalizedEvents = eventsRes.data?.map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          description: e.description,
+          startTime: e.start_time || e.startTime,
+          endTime: e.end_time || e.endTime,
+          location: e.location,
+          image: e.image_url || e.image,
+          isPublic: e.is_public !== undefined ? e.is_public : e.isPublic,
+          maxParticipants: e.max_participants || e.maxParticipants,
+          createdBy: e.created_by || e.createdBy,
+          createdAt: e.created_at || e.createdAt,
+          status: e.status,
+          rejectionReason: e.rejection_reason || e.rejectionReason,
+          participants: e.participants || [],
+          comments: e.comments || [],
+          ratings: e.ratings || [],
+          averageRating: e.average_rating || e.averageRating || 0,
+          category: e.category_name || e.category
+        })) || [];
+        
+        setEvents(normalizedEvents);
+        setUsers(usersRes.data || []);
+        
+        // Set statistics if available (admin only)
+        if (statsRes) {
+          setStatistics(statsRes.data);
+        }
+      } catch (err: any) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err.response?.data?.message || 'Không thể tải dữ liệu');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   const safeEvents = events ?? [];
 
   const userEvents = safeEvents.filter(
     (event) =>
       event.createdBy === currentUser?.id ||
-      (event.participants ?? []).some((p) => p.userId === currentUser?.id)
+      (event.participants ?? []).some((p: any) => p.userId === currentUser?.id)
   );
 
   const approvedEvents = safeEvents.filter((event) => event.status === "approved");
@@ -25,7 +119,7 @@ export function Dashboard() {
       title: "Sự kiện đã tham gia",
       value: userEvents.filter((event) =>
         (event.participants ?? []).some(
-          (p) => p.userId === currentUser?.id && p.checkedIn
+          (p: any) => p.userId === currentUser?.id && p.checkedIn
         )
       ).length,
       icon: CheckCircle,
@@ -34,10 +128,10 @@ export function Dashboard() {
     },
     {
       title: "Sự kiện sắp diễn ra",
-      value: approvedEvents.filter(
+      value: statistics?.upcoming_events ?? approvedEvents.filter(
         (event) =>
           new Date(event.startTime) > new Date() &&
-          (event.participants ?? []).some((p) => p.userId === currentUser?.id)
+          (event.participants ?? []).some((p: any) => p.userId === currentUser?.id)
       ).length,
       icon: Calendar,
       color: "bg-blue-500",
@@ -45,7 +139,7 @@ export function Dashboard() {
     },
     {
       title: "Đánh giá trung bình",
-      value: currentUser?.eventsAttended ? "4.8/5.0" : "N/A",
+      value: statistics?.average_rating ? `${statistics.average_rating.toFixed(1)}/5.0` : (currentUser?.eventsAttended ? "4.8/5.0" : "N/A"),
       icon: Star,
       color: "bg-yellow-500",
       trend: "Xuất sắc",
@@ -54,7 +148,9 @@ export function Dashboard() {
       title:
         currentUser?.role === "admin" ? "Tổng người dùng" : "Sự kiện đã tạo",
       value:
-        currentUser?.role === "admin" ? users.length : myCreatedEvents.length,
+        currentUser?.role === "admin" 
+          ? (statistics?.total_users ?? users.length) 
+          : myCreatedEvents.length,
       icon: currentUser?.role === "admin" ? Users : Calendar,
       color: "bg-purple-500",
       trend:
@@ -81,6 +177,48 @@ export function Dashboard() {
         return null; 
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">
+            Lỗi tải dữ liệu
+          </h2>
+          <p className="text-gray-600 dark:text-dark-text-secondary mb-4">
+            {error}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -143,7 +281,7 @@ export function Dashboard() {
                   Sự kiện chờ duyệt
                 </p>
                 <p className="text-3xl font-extrabold mt-1 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                  {pendingEvents.length}
+                  {statistics?.pending_events ?? pendingEvents.length}
                 </p>
               </div>
               <Clock className="h-10 w-10 text-orange-500 dark:text-orange-400 group-hover:scale-110 transition-transform duration-300" />
@@ -160,7 +298,7 @@ export function Dashboard() {
                   Sự kiện đã duyệt
                 </p>
                 <p className="text-3xl font-extrabold mt-1 bg-gradient-to-r from-green-500 to-teal-500 bg-clip-text text-transparent">
-                  {approvedEvents.length}
+                  {statistics?.approved_events ?? approvedEvents.length}
                 </p>
               </div>
               <CheckCircle className="h-10 w-10 text-green-500 dark:text-green-400 group-hover:scale-110 transition-transform duration-300" />
@@ -177,7 +315,7 @@ export function Dashboard() {
                   Tổng tham gia
                 </p>
                 <p className="text-3xl font-extrabold mt-1 bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-                  {safeEvents.reduce(
+                  {statistics?.total_participations ?? safeEvents.reduce(
                     (sum, event) => sum + ((event.participants ?? []).length || 0),
                     0
                   )}
