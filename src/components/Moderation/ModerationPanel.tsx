@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Eye,
   Check,
   X,
   Clock,
-  MessageSquare,
-  EyeOff,
-  Trash2,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event } from "../../types";
@@ -14,9 +11,8 @@ import axios from "axios";
 
 export function ModerationPanel() {
   const { state, dispatch } = useApp();
-  const { events, users, comments, currentUser } = state;
+  const { users } = state;
   
-  const [loading, setLoading] = useState(false);
   const [pendingEvents, setPendingEvents] = useState<Event[]>([]);
   const [allEventsStats, setAllEventsStats] = useState<Event[]>([]);
   const [allUsers, setAllUsers] = useState(users || []);
@@ -42,9 +38,8 @@ export function ModerationPanel() {
   };
   
   useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      try {
+  const fetchEvents = async () => {
+    try {
         const token = getToken();
         const res = await axios.get(`${BASE}/events`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -76,12 +71,10 @@ export function ModerationPanel() {
         setAllEventsStats(normalizedEvents);
         const pending = normalizedEvents.filter((e: Event) => e.status === 'pending');
         setPendingEvents(pending);
-      } catch (err) {
-        console.error('Error fetching events:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } catch (err) {
+      console.error('Error fetching events:', err);
+    }
+  };
     
     const fetchUsers = async () => {
       try {
@@ -103,7 +96,6 @@ export function ModerationPanel() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
 
-  const reportedComments = comments.filter((comment) => !comment.isHidden);
 
   const refreshEvents = async () => {
     const token = getToken();
@@ -181,51 +173,6 @@ export function ModerationPanel() {
     }
   };
 
-  const handleHideComment = async (commentId: string) => {
-    try {
-      const token = getToken();
-      await axios.patch(
-        `${BASE}/chats/${commentId}`,
-        { action: 'hide' },
-        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
-      );
-      dispatch({ type: "HIDE_COMMENT", payload: commentId });
-      alert("Đã ẩn bình luận");
-    } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể ẩn bình luận.");
-    }
-  };
-
-  const handleUnhideComment = async (commentId: string) => {
-    try {
-      const token = getToken();
-      await axios.patch(
-        `${BASE}/chats/${commentId}`,
-        { action: 'unhide' },
-        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
-      );
-      dispatch({ type: "UNHIDE_COMMENT", payload: commentId });
-      alert("Đã hiện lại bình luận");
-    } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể hiện bình luận.");
-    }
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
-    try {
-      const token = getToken();
-      await axios.patch(
-        `${BASE}/chats/${commentId}`,
-        { action: 'delete' },
-        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
-      );
-      dispatch({ type: "DELETE_COMMENT", payload: commentId });
-      alert("Đã xóa bình luận");
-    } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể xóa bình luận.");
-    }
-  };
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("vi-VN", {
@@ -353,84 +300,6 @@ export function ModerationPanel() {
         </div>
       </div>
 
-      {/* Comments Moderation */}
-      <div className="card rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gradient-to-r from-blue-200 via-blue-300 to-purple-200 dark:from-blue-700 dark:via-blue-800 dark:to-purple-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-            Quản lý bình luận
-          </h3>
-        </div>
-        <div className="divide-y divide-gray-200 dark:divide-dark-border">
-          {comments.slice(0, 10).map((comment) => {
-            const user = allUsers.find((u) => u.id === comment.userId);
-            const event = allEventsStats.find((e) => e.id === comment.eventId);
-            return (
-              <div
-                key={comment.id}
-                className={`p-6 rounded-xl mb-4 hover:scale-[1.01] transition-transform duration-200 ${
-                  comment.isHidden
-                    ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400"
-                    : "bg-white dark:bg-dark-bg-secondary"
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-medium text-gray-900 dark:text-dark-text-primary">
-                        {user?.name}
-                      </span>
-                      <span className="text-gray-500 dark:text-dark-text-tertiary text-sm">
-                        bình luận trong "{event?.title}"
-                      </span>
-                      {comment.isHidden && (
-                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-200 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300">
-                          Đã ẩn
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className={`mb-2 ${
-                        comment.isHidden
-                          ? "text-gray-500 dark:text-dark-text-tertiary"
-                          : "text-gray-700 dark:text-dark-text-secondary"
-                      }`}
-                    >
-                      {comment.content}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">
-                      {formatDate(comment.createdAt)}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2 ml-4">
-                    {comment.isHidden ? (
-                      <button
-                        onClick={() => handleUnhideComment(comment.id)}
-                        className="flex items-center px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm"
-                      >
-                        <Eye className="h-4 w-4 mr-1" /> Hiện lại
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleHideComment(comment.id)}
-                        className="flex items-center px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors text-sm"
-                      >
-                        <EyeOff className="h-4 w-4 mr-1" /> Ẩn
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeleteComment(comment.id)}
-                      className="flex items-center px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Xóa
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -452,12 +321,6 @@ export function ModerationPanel() {
             count: allEventsStats.filter((e) => e.status === "rejected").length,
             icon: X,
             color: "red",
-          },
-          {
-            title: "Bình luận ẩn",
-            count: comments.filter((c) => c.isHidden).length,
-            icon: MessageSquare,
-            color: "gray",
           },
         ].map((stat, idx) => {
           const Icon = stat.icon;
