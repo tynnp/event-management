@@ -19,6 +19,7 @@ export function ModerationPanel() {
   const [loading, setLoading] = useState(false);
   const [pendingEvents, setPendingEvents] = useState<Event[]>([]);
   const [allEventsStats, setAllEventsStats] = useState<Event[]>([]);
+  const [allUsers, setAllUsers] = useState(users || []);
   
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -48,9 +49,32 @@ export function ModerationPanel() {
         const res = await axios.get(`${BASE}/events`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        const allEvents = res.data || [];
-        setAllEventsStats(allEvents);
-        const pending = allEvents.filter((e: Event) => e.status === 'pending');
+        const rawEvents = res.data || [];
+        
+        // Normalize events from backend (snake_case -> camelCase)
+        const normalizedEvents = rawEvents.map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          description: e.description,
+          startTime: e.start_time || e.startTime,
+          endTime: e.end_time || e.endTime,
+          location: e.location,
+          image: e.image_url || e.image,
+          isPublic: e.is_public !== undefined ? e.is_public : e.isPublic,
+          maxParticipants: e.max_participants || e.maxParticipants,
+          createdBy: e.created_by || e.createdBy,
+          createdAt: e.created_at || e.createdAt,
+          status: e.status,
+          rejectionReason: e.rejection_reason || e.rejectionReason,
+          participants: [],
+          comments: [],
+          ratings: [],
+          averageRating: 0,
+          category: e.category_name || e.category
+        }));
+        
+        setAllEventsStats(normalizedEvents);
+        const pending = normalizedEvents.filter((e: Event) => e.status === 'pending');
         setPendingEvents(pending);
       } catch (err) {
         console.error('Error fetching events:', err);
@@ -59,7 +83,20 @@ export function ModerationPanel() {
       }
     };
     
+    const fetchUsers = async () => {
+      try {
+        const token = getToken();
+        const res = await axios.get(`${BASE}/users`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        setAllUsers(res.data || []);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+    
     fetchEvents();
+    fetchUsers();
   }, []);
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -73,9 +110,32 @@ export function ModerationPanel() {
     const res = await axios.get(`${BASE}/events`, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
-    const allEvents = res.data || [];
-    setAllEventsStats(allEvents);
-    const pending = allEvents.filter((e: Event) => e.status === 'pending');
+    const rawEvents = res.data || [];
+    
+    // Normalize events from backend (snake_case -> camelCase)
+    const normalizedEvents = rawEvents.map((e: any) => ({
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      startTime: e.start_time || e.startTime,
+      endTime: e.end_time || e.endTime,
+      location: e.location,
+      image: e.image_url || e.image,
+      isPublic: e.is_public !== undefined ? e.is_public : e.isPublic,
+      maxParticipants: e.max_participants || e.maxParticipants,
+      createdBy: e.created_by || e.createdBy,
+      createdAt: e.created_at || e.createdAt,
+      status: e.status,
+      rejectionReason: e.rejection_reason || e.rejectionReason,
+      participants: [],
+      comments: [],
+      ratings: [],
+      averageRating: 0,
+      category: e.category_name || e.category
+    }));
+    
+    setAllEventsStats(normalizedEvents);
+    const pending = normalizedEvents.filter((e: Event) => e.status === 'pending');
     setPendingEvents(pending);
   };
 
@@ -201,7 +261,7 @@ export function ModerationPanel() {
         </div>
         <div className="divide-y divide-gray-200 dark:divide-dark-border">
           {pendingEvents.map((event) => {
-            const creator = users.find((u) => u.id === event.createdBy);
+            const creator = allUsers.find((u) => u.id === event.createdBy);
             return (
               <div
                 key={event.id}
@@ -303,8 +363,8 @@ export function ModerationPanel() {
         </div>
         <div className="divide-y divide-gray-200 dark:divide-dark-border">
           {comments.slice(0, 10).map((comment) => {
-            const user = users.find((u) => u.id === comment.userId);
-            const event = events.find((e) => e.id === comment.eventId);
+            const user = allUsers.find((u) => u.id === comment.userId);
+            const event = allEventsStats.find((e) => e.id === comment.eventId);
             return (
               <div
                 key={comment.id}
