@@ -260,6 +260,40 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const formatTime = (dateString: string) =>
     new Date(dateString).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 
+  // Helper function để refetch và update comments
+  const refetchComments = async () => {
+    if (!event?.id) return;
+    try {
+      const commentRes = await axios.get(`${BASE}/chats/comments/${event.id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      const comments = (commentRes.data || []).map((c: any) => ({
+        id: c._id || c.id,
+        eventId: c.eventId,
+        userId: c.userId,
+        content: c.content,
+        createdAt: c.createdAt,
+        isHidden: c.isHidden || false,
+        parentId: c.parentId,
+        replies: (c.replies || []).map((r: any) => ({
+          id: r._id || r.id,
+          eventId: r.eventId,
+          userId: r.userId,
+          content: r.content,
+          createdAt: r.createdAt,
+          isHidden: r.isHidden || false,
+          parentId: r.parentId
+        }))
+      }));
+      setRemoteEvent((prev) => {
+        if (!prev) return prev;
+        return { ...prev, comments };
+      });
+    } catch (err) {
+      console.warn('Could not refetch comments:', err);
+    }
+  };
+
   const postComment = async (payload: Partial<Comment>) => {
     try {
       setSendingComment(true);
@@ -270,42 +304,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       );
       const created: Comment = res.data?.data ?? res.data;
       
-      // Refetch comments từ backend để có đúng structure (cả comment mới và reply)
-      try {
-        const commentRes = await axios.get(`${BASE}/chats/comments/${payload.eventId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        const comments = (commentRes.data || []).map((c: any) => ({
-          id: c._id || c.id,
-          eventId: c.eventId,
-          userId: c.userId,
-          content: c.content,
-          createdAt: c.createdAt,
-          isHidden: c.isHidden || false,
-          parentId: c.parentId,
-          replies: (c.replies || []).map((r: any) => ({
-            id: r._id || r.id,
-            eventId: r.eventId,
-            userId: r.userId,
-            content: r.content,
-            createdAt: r.createdAt,
-            isHidden: r.isHidden || false,
-            parentId: r.parentId
-          }))
-        }));
-        setRemoteEvent((prev) => {
-          if (!prev) return prev;
-          return { ...prev, comments };
-        });
-      } catch (err) {
-        console.warn('Could not refetch comments:', err);
-        // Fallback: add to local state anyway
-        setRemoteEvent((prev) => {
-          if (!prev) return prev;
-          return { ...prev, comments: [...(prev.comments ?? []), created] };
-        });
-      }
-
+      // Refetch comments để có đúng structure (cả comment mới và reply)
+      await refetchComments();
+      
       dispatch?.({ type: "ADD_COMMENT", payload: created });
       setNewComment("");
 
@@ -404,24 +405,42 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   };
 
   const handleUnhideComment = async (commentId: string) => {
-    dispatch?.({ type: "UNHIDE_COMMENT", payload: commentId });
+    try {
+      await axios.patch(
+        `${BASE}/chats/${commentId}`,
+        { action: 'unhide' },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      await refetchComments();
+      dispatch?.({ type: "UNHIDE_COMMENT", payload: commentId });
+    } catch (err: any) {
+      alert(err.response?.data?.message ?? "Không thể hiện bình luận.");
+    }
   };
+
   const handleHideComment = async (commentId: string) => {
-    dispatch?.({ type: "HIDE_COMMENT", payload: commentId });
+    try {
+      await axios.patch(
+        `${BASE}/chats/${commentId}`,
+        { action: 'hide' },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      await refetchComments();
+      dispatch?.({ type: "HIDE_COMMENT", payload: commentId });
+    } catch (err: any) {
+      alert(err.response?.data?.message ?? "Không thể ẩn bình luận.");
+    }
   };
+
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
     try {
       await axios.patch(
-        `${BASE}/chats/${commentId}`, 
+        `${BASE}/chats/${commentId}`,
         { action: 'delete' },
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
-      // update local
-      setRemoteEvent((prev) => {
-        if (!prev) return prev;
-        return { ...prev, comments: (prev.comments ?? []).filter((c) => c.id !== commentId) };
-      });
+      await refetchComments();
       dispatch?.({ type: "DELETE_COMMENT", payload: commentId });
     } catch (err: any) {
       alert(err.response?.data?.message ?? "Không thể xóa bình luận.");

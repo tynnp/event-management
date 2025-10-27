@@ -116,25 +116,49 @@ exports.updateComment = async (req, res) => {
         break;
 
       case 'delete':
-        if (comment.userId !== userId && userRole !== 'admin') {
+        // Admin và moderator có thể xóa bất kỳ comment nào, user chỉ có thể xóa comment của mình
+        if (comment.userId !== userId && !['admin', 'moderator'].includes(userRole)) {
           return res.status(403).json({ message: 'Not authorized to delete this comment' });
         }
         await Comment.findByIdAndDelete(commentId);
+        // Xóa comment khỏi replies của parent nếu có
+        if (comment.parentId) {
+          await Comment.updateOne(
+            { _id: comment.parentId },
+            { $pull: { replies: comment._id } }
+          );
+        }
         return res.json({ message: 'Comment deleted' });
 
       case 'hide':
-        if (comment.userId !== userId && userRole !== 'admin') {
+        // Admin và moderator có thể ẩn bất kỳ comment nào
+        if (comment.userId !== userId && !['admin', 'moderator'].includes(userRole)) {
           return res.status(403).json({ message: 'Not authorized to hide this comment' });
         }
         comment.isHidden = true;
+        // Ẩn tất cả replies của comment này
+        if (comment.replies && comment.replies.length > 0) {
+          await Comment.updateMany(
+            { _id: { $in: comment.replies } },
+            { $set: { isHidden: true } }
+          );
+        }
         break;
 
       case 'unhide':
-        if (comment.userId !== userId && userRole !== 'admin') {
+        // Admin và moderator có thể hiện bất kỳ comment nào
+        if (comment.userId !== userId && !['admin', 'moderator'].includes(userRole)) {
           return res.status(403).json({ message: 'Not authorized to unhide this comment' });
         }
-      comment.isHidden = false;
-      break;
+        comment.isHidden = false;
+        // Hiện tất cả replies của comment này
+        if (comment.replies && comment.replies.length > 0) {
+          await Comment.updateMany(
+            { _id: { $in: comment.replies } },
+            { $set: { isHidden: false } }
+          );
+        }
+        break;
       default:
         return res.status(400).json({ message: 'Invalid action' });
     }
