@@ -246,7 +246,14 @@ exports.deleteUserAccount = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll();
-    res.json(users);
+    // Build full avatar URLs
+    const usersWithAvatars = users.map(user => {
+      if (user.avatar_url) {
+        user.avatar_url = buildImageUrl(user.avatar_url);
+      }
+      return user;
+    });
+    res.json(usersWithAvatars);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching users', error: err.message });
   }

@@ -40,6 +40,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [remoteEvent, setRemoteEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>(users || []);
 
   const [newComment, setNewComment] = useState("");
   const [newRating, setNewRating] = useState<number>(0);
@@ -153,6 +154,18 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
         normalizedEvent.comments = comments;
         
         setRemoteEvent(normalizedEvent);
+        
+        // Fetch users để có avatar
+        try {
+          const usersRes = await axios.get(`${BASE}/users`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          });
+          if (usersRes.data) {
+            setAllUsers(usersRes.data);
+          }
+        } catch (err) {
+          console.warn('Could not fetch users:', err);
+        }
       } catch (err: any) {
         if (!mounted) return;
         if (axios.isCancel(err)) return;
@@ -585,7 +598,17 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             {/* Add Comment */}
             <form onSubmit={handleAddComment} className="mb-8">
               <div className="flex space-x-4">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex-shrink-0" />
+                {currentUser?.avatar_url ? (
+                  <img 
+                    src={currentUser.avatar_url.startsWith('http') ? currentUser.avatar_url : `${RAW_BASE}${currentUser.avatar_url}`}
+                    alt={currentUser.name}
+                    className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex-shrink-0 flex items-center justify-center text-gray-600">
+                    {currentUser?.name?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
                 <div className="flex-1">
                   <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} rows={3} className="w-full border border-gray-300 dark:border-dark-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary placeholder-gray-500 dark:placeholder-dark-text-tertiary" placeholder="Viết bình luận..." />
                   <button type="submit" disabled={!newComment.trim() || sendingComment} className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400">
@@ -598,13 +621,23 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             {/* List Comments */}
             <div className="space-y-6">
               {allComments.map((comment) => {
-                const user = users.find((u: User) => u.id === comment.userId);
+                const user = allUsers.find((u: User) => u.id === comment.userId);
                 const isHidden = comment.isHidden;
                 const canModerate = currentUser?.role === "admin" || currentUser?.role === "moderator";
 
                 return (
                   <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400" : "bg-white dark:bg-dark-bg-secondary"}`}>
-                    <div className="w-8 h-8 bg-gray-300 dark:bg-dark-bg-tertiary rounded-full flex-shrink-0" />
+                    {user?.avatar_url ? (
+                      <img 
+                        src={user.avatar_url.startsWith('http') ? user.avatar_url : `${RAW_BASE}${user.avatar_url}`}
+                        alt={user.name}
+                        className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-300 dark:bg-dark-bg-tertiary rounded-full flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                        {user?.name?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center space-x-2">
@@ -643,10 +676,20 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                       {comment.replies && comment.replies.length > 0 && (
                         <div className="mt-4 ml-4 space-y-3">
                           {comment.replies.map((reply) => {
-                            const replyUser = users.find((u: User) => u.id === reply.userId);
+                            const replyUser = allUsers.find((u: User) => u.id === reply.userId);
                             return (
                               <div key={reply.id} className="flex space-x-3 p-3 bg-gray-50 dark:bg-dark-bg-tertiary rounded-lg">
-                                <div className="w-6 h-6 bg-gray-300 dark:bg-dark-bg-secondary rounded-full flex-shrink-0" />
+                                {replyUser?.avatar_url ? (
+                                  <img 
+                                    src={replyUser.avatar_url.startsWith('http') ? replyUser.avatar_url : `${RAW_BASE}${replyUser.avatar_url}`}
+                                    alt={replyUser.name}
+                                    className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-6 h-6 bg-gray-300 dark:bg-dark-bg-secondary rounded-full flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs">
+                                    {replyUser?.name?.[0]?.toUpperCase() || 'U'}
+                                  </div>
+                                )}
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2 mb-1">
                                     <span className="font-medium text-gray-900 dark:text-dark-text-primary text-sm">{replyUser?.name ?? "Người dùng"}</span>
@@ -664,7 +707,17 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                       {replyingTo === comment.id && (
                         <form onSubmit={handleSubmitReply} className="mt-4 ml-4">
                           <div className="flex space-x-3">
-                            <div className="w-6 h-6 bg-gray-300 dark:bg-dark-bg-secondary rounded-full flex-shrink-0" />
+                            {currentUser?.avatar_url ? (
+                              <img 
+                                src={currentUser.avatar_url.startsWith('http') ? currentUser.avatar_url : `${RAW_BASE}${currentUser.avatar_url}`}
+                                alt={currentUser.name}
+                                className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 bg-gray-300 dark:bg-dark-bg-secondary rounded-full flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs">
+                                {currentUser?.name?.[0]?.toUpperCase() || 'U'}
+                              </div>
+                            )}
                             <div className="flex-1">
                               <textarea value={replyContent} onChange={(e) => setReplyContent(e.target.value)} rows={2} className="w-full border border-gray-300 dark:border-dark-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary placeholder-gray-500 dark:placeholder-dark-text-tertiary text-sm" placeholder="Viết phản hồi..." />
                               <div className="flex space-x-2 mt-2">
