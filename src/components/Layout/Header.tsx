@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { User, LogOut, Bell, Settings, Menu } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { User, LogOut, Bell, Settings, Menu, Check, Trash2, Clock } from "lucide-react";
+import axios from "axios";
 import { useApp } from "../../context/AppContext";
 import { ThemeToggle } from "./ThemeToggle";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +20,60 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Notifications state
+  const [openNotif, setOpenNotif] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+  const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
+  const getToken = (): string | null => localStorage.getItem("authToken");
+
+  const fetchNotifications = async () => {
+    try {
+      const token = getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      const res = await axios.get(`${BASE}/notifications`, { headers });
+      const rows = res.data || [];
+      setNotifications(rows);
+      setUnreadCount(rows.filter((n: any) => !n.is_read).length);
+    } catch (err) {
+      // silent
+    }
+  };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    fetchNotifications();
+    const id = window.setInterval(fetchNotifications, 30000);
+    return () => window.clearInterval(id);
+  }, [currentUser?.id]);
+
+  const handleToggleNotif = async () => {
+    setOpenNotif((v) => !v);
+    if (!openNotif) await fetchNotifications();
+  };
+
+  const markAsRead = async (id: string) => {
+    try {
+      const token = getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      await axios.patch(`${BASE}/notifications/${id}/read`, {}, { headers });
+      setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    } catch {}
+  };
+
+  const deleteNotification = async (id: string) => {
+    try {
+      const token = getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      await axios.delete(`${BASE}/notifications/${id}`, { headers });
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    } catch {}
+  };
 
   const getAvatarUrl = (url?: string) => {
     if (!url) return "/default-avatar.png";
@@ -101,12 +156,60 @@ export function Header({ onMenuToggle }: HeaderProps) {
               <ThemeToggle />
 
               {/* Bell */}
-              <button
-                className="relative p-2 rounded-full text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 
+              <div className="relative">
+                <button
+                  onClick={handleToggleNotif}
+                  className="relative p-2 rounded-full text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 
               dark:text-dark-text-tertiary dark:hover:text-indigo-400 dark:hover:bg-dark-bg-tertiary transition"
-              >
-                <Bell className="h-5 w-5" />
-              </button>
+                  aria-label="Thông báo"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {openNotif && (
+                  <div className="absolute right-0 mt-2 w-[360px] max-h-[60vh] overflow-auto bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-xl shadow-2xl z-50">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-dark-border flex items-center justify-between">
+                      <span className="font-semibold text-gray-900 dark:text-dark-text-primary">Thông báo</span>
+                      <button onClick={fetchNotifications} className="text-sm text-indigo-600 hover:text-indigo-500">Làm mới</button>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-sm text-gray-500 dark:text-dark-text-tertiary">Không có thông báo</div>
+                    ) : (
+                      <ul className="divide-y divide-gray-100 dark:divide-dark-border">
+                        {notifications.map((n) => (
+                          <li key={n.id} className={`px-4 py-3 flex items-start gap-3 ${n.is_read ? '' : 'bg-indigo-50/50 dark:bg-indigo-900/20'}`}>
+                            <div className="mt-0.5">
+                              <div className={`w-2 h-2 rounded-full ${n.is_read ? 'bg-gray-300' : 'bg-indigo-500'}`}></div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary truncate">{n.title}</p>
+                              <p className="text-sm text-gray-600 dark:text-dark-text-secondary whitespace-pre-wrap break-words">{n.message}</p>
+                              <div className="mt-1 flex items-center gap-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>{new Date(n.created_at || n.createdAt).toLocaleString('vi-VN')}</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2 ml-2">
+                              {!n.is_read && (
+                                <button onClick={() => markAsRead(n.id)} title="Đánh dấu đã đọc" className="p-1.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100">
+                                  <Check className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button onClick={() => deleteNotification(n.id)} title="Xóa" className="p-1.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* User */}
               <div className="flex items-center space-x-3">
