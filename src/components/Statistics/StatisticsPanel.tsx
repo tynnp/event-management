@@ -192,7 +192,10 @@ export function StatisticsPanel() {
     },
     {
       title: "Người tham gia sự kiện của tôi",
-      value: myEvents.reduce((sum, e) => sum + e.participants.length, 0),
+      value: myEvents.reduce((sum, e: any) => {
+        const count = Array.isArray(e.participants) ? e.participants.length : Number(e.current_participants ?? 0);
+        return sum + (Number.isFinite(count) ? count : 0);
+      }, 0),
       icon: Users,
       color: "bg-purple-500",
     },
@@ -225,38 +228,7 @@ export function StatisticsPanel() {
     },
   ];
 
-  const userCreatedEventsStats = [
-    {
-      title: "Sự kiện đã tạo",
-      value: myEvents.length,
-      icon: Calendar,
-      color: "bg-purple-500",
-    },
-    {
-      title: "Đã duyệt",
-      value: myEvents.filter((e) => e.status === "approved").length,
-      icon: CheckCircle,
-      color: "bg-green-500",
-    },
-    {
-      title: "Chờ duyệt",
-      value: myEvents.filter((e) => e.status === "pending").length,
-      icon: Clock,
-      color: "bg-orange-500",
-    },
-    {
-      title: "Sự kiện bị từ chối",
-      value: myEvents.filter((e) => e.status === "cancelled").length,
-      icon: XCircle,
-      color: "bg-red-500"
-    },
-    {
-      title: "Người tham gia",
-      value: myEvents.reduce((sum, e) => sum + e.participants.length, 0),
-      icon: Users,
-      color: "bg-blue-500",
-    },
-  ];
+  // userCreatedEventsStats removed (unused)
 
   // --- Data biểu đồ ---
   const eventStatusData = [

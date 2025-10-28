@@ -15,6 +15,17 @@ class Attendance {
     return result.rows[0];
   }
 
+  // Create participant without check-in (join only)
+  static async createPending(participantData) {
+    const pool = getPostgresPool();
+    const { id, user_id, event_id, qr_code } = participantData;
+    const result = await pool.query(
+      'INSERT INTO participants (id, user_id, event_id, qr_code, joined_at, checked_in) VALUES ($1, $2, $3, $4, NOW(), false) RETURNING *',
+      [id, user_id, event_id, qr_code]
+    );
+    return result.rows[0];
+  }
+
   // Update check-in status
   static async updateCheckIn(eventId, qrCode) {
     const pool = getPostgresPool();

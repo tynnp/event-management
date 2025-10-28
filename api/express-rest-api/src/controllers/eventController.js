@@ -80,6 +80,22 @@ exports.getEventDetail = async (req, res) => {
     if (!event) return res.status(404).json({ message: 'Event not found' });
 
     // Admin/Mod có thể xem tất cả events
+    // Enrich with participants for UI persistence
+    try {
+      const Attendance = require('../models/Attendance');
+      const rows = await Attendance.findByEvent(req.params.id);
+      event.participants = rows.map(r => ({
+        userId: r.user_id,
+        joinedAt: r.joined_at,
+        qrCode: r.qr_code,
+        checkedIn: r.checked_in,
+        checkInTime: r.check_in_time
+      }));
+    } catch (e) {
+      // best-effort enrichment
+      event.participants = [];
+    }
+
     if (req.user.role === 'admin' || req.user.role === 'moderator') {
       res.json(event);
       return;

@@ -139,3 +139,43 @@ exports.getMyParticipations = async (req, res) => {
   }
 };
 
+// POST: join event to generate personal QR (not checked-in yet)
+exports.joinEvent = async (req, res) => {
+  const { event_id } = req.body;
+  if (!event_id) {
+    return res.status(400).json({ message: 'event_id is required' });
+  }
+  try {
+    const Event = require('../models/Event');
+    const event = await Event.findById(event_id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    // Only allow join before event ends
+    const now = new Date();
+    const end = new Date(event.end_time || event.endTime);
+    if (Number.isFinite(end.getTime()) && now > end) {
+      return res.status(400).json({ message: 'Event has ended; joining is closed' });
+    }
+
+    // If already joined, return existing participant
+    const pool = require('../config/database').getPostgresPool();
+    const existing = await pool.query('SELECT * FROM participants WHERE user_id = $1 AND event_id = $2', [req.user.id, event_id]);
+    if (existing.rows[0]) {
+      return res.json(existing.rows[0]);
+    }
+
+    const participantId = uuidv4();
+    const qrCode = uuidv4();
+    const created = await AttendanceModel.createPending({
+      id: participantId,
+      user_id: req.user.id,
+      event_id,
+      qr_code: qrCode
+    });
+    return res.status(201).json(created);
+  } catch (err) {
+    console.error('Join event failed:', err);
+    res.status(500).json({ message: 'Join event failed', error: err.message });
+  }
+};
+

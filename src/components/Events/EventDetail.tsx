@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Calendar,
   MapPin,
@@ -22,13 +23,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { QRCodeSVG } from "qrcode.react";
 
-interface ApiParticipant {
-  userId: string;
-  joinedAt: string;
-  qrCode: string;
-  checkedIn?: boolean;
-  checkInTime?: string;
-}
+// ApiParticipant removed (unused)
 
 export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBack?: () => void }) {
   const { state, dispatch } = useApp();
@@ -53,6 +48,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [showHiddenComments, setShowHiddenComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [modalRoot, setModalRoot] = useState<HTMLDivElement | null>(null);
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -76,6 +72,29 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   };
 
   const token = getAuthToken() ?? undefined;
+  // Create a portal root for modals (ensures highest stacking and outside app layout)
+  useEffect(() => {
+    const el = document.createElement('div');
+    el.setAttribute('id', 'app-modal-root');
+    document.body.appendChild(el);
+    setModalRoot(el);
+    return () => {
+      document.body.removeChild(el);
+      setModalRoot(null);
+    };
+  }, []);
+
+  // Lock background scroll when QR modal is open
+  useEffect(() => {
+    if (showQR) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [showQR]);
+
 
   const normalizeEvent = (raw: any): Event => {
     const averageRatingNum = Number(raw.averageRating ?? raw.average_rating ?? 0);
@@ -386,16 +405,23 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     try {
       setJoining(true);
       const res = await axios.post(
-        `${BASE}/participants`,
-        { eventId: event.id },
+        `${BASE}/attendance/join`,
+        { event_id: event.id },
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
-      const created = res.data?.data ?? res.data;
+      const created = res.data;
       setRemoteEvent((prev) => {
         if (!prev) return prev;
-        return { ...prev, participants: [...(prev.participants ?? []), created] as Participant[] };
+        const participant: Participant = {
+          userId: currentUser.id,
+          joinedAt: new Date().toISOString(),
+          qrCode: created.qr_code || created.qrCode,
+          checkedIn: !!created.checked_in,
+          checkInTime: created.check_in_time || created.checkInTime
+        };
+        return { ...prev, participants: [...(prev.participants ?? []), participant] as Participant[] };
       });
-      dispatch?.({ type: "JOIN_EVENT", payload: { eventId: event.id, userId: currentUser.id, qrCode: (created as any).qrCode } });
+      dispatch?.({ type: "JOIN_EVENT", payload: { eventId: event.id, userId: currentUser.id, qrCode: created.qr_code || created.qrCode } });
       setShowQR(true);
     } catch (err: any) {
       alert(err.response?.data?.message ?? "Không thể tham gia sự kiện.");
@@ -471,10 +497,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     setReplyContent("");
   };
 
-  const generateQRCode = (data: string) => {
-    // fallback svg if needed; but we use qrcode.react below
-    return data;
-  };
+  // generateQRCode removed (unused)
 
   const getEventStatus = () => {
     const now = Date.now();
@@ -558,7 +581,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             {/* Action Buttons */}
             <div className="lg:ml-8 lg:min-w-[300px]">
               <div className="bg-gray-50 dark:bg-dark-bg-tertiary rounded-xl p-6">
-                {!isParticipant && !isCreator && eventStatus.status === "upcoming" && (
+                {!isParticipant && !isCreator && eventStatus.status !== "ended" && (
                   <button onClick={handleJoinEvent} className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
                     <UserPlus className="h-4 w-4 inline mr-2" /> Tham gia sự kiện
                   </button>
@@ -792,22 +815,12 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
         </div>
       </div>
 
-      {/* QR CODE POPUP */}
-      {showQR && currentParticipant && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-dark-bg-secondary rounded-xl p-8 max-w-sm w-full text-center border border-gray-200 dark:border-dark-border">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">Mã QR tham gia sự kiện</h3>
-            <QRCodeSVG value={(currentParticipant as ApiParticipant).qrCode ?? `${window.location.href}`} size={180} />
-            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">Xuất trình mã này tại cửa để điểm danh</p>
-            <button onClick={() => setShowQR(false)} className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">Đóng</button>
-          </div>
-        </div>
-      )}
-
       {/* Modal hiển thị mã QR */}
-      {showQR && userParticipant && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative">
+      {showQR && userParticipant && modalRoot && createPortal(
+        <div className="fixed inset-0 z-[2147483647]">
+          <div onClick={() => setShowQR(false)} className="absolute inset-0 bg-black/80 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative animate-[fadeIn_.15s_ease]">
             <button
               onClick={() => setShowQR(false)}
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
@@ -821,6 +834,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
             <div className="flex justify-center mb-4">
               <QRCodeSVG
+                id="user-qr-svg"
                 value={userParticipant.qrCode || `${event.id}-${currentUser?.id}`}
                 size={200}
                 bgColor="#FFFFFF"
@@ -832,8 +846,72 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             <p className="text-sm text-gray-600 dark:text-gray-300">
               Vui lòng đưa mã này để điểm danh tham gia sự kiện.
             </p>
+
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                onClick={() => {
+                  const svg = document.getElementById('user-qr-svg') as SVGSVGElement | null;
+                  if (!svg) return;
+                  const serializer = new XMLSerializer();
+                  const source = serializer.serializeToString(svg);
+                  const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `qr-${event.id}-${currentUser?.id}.svg`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
+              >
+                Tải SVG
+              </button>
+              <button
+                onClick={() => {
+                  const svg = document.getElementById('user-qr-svg') as SVGSVGElement | null;
+                  if (!svg) return;
+                  const serializer = new XMLSerializer();
+                  const svgStr = serializer.serializeToString(svg);
+                  const img = new Image();
+                  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+                  const url = URL.createObjectURL(svgBlob);
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const size = 200;
+                    canvas.width = size;
+                    canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                      ctx.fillStyle = '#FFFFFF';
+                      ctx.fillRect(0, 0, size, size);
+                      ctx.drawImage(img, 0, 0, size, size);
+                      canvas.toBlob((blob) => {
+                        if (!blob) return;
+                        const pngUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = pngUrl;
+                        a.download = `qr-${event.id}-${currentUser?.id}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(pngUrl);
+                      }, 'image/png');
+                    }
+                    URL.revokeObjectURL(url);
+                  };
+                  img.src = url;
+                }}
+                className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition"
+              >
+                Tải PNG
+              </button>
+            </div>
           </div>
-        </div>
+          </div>
+        </div>,
+        modalRoot
       )}
     </div>
   );
