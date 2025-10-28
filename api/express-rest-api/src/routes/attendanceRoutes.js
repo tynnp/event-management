@@ -8,6 +8,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.post('/checkin', authMiddleware, attendanceController.checkIn);
 // Trước đây: router.get('/generate-qr', authMiddleware, attendanceController.generateQRCode);
 router.get('/generate-qr', authMiddleware, attendanceController.generateQRCode);
+// Lấy danh sách tham gia của chính mình
+router.get('/my', authMiddleware, attendanceController.getMyParticipations);
 
 
 module.exports = router;

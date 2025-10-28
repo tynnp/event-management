@@ -1,4 +1,7 @@
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { useApp } from "../../context/AppContext";
+import type { Participant, Rating } from "../../types";
 import { Users, Calendar, CheckCircle, Clock, Star, XCircle } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend, LineChart, Line } from "recharts";
 
@@ -8,44 +11,149 @@ export function StatisticsPanel() {
   const { state } = useApp();
   const { currentUser, users, events } = state;
 
+  // --- Remote API data (admin-focused) ---
+  const [remoteUsers, setRemoteUsers] = useState<any[] | null>(null);
+  const [remoteEvents, setRemoteEvents] = useState<any[] | null>(null);
+  const [remoteParticipations, setRemoteParticipations] = useState<any[] | null>(null);
+  const [systemStats, setSystemStats] = useState<any | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+  const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
+
+  const getToken = (): string | null => {
+    const keys = ["token", "accessToken", "authToken", "currentUser", "user"];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.token) return parsed.token;
+        if (parsed?.accessToken) return parsed.accessToken;
+        if (parsed?.data?.token) return parsed.data.token;
+      } catch {
+        if (raw && raw.length < 500) return raw;
+      }
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchAll = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = getToken();
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+        const promises: Promise<any>[] = [
+          axios.get(`${BASE}/events`, { headers }),
+          axios.get(`${BASE}/users`, { headers }),
+          axios.get(`${BASE}/attendance/my`, { headers })
+        ];
+        if (currentUser.role === "admin") {
+          promises.push(axios.get(`${BASE}/stats/system`, { headers }));
+        }
+
+        const responses = await Promise.all(promises);
+        const eventsRes = responses[0];
+        const usersRes = responses[1];
+        const myPartRes = responses[2];
+        const systemRes = responses[3];
+
+        const normalizedEvents = (eventsRes.data || []).map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          description: e.description,
+          startTime: e.start_time || e.startTime,
+          endTime: e.end_time || e.endTime,
+          location: e.location,
+          image: e.image_url || e.image,
+          isPublic: e.is_public !== undefined ? e.is_public : e.isPublic,
+          maxParticipants: e.max_participants || e.maxParticipants,
+          createdBy: e.created_by || e.createdBy,
+          createdAt: e.created_at || e.createdAt,
+          status: e.status,
+          rejectionReason: e.rejection_reason || e.rejectionReason,
+          participants: e.participants || [],
+          comments: e.comments || [],
+          ratings: e.ratings || [],
+          averageRating: Number(e.average_rating ?? e.averageRating ?? 0),
+          category: e.category_name || e.category
+        }));
+
+        setRemoteEvents(normalizedEvents);
+        setRemoteUsers(usersRes.data || []);
+        setRemoteParticipations(myPartRes?.data || null);
+        if (systemRes) setSystemStats(systemRes.data || null);
+      } catch (err: any) {
+        console.error("Error fetching statistics:", err);
+        setError(err?.response?.data?.message || "Không thể tải thống kê từ API");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAll();
+  }, [currentUser]);
+
   if (!currentUser) return null;
 
+  // --- Data sources (prefer remote if available) ---
+  const dataUsers = remoteUsers ?? users;
+  const dataEvents = remoteEvents ?? events;
+  const dataMyParticipations = remoteParticipations ?? null;
+
   // --- Data cá nhân ---
-  const myEvents = events.filter((e) => e.createdBy === currentUser.id);
-  const myParticipations = events.filter((e) =>
-    e.participants.some((p) => p.userId === currentUser.id)
-  );
-  const myCheckedIn = myParticipations.reduce(
-    (sum, e) =>
-      sum +
-      e.participants.filter((p) => p.userId === currentUser.id && p.checkedIn)
-        .length,
-    0
-  );
+  const myEvents = useMemo(() => dataEvents.filter((e: any) => e.createdBy === currentUser.id), [dataEvents, currentUser.id]);
+  const myParticipations = useMemo(() => {
+    if (dataMyParticipations && Array.isArray(dataMyParticipations)) {
+      // dataMyParticipations are rows from participants table: { event_id, checked_in, ... }
+      const eventIdSet = new Set<string>(dataMyParticipations.map((r: any) => r.event_id));
+      return dataEvents.filter((e: any) => eventIdSet.has(e.id));
+    }
+    return dataEvents.filter((e: any) => (e.participants ?? []).some((p: any) => p.userId === currentUser.id));
+  }, [dataMyParticipations, dataEvents, currentUser.id]);
+  const myCheckedIn = useMemo(() => {
+    if (dataMyParticipations && Array.isArray(dataMyParticipations)) {
+      // Count rows with checked_in = true
+      return dataMyParticipations.filter((r: any) => !!r.checked_in).length;
+    }
+    return myParticipations.reduce(
+      (sum, e) =>
+        sum +
+        e.participants.filter((p: Participant) => p.userId === currentUser.id && p.checkedIn)
+          .length,
+      0
+    );
+  }, [dataMyParticipations, myParticipations, currentUser.id]);
 
   // --- Cards ---
   const adminStats = [
     {
       title: "Tổng người dùng",
-      value: users.length,
+      value: systemStats?.total_users ?? dataUsers.length,
       icon: Users,
       color: "bg-blue-500",
     },
     {
       title: "Sự kiện đã duyệt",
-      value: events.filter((e) => e.status === "approved").length,
+      value: systemStats?.approved_events ?? dataEvents.filter((e: any) => e.status === "approved").length,
       icon: CheckCircle,
       color: "bg-green-500",
     },
     {
       title: "Sự kiện chờ duyệt",
-      value: events.filter((e) => e.status === "pending").length,
+      value: systemStats?.pending_events ?? dataEvents.filter((e: any) => e.status === "pending").length,
       icon: Clock,
       color: "bg-orange-500",
     },
     {
       title: "Sự kiện bị từ chối",
-      value: events.filter((e) => e.status === "rejected").length,
+      value: dataEvents.filter((e: any) => e.status === "rejected").length,
       icon: Calendar,
       color: "bg-red-500",
     },
@@ -154,45 +262,41 @@ export function StatisticsPanel() {
   const eventStatusData = [
     {
       name: "Đã duyệt",
-      value: events.filter((e) => e.status === "approved").length,
+      value: dataEvents.filter((e: any) => e.status === "approved").length,
     },
     {
       name: "Chờ duyệt",
-      value: events.filter((e) => e.status === "pending").length,
+      value: dataEvents.filter((e: any) => e.status === "pending").length,
     },
     {
       name: "Bị từ chối",
-      value: events.filter((e) => e.status === "rejected").length,
-    },
-    {
-      name: "Hủy",
-      value: events.filter((e) => e.status === "cancelled").length,
+      value: dataEvents.filter((e: any) => e.status === "rejected").length,
     },
   ];
 
   const userRoleData = [
-    { name: "Admin", value: users.filter((u) => u.role === "admin").length },
+    { name: "Admin", value: dataUsers.filter((u: any) => u.role === "admin").length },
     {
       name: "Moderator",
-      value: users.filter((u) => u.role === "moderator").length,
+      value: dataUsers.filter((u: any) => u.role === "moderator").length,
     },
-    { name: "User", value: users.filter((u) => u.role === "user").length },
+    { name: "User", value: dataUsers.filter((u: any) => u.role === "user").length },
   ];
 
   const participantsPerEvent = myEvents.map((e) => ({
     name: e.title,
     đăngKý: e.participants.length,
-    thamGia: e.participants.filter((p) => p.checkedIn).length,
+    thamGia: e.participants.filter((p: Participant) => p.checkedIn).length,
   }));
 
   const ratingsPerEvent = myEvents.map((e) => ({
     name: e.title,
-    value: e.averageRating || 0,
+    value: Number(e.averageRating ?? 0) || 0,
   }));
 
   const checkInData = [
     { name: "Đã điểm danh", value: myCheckedIn },
-    { name: "Chưa điểm danh", value: myParticipations.length - myCheckedIn },
+    { name: "Chưa điểm danh", value: Math.max(0, myParticipations.length - myCheckedIn) },
   ];
 
   const categoryData = myParticipations.reduce((acc: any[], e) => {
@@ -205,6 +309,12 @@ export function StatisticsPanel() {
 
   return (
     <div className="space-y-12">
+      {currentUser?.role === "admin" && loading && (
+        <div className="text-sm text-gray-500 dark:text-gray-400">Đang tải thống kê từ API…</div>
+      )}
+      {currentUser?.role === "admin" && error && (
+        <div className="text-sm text-red-600">{error}</div>
+      )}
       {currentUser?.role === "admin" && (
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
@@ -298,8 +408,8 @@ export function StatisticsPanel() {
         </>
       )}
 
-      {/* --- Organizer block (admin & moderator) --- */}
-      {(currentUser.role === "admin" || currentUser.role === "moderator") && (
+      {/* --- Organizer block --- */}
+      {(currentUser.role === "admin" || currentUser.role === "moderator" || currentUser.role === "user") && (
         <div className="space-y-6">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
             <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
@@ -399,7 +509,7 @@ export function StatisticsPanel() {
                   {myEvents.map((e) => {
                     const registered = e.participants.length;
                     const checkedIn = e.participants.filter(
-                      (p) => p.checkedIn
+                      (p: Participant) => p.checkedIn
                     ).length;
                     const rate =
                       registered > 0
@@ -423,116 +533,13 @@ export function StatisticsPanel() {
                           {rate}
                         </td>
                         <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
-                          {e.averageRating > 0
-                            ? e.averageRating.toFixed(1)
+                          {Number(e.averageRating ?? 0) > 0
+                            ? Number(e.averageRating).toFixed(1)
                             : "Chưa có"}
                         </td>
                       </tr>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* User Created Events Statistics - Only for regular users */}
-      {currentUser.role === "user" && myEvents.length > 0 && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">
-            Thống kê sự kiện tôi đã tạo
-          </h2>
-
-          {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {userCreatedEventsStats.map((stat, i) => (
-              <div key={i} className="card rounded-xl shadow-sm p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mt-1">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className={`${stat.color} rounded-lg p-3`}>
-                    <stat.icon className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Recent Created Events Table */}
-          <div className="card rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">
-              Sự kiện gần đây của tôi
-            </h3>
-            <div className="max-h-96 overflow-y-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-dark-bg-tertiary sticky top-0">
-                  <tr>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
-                      Tên sự kiện
-                    </th>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
-                      Trạng thái
-                    </th>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
-                      Người tham gia
-                    </th>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
-                      Ngày tạo
-                    </th>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
-                      Đánh giá TB
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {myEvents.slice(0, 10).map((event) => (
-                    <tr
-                      key={event.id}
-                      className="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary"
-                    >
-                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
-                        {event.title}
-                      </td>
-                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${event.status === "approved"
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
-                            : event.status === "pending"
-                              ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
-                              : event.status === "rejected"
-                                ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
-                                : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
-                            }`}
-                        >
-                          {event.status === "approved"
-                            ? "Đã duyệt"
-                            : event.status === "pending"
-                              ? "Chờ duyệt"
-                              : event.status === "rejected"
-                                ? "Bị từ chối"
-                                : "Đã hủy"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
-                        {event.participants.length}
-                      </td>
-                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
-                        {new Date(event.createdAt).toLocaleDateString("vi-VN")}
-                      </td>
-                      <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
-                        {event.averageRating > 0
-                          ? event.averageRating.toFixed(1)
-                          : "Chưa có"}
-                      </td>
-                    </tr>
-                  ))}
                 </tbody>
               </table>
             </div>
@@ -638,12 +645,12 @@ export function StatisticsPanel() {
               </tr>
             </thead>
             <tbody>
-              {myParticipations.map((e, idx) => {
+              {myParticipations.map((e) => {
                 const participant = e.participants.find(
-                  (p) => p.userId === currentUser.id
+                  (p: Participant) => p.userId === currentUser.id
                 );
                 const rating = e.ratings.find(
-                  (r) => r.userId === currentUser.id
+                  (r: Rating) => r.userId === currentUser.id
                 );
 
                 return (
@@ -659,12 +666,14 @@ export function StatisticsPanel() {
                     </td>
                     <td className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                       {participant?.checkedIn ? (
-                        <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-green-400 to-green-600 text-white rounded-full shadow-sm">
-                          ✔ Đã Check-in
+                        <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-green-100 dark:bg-green-700 text-green-800 dark:text-green-100 rounded-full shadow-sm transition hover:scale-105">
+                          <CheckCircle className="w-4 h-4" />
+                          Đã Check-in
                         </span>
                       ) : (
-                        <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-red-400 to-red-600 text-white rounded-full shadow-sm">
-                          ✘ Chưa Check-in
+                        <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-red-100 dark:bg-red-700 text-red-800 dark:text-red-100 rounded-full shadow-sm transition hover:scale-105">
+                          <XCircle className="w-4 h-4" />
+                          Chưa Check-in
                         </span>
                       )}
                     </td>

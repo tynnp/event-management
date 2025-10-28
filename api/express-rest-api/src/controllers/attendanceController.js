@@ -128,3 +128,14 @@ exports.checkIn = async (req, res) => {
 };
 
 
+// GET: current user's participation records
+exports.getMyParticipations = async (req, res) => {
+  try {
+    const records = await AttendanceModel.findByUser(req.user.id);
+    res.json(records);
+  } catch (err) {
+    console.error('Error fetching participations:', err);
+    res.status(500).json({ message: 'Error fetching participations', error: err.message });
+  }
+};
+
