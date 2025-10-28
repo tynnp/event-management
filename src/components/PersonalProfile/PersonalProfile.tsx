@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-hot-toast";
 import { useApp } from "../../context/AppContext";
 import { Eye, EyeOff, Lock, Camera, X } from "lucide-react";
 import Cropper, { Area } from "react-easy-crop";
@@ -133,7 +134,7 @@ export function PersonalProfile() {
       setIsSuccess(true);
     } catch (err) {
       console.error("Lỗi khi cập nhật avatar:", err);
-      alert("Không thể cập nhật avatar!");
+      toast.error("Không thể cập nhật avatar!");
     }
   }, [imageToCrop, croppedAreaPixels, state.token, dispatch]);
 

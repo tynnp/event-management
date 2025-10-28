@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import { createPortal } from "react-dom";
 import {
   Calendar,
@@ -414,7 +415,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       setNewComment("");
 
     } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể gửi bình luận.");
+      toast.error(err.response?.data?.message ?? "Không thể gửi bình luận.");
     } finally {
       setSendingComment(false);
     }
@@ -423,7 +424,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) {
-      alert("Bạn cần đăng nhập để bình luận.");
+      toast.error("Bạn cần đăng nhập để bình luận.");
       return;
     }
     if (!newComment.trim()) return;
@@ -494,7 +495,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       setNewRating(0);
       setNewReview("");
     } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể gửi đánh giá.");
+      toast.error(err.response?.data?.message ?? "Không thể gửi đánh giá.");
     } finally {
       setSendingRating(false);
     }
@@ -503,7 +504,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const handleAddRating = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) {
-      alert("Bạn cần đăng nhập để đánh giá.");
+      toast.error("Bạn cần đăng nhập để đánh giá.");
       return;
     }
     if (newRating <= 0) return;
@@ -519,11 +520,11 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
   const handleJoinEvent = async () => {
     if (!currentUser) {
-      alert("Bạn cần đăng nhập để tham gia.");
+      toast.error("Bạn cần đăng nhập để tham gia.");
       return;
     }
     if (isParticipant) {
-      alert("Bạn đã tham gia rồi.");
+      toast("Bạn đã tham gia rồi.");
       return;
     }
     try {
@@ -548,7 +549,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       dispatch?.({ type: "JOIN_EVENT", payload: { eventId: event.id, userId: currentUser.id, qrCode: created.qr_code || created.qrCode } });
       setShowQR(true);
     } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể tham gia sự kiện.");
+      toast.error(err.response?.data?.message ?? "Không thể tham gia sự kiện.");
     } finally {
       setJoining(false);
     }
@@ -564,7 +565,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       await refetchComments();
       dispatch?.({ type: "UNHIDE_COMMENT", payload: commentId });
     } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể hiện bình luận.");
+      toast.error(err.response?.data?.message ?? "Không thể hiện bình luận.");
     }
   };
 
@@ -578,7 +579,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       await refetchComments();
       dispatch?.({ type: "HIDE_COMMENT", payload: commentId });
     } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể ẩn bình luận.");
+      toast.error(err.response?.data?.message ?? "Không thể ẩn bình luận.");
     }
   };
 
@@ -593,7 +594,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       await refetchComments();
       dispatch?.({ type: "DELETE_COMMENT", payload: commentId });
     } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể xóa bình luận.");
+      toast.error(err.response?.data?.message ?? "Không thể xóa bình luận.");
     }
   };
 
@@ -667,10 +668,11 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 const shareLink = isPublicView ? window.location.href : `${origin}/events/${event.id}?public=1`;
                 try {
                   await navigator.clipboard.writeText(shareLink);
-                  alert('Đã sao chép link chia sẻ vào clipboard!');
+                  toast.success('Đã sao chép link chia sẻ vào clipboard!');
                 } catch {
                   // Fallback: prompt copy
-                  prompt('Sao chép liên kết chia sẻ:', shareLink);
+                  const copied = window.prompt('Sao chép liên kết chia sẻ:', shareLink);
+                  if (copied !== null) toast('Hãy dán liên kết để chia sẻ');
                 }
               }}
               className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition"
@@ -1015,7 +1017,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Vui lòng đưa mã này để điểm danh tham gia sự kiện.
+              Vui lòng đưa mã này để điểm danh sự kiện!
             </p>
 
             <div className="mt-6 flex items-center justify-center gap-3">
