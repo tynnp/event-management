@@ -179,3 +179,20 @@ exports.joinEvent = async (req, res) => {
   }
 };
 
+// GET: participants by event (organizer/admin/mod only)
+exports.getParticipantsByEvent = async (req, res) => {
+  const { event_id } = req.query;
+  if (!event_id) return res.status(400).json({ message: 'event_id is required' });
+  try {
+    const Event = require('../models/Event');
+    const canView = await Event.canEdit(event_id, req.user.id, req.user.role);
+    if (!canView) return res.status(403).json({ message: 'Not authorized to view participants of this event' });
+
+    const rows = await AttendanceModel.findByEvent(event_id);
+    return res.json(rows);
+  } catch (err) {
+    console.error('Fetch participants failed:', err);
+    res.status(500).json({ message: 'Error fetching participants', error: err.message });
+  }
+};
+

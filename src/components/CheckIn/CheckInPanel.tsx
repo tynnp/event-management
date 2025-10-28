@@ -1,52 +1,117 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { QrCode, Users, CheckCircle, Clock, Scan } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 
 export function CheckInPanel() {
   const { state, dispatch } = useApp();
-  const { events, users } = state;
+  const { events, users, currentUser } = state;
   const [selectedEvent, setSelectedEvent] = useState<string>("");
   const [qrInput, setQrInput] = useState("");
   const [scanResult, setScanResult] = useState<string>("");
+  const [remoteEvents, setRemoteEvents] = useState<any[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedParticipants, setSelectedParticipants] = useState<any[]>([]);
 
-  const approvedEvents = events.filter((e) => e.status === "approved");
-  const selectedEventData = events.find((e) => e.id === selectedEvent);
+  const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+  const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
 
-  const handleQRScan = () => {
+  const getToken = (): string | null => {
+    const keys = ["token", "accessToken", "authToken", "currentUser", "user"];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.token) return parsed.token;
+        if (parsed?.accessToken) return parsed.accessToken;
+        if (parsed?.data?.token) return parsed.data.token;
+      } catch {
+        if (raw && raw.length < 500) return raw;
+      }
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (!currentUser) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const token = getToken();
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        const res = await axios.get(`${BASE}/events`, { headers });
+        const normalized = (res.data || []).map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          description: e.description,
+          startTime: e.start_time || e.startTime,
+          endTime: e.end_time || e.endTime,
+          location: e.location,
+          image: e.image_url || e.image,
+          isPublic: e.is_public !== undefined ? e.is_public : e.isPublic,
+          maxParticipants: e.max_participants || e.maxParticipants,
+          createdBy: e.created_by || e.createdBy,
+          createdAt: e.created_at || e.createdAt,
+          status: e.status,
+          rejectionReason: e.rejection_reason || e.rejectionReason,
+          participants: e.participants || [],
+          averageRating: Number(e.average_rating ?? e.averageRating ?? 0),
+          category: e.category_name || e.category,
+        }));
+        setRemoteEvents(normalized);
+      } catch (err: any) {
+        setError(err?.response?.data?.message || "Không thể tải sự kiện");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, [currentUser]);
+
+  const dataEvents = remoteEvents ?? events;
+  const myCreatedEvents = useMemo(
+    () => dataEvents.filter((e: any) => e.createdBy === currentUser?.id),
+    [dataEvents, currentUser?.id]
+  );
+  const selectedEventData = dataEvents.find((e: any) => e.id === selectedEvent);
+
+  useEffect(() => {
+    const loadParticipants = async () => {
+      if (!selectedEvent) return;
+      try {
+        const token = getToken();
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        const res = await axios.get(`${BASE}/attendance/participants`, {
+          params: { event_id: selectedEvent },
+          headers,
+        });
+        const rows = res.data || [];
+        const normalized = rows.map((r: any) => ({
+          userId: r.user_id ?? r.userId,
+          joinedAt: r.joined_at ?? r.joinedAt ?? new Date().toISOString(),
+          qrCode: r.qr_code ?? r.qrCode,
+          checkedIn: !!(r.checked_in ?? r.checkedIn),
+          checkInTime: r.check_in_time ?? r.checkInTime ?? undefined,
+        }));
+        setSelectedParticipants(normalized);
+      } catch (err) {
+      }
+    };
+    loadParticipants();
+  }, [selectedEvent]);
+
+  const handleQRScan = async () => {
     if (!selectedEvent || !qrInput.trim()) {
       setScanResult("Vui lòng chọn sự kiện và nhập mã QR");
       return;
     }
 
-    // Parse QR code format: eventId-userId-timestamp
-    const qrParts = qrInput.trim().split("-");
-    if (qrParts.length !== 3) {
-      setScanResult("Mã QR không hợp lệ");
-      return;
-    }
-
-    const [eventId, userId] = qrParts;
-
-    if (eventId !== selectedEvent) {
-      setScanResult("Mã QR không thuộc sự kiện đã chọn");
-      return;
-    }
-
-    const event = events.find((e) => e.id === eventId);
+    const event = events.find((e) => e.id === selectedEvent);
     if (!event) {
       setScanResult("Không tìm thấy sự kiện");
-      return;
-    }
-
-    const participant = event.participants.find((p) => p.userId === userId);
-
-    if (!participant) {
-      setScanResult("Người dùng chưa đăng ký sự kiện này");
-      return;
-    }
-
-    if (participant.checkedIn) {
-      setScanResult("Người dùng đã điểm danh trước đó");
       return;
     }
 
@@ -65,15 +130,30 @@ export function CheckInPanel() {
       return;
     }
 
-    // Perform check-in
-    dispatch({
-      type: "CHECK_IN",
-      payload: { eventId, userId },
-    });
+    try {
+      const token = getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      const raw = qrInput.trim();
+      const isJsonOrData = raw.startsWith("{") || raw.startsWith("data:");
+      const payload: any = { event_id: selectedEvent };
+      if (isJsonOrData) payload.qr_data = raw; else payload.qr_code = raw;
 
-    const user = users.find((u) => u.id === userId);
-    setScanResult(`Điểm danh thành công cho ${user?.name}`);
-    setQrInput("");
+      const res = await axios.post(`${BASE}/attendance/checkin`, payload, { headers });
+      const participant = res.data?.participant ?? res.data;
+      const checkedUserId = participant.user_id ?? participant.userId;
+
+      if (checkedUserId) {
+        dispatch({ type: "CHECK_IN", payload: { eventId: selectedEvent, userId: checkedUserId } });
+        setSelectedParticipants(prev => prev.map((p: any) => p.userId === checkedUserId ? { ...p, checkedIn: true, checkInTime: new Date().toISOString() } : p));
+      }
+
+      const user = users.find((u) => u.id === checkedUserId);
+      setScanResult(`Điểm danh thành công${user?.name ? ` cho ${user.name}` : ""}`);
+      setQrInput("");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Điểm danh thất bại";
+      setScanResult(msg);
+    }
   };
 
   const getEventStatus = (event: any) => {
@@ -135,7 +215,7 @@ export function CheckInPanel() {
                 className="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               >
                 <option value="">Chọn sự kiện...</option>
-                {approvedEvents.map((event) => {
+                {myCreatedEvents.map((event) => {
                   const status = getEventStatus(event);
                   return (
                     <option key={event.id} value={event.id}>
@@ -187,7 +267,7 @@ export function CheckInPanel() {
 
         {/* Event Details Card */}
         {selectedEventData && (
-          <div className="rounded-3xl p-8 shadow-2xl bg-gradient-to-r from-purple-200 via-pink-200 to-pink-300 dark:from-purple-800 dark:via-pink-800 dark:to-pink-900 border border-gray-200 dark:border-gray-700 animate-fade-in-up hover:shadow-3xl hover:-translate-y-1 transition-all duration-300">
+        <div className="rounded-3xl p-8 shadow-2xl bg-gradient-to-r from-purple-200 via-pink-200 to-pink-300 dark:from-purple-800 dark:via-pink-800 dark:to-pink-900 border border-gray-200 dark:border-gray-700 animate-fade-in-up hover:shadow-3xl hover:-translate-y-1 transition-all duration-300">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
               Chi tiết sự kiện
             </h3>
@@ -242,7 +322,7 @@ export function CheckInPanel() {
                       <Users className="h-5 w-5 mr-1 animate-bounce" />
                     </div>
                     <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                      {selectedEventData.participants.length}
+                      {selectedParticipants.length}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Đăng ký
@@ -254,9 +334,7 @@ export function CheckInPanel() {
                     </div>
                     <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       {
-                        selectedEventData.participants.filter(
-                          (p) => p.checkedIn
-                        ).length
+                        selectedParticipants.filter((p: any) => p.checkedIn).length
                       }
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -269,9 +347,7 @@ export function CheckInPanel() {
                     </div>
                     <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       {
-                        selectedEventData.participants.filter(
-                          (p) => !p.checkedIn
-                        ).length
+                        selectedParticipants.filter((p: any) => !p.checkedIn).length
                       }
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -290,12 +366,12 @@ export function CheckInPanel() {
         <div className="rounded-3xl shadow-2xl bg-gradient-to-r from-green-100 via-green-200 to-green-300 dark:from-green-800 dark:via-green-700 dark:to-green-900 border border-gray-200 dark:border-gray-700 backdrop-blur-sm animate-fade-in-up overflow-hidden mt-10">
           <div className="px-8 py-5 border-b border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              Danh sách người tham gia ({selectedEventData.participants.length})
+              Danh sách người tham gia ({selectedParticipants.length})
             </h3>
           </div>
 
           <div className="divide-y divide-gray-200 dark:divide-gray-600">
-            {selectedEventData.participants.map((participant, idx) => {
+            {selectedParticipants.map((participant: any, idx: number) => {
               const user = users.find((u) => u.id === participant.userId);
               return (
                 <div
@@ -339,7 +415,7 @@ export function CheckInPanel() {
                 </div>
               );
             })}
-            {selectedEventData.participants.length === 0 && (
+            {selectedParticipants.length === 0 && (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 Chưa có người đăng ký tham gia
               </div>

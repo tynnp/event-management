@@ -12,6 +12,8 @@ router.get('/generate-qr', authMiddleware, attendanceController.generateQRCode);
 router.get('/my', authMiddleware, attendanceController.getMyParticipations);
 // Tham gia sự kiện (tạo mã QR cá nhân, chưa check-in)
 router.post('/join', authMiddleware, attendanceController.joinEvent);
+// Lấy participants theo event (chỉ organizer/mod/admin)
+router.get('/participants', authMiddleware, attendanceController.getParticipantsByEvent);
 
 
 module.exports = router;
