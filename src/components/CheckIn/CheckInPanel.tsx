@@ -6,6 +6,7 @@ import { useApp } from "../../context/AppContext";
 export function CheckInPanel() {
   const { state, dispatch } = useApp();
   const { events, users, currentUser } = state;
+  const [allUsers, setAllUsers] = useState<any[]>(users || []);
   const [selectedEvent, setSelectedEvent] = useState<string>("");
   const [qrInput, setQrInput] = useState("");
   const [scanResult, setScanResult] = useState<string>("");
@@ -75,6 +76,19 @@ export function CheckInPanel() {
     };
     fetchEvents();
   }, [currentUser]);
+
+  // Fetch users for participant display
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = getToken();
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        const res = await axios.get(`${BASE}/users`, { headers });
+        if (Array.isArray(res.data)) setAllUsers(res.data);
+      } catch {}
+    };
+    fetchUsers();
+  }, []);
 
   const dataEvents = remoteEvents ?? events;
   const myCreatedEvents = useMemo(
@@ -495,7 +509,7 @@ export function CheckInPanel() {
 
           <div className="divide-y divide-gray-200 dark:divide-gray-600">
             {selectedParticipants.map((participant: any, idx: number) => {
-              const user = users.find((u) => u.id === participant.userId);
+              const user = allUsers.find((u) => u.id === participant.userId);
               return (
                 <div
                   key={participant.userId}
@@ -504,14 +518,14 @@ export function CheckInPanel() {
                 >
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                      {user?.name.charAt(0).toUpperCase()}
+                      {(user?.name?.[0] || 'U').toUpperCase()}
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
-                        {user?.name}
+                        {user?.name || 'Người dùng'}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {user?.email}
+                        {user?.email || participant.userId}
                       </p>
                     </div>
                   </div>
