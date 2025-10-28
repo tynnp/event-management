@@ -98,26 +98,8 @@ exports.checkIn = async (req, res) => {
       return res.json({ message: 'Check-in successful', participant });
     }
 
-    // 3) Nếu không có participant tương ứng => tạo participant mới
-    const newParticipantId = uuidv4();
-    const newParticipant = await AttendanceModel.create({
-      id: newParticipantId,
-      user_id: req.user.id,
-      event_id: eventId,
-      qr_code: code
-    });
-
-    // Tăng events_attended vì đây là lần đầu check-in
-    await User.incrementEventsAttended(req.user.id);
-
-    // Ghi Mongo Attendance (option)
-    try {
-      await AttendanceMongo.create({ userId: req.user.id, eventId, timestamp: new Date() });
-    } catch (e) {
-      console.warn('Mongo attendance create failed:', e.message);
-    }
-
-    return res.json({ message: 'Check-in successful (participant auto-created)', participant: newParticipant });
+    // 3) Không tự tạo participant mới; báo lỗi không tìm thấy QR cho sự kiện này
+    return res.status(404).json({ message: 'QR code not found for this event' });
   } catch (err) {
     console.error(err);
     if (err.code === '23505') {
