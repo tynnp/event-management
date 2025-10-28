@@ -16,13 +16,14 @@ import { CheckInPanel } from "./components/CheckIn/CheckInPanel";
 import { NotFound } from "./components/Layout/NotFound";
 import { useState, useEffect } from 'react';
 import { useLocation } from "react-router-dom";
+import { Toaster } from 'react-hot-toast';
 
 function AppContent() {
   const { state } = useApp();
   const { currentUser } = state;
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation(); 
+  const location = useLocation();
 
   useEffect(() => {
     const pathToSection: Record<string, string> = {
@@ -41,7 +42,7 @@ function AppContent() {
     if (matchedSection) {
       setActiveSection(matchedSection);
     }
-  }, [location.pathname]); 
+  }, [location.pathname]);
 
   if (!currentUser) {
     return <LoginForm />;
@@ -59,9 +60,8 @@ function AppContent() {
         />
 
         <main
-          className={`flex-1 p-8 transition-all duration-300 ${
-            sidebarOpen ? 'ml-[250px]' : 'ml-0'
-          }`}
+          className={`flex-1 p-8 transition-all duration-300 ${sidebarOpen ? 'ml-[250px]' : 'ml-0'
+            }`}
         >
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -89,6 +89,21 @@ function App() {
       <ThemeProvider>
         <AppProvider>
           <AppContent />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: '#fff',
+                padding: '12px 20px',
+                borderRadius: '12px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                fontWeight: 500,
+                fontSize: '14px',
+              },
+            }}
+          />
         </AppProvider>
       </ThemeProvider>
     </BrowserRouter>

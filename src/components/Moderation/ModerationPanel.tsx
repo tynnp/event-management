@@ -3,6 +3,7 @@ import { Globe, Lock, Users, Tag, Eye, Check, X, Clock } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event } from "../../types";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import axios from "axios";
 
 export function ModerationPanel() {
@@ -140,10 +141,10 @@ export function ModerationPanel() {
       // Refresh events
       await refreshEvents();
 
-      alert("Sự kiện đã được duyệt thành công!");
+      toast.success("Sự kiện đã được duyệt thành công!");
       dispatch({ type: "APPROVE_EVENT", payload: eventId });
     } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể duyệt sự kiện.");
+      toast.error(err.response?.data?.message ?? "Không thể duyệt sự kiện.");
     }
   };
 
@@ -159,14 +160,14 @@ export function ModerationPanel() {
       // Refresh events
       await refreshEvents();
 
-      alert("Sự kiện đã bị từ chối.");
+      toast.success("Sự kiện đã bị từ chối!");
 
       setShowRejectModal(false);
       setRejectionReason("");
       setSelectedEvent(null);
       dispatch({ type: "REJECT_EVENT", payload: { eventId, reason } });
     } catch (err: any) {
-      alert(err.response?.data?.message ?? "Không thể từ chối sự kiện.");
+      toast.error(err.response?.data?.message ?? "Không thể từ chối sự kiện.");
     }
   };
 
@@ -190,7 +191,7 @@ export function ModerationPanel() {
           </span>
         </h2>
         <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
-          Quản lý và kiểm duyệt sự kiện, bình luận
+          Quản lý và kiểm duyệt sự kiện
         </p>
       </div>
 

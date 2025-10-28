@@ -1,13 +1,7 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Type,
-  FileText,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Calendar, MapPin, Users, Type, FileText, Image as ImageIcon } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { useApp } from "../../context/AppContext";
 import { useNavigate } from "react-router-dom";
 
@@ -132,7 +126,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 5MB");
+        toast.error("Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 5MB");
         return;
       }
       setFormData((prev) => ({ ...prev, image: file }));
@@ -203,7 +197,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
 
       // Parse response
       const created = await res.json().catch(() => null);
-      
+
       if (!res.ok) {
         console.error(`[CreateEvent] Server returned ${res.status}:`, created);
 
@@ -213,16 +207,14 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
           return;
         }
 
-        // ⚠️ thêm alert báo lỗi
-        alert("Không thể tạo sự kiện. Vui lòng thử lại!");
+        toast.error("Không thể tạo sự kiện. Vui lòng thử lại!"); 
         throw new Error(`Server ${res.status}: ${JSON.stringify(created)}`);
       }
 
-      // ✅ Hiển thị message phù hợp
       if (created?.status === 'approved') {
-        alert("🎉 Sự kiện đã được tạo thành công! Sự kiện của bạn đã được hiển thị ngay lập tức.");
+        toast.success("Sự kiện đã được tạo thành công! Sự kiện của bạn đã được hiển thị ngay lập tức."); 
       } else {
-        alert("✅ Sự kiện đã được tạo thành công! Đang chờ Admin/Moderator duyệt...");
+        toast.success("Sự kiện đã được tạo thành công! Đang chờ kiểm duyệt...");
       }
 
       if (created && dispatch) {
@@ -233,16 +225,28 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
       }
 
       if (onSuccess) onSuccess();
+
+      setFormData({
+        title: "",
+        description: "",
+        startTime: "",
+        endTime: "",
+        location: "",
+        category: categories.length > 0 ? categories[0].id : "",
+        isPublic: true,
+        maxParticipants: "",
+        image: undefined,
+      });
+      setPreview(null);
+      setErrors({});
+
     } catch (err: any) {
       console.error("Error creating event:", err);
-      // ⚠️ thêm alert nếu gặp lỗi bất ngờ
-      alert(err?.message || "Có lỗi xảy ra khi tạo sự kiện");
+      toast.error(err?.message || "Có lỗi xảy ra khi tạo sự kiện");
     } finally {
       setLoading(false);
     }
   };
-
-
 
   return (
     <div className="max-w-2xl mx-auto transition-colors duration-300">
@@ -368,7 +372,7 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                 ))}
               </select>
             </div>
-            
+
             {/* Chế độ: Công khai/Riêng tư */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -399,10 +403,10 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
                 </label>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {formData.isPublic 
+                {formData.isPublic
                   ? (currentUser?.role === 'admin' || currentUser?.role === 'moderator'
-                      ? 'Sự kiện sẽ được hiển thị công khai ngay lập tức'
-                      : 'Sự kiện công khai cần được duyệt bởi Admin/Mod')
+                    ? 'Sự kiện sẽ được hiển thị công khai ngay lập tức'
+                    : 'Sự kiện công khai cần được duyệt bởi Admin/Mod')
                   : 'Sự kiện riêng tư sẽ được hiển thị ngay lập tức (không cần duyệt)'}
               </p>
             </div>

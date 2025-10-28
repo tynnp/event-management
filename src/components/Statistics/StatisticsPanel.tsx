@@ -1,19 +1,6 @@
 import { useApp } from "../../context/AppContext";
 import { Users, Calendar, CheckCircle, Clock, Star, XCircle } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Legend,
-  LineChart,
-  Line,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend, LineChart, Line } from "recharts";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
@@ -560,7 +547,6 @@ export function StatisticsPanel() {
             Thống kê sự kiện tôi tham gia
           </span>
         </h2>
-
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

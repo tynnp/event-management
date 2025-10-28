@@ -126,7 +126,7 @@ export function Dashboard() {
       ).length,
       icon: CheckCircle,
       color: "bg-green-500",
-      trend: "+12% so với tháng trước",
+
     },
     {
       title: "Sự kiện sắp diễn ra",
@@ -137,14 +137,14 @@ export function Dashboard() {
       ).length,
       icon: Calendar,
       color: "bg-blue-500",
-      trend: "3 sự kiện tuần này",
+      // trend: "3 sự kiện tuần này",
     },
     {
       title: "Đánh giá trung bình",
       value: statistics?.average_rating ? `${statistics.average_rating.toFixed(1)}/5.0` : (currentUser?.eventsAttended ? "4.8/5.0" : "N/A"),
       icon: Star,
       color: "bg-yellow-500",
-      trend: "Xuất sắc",
+      // trend: "Xuất sắc",
     },
     {
       title:
@@ -155,10 +155,10 @@ export function Dashboard() {
           : myCreatedEvents.length,
       icon: currentUser?.role === "admin" ? Users : Calendar,
       color: "bg-purple-500",
-      trend:
-        currentUser?.role === "admin"
-          ? "+5 người dùng mới"
-          : "Hoạt động tích cực",
+      // trend:
+      //   currentUser?.role === "admin"
+      //     ? "+5 người dùng mới"
+      //     : "Hoạt động tích cực",
     },
   ];
 
@@ -260,9 +260,9 @@ export function Dashboard() {
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-4 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
+            {/* <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-4 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
               {stat.trend}
-            </p>
+            </p> */}
 
             <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-indigo-500/10 via-pink-500/10 to-purple-500/10 blur-xl transition duration-700 pointer-events-none"></div>
           </div>
