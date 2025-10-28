@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event, Comment, Rating, Participant, User } from "../../types";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -30,6 +30,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const { currentUser, users = [], comments = [], ratings = [] } = state;
   const { id: paramId } = useParams<{ id?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Local UI/state
   const [remoteEvent, setRemoteEvent] = useState<Event | null>(null);
@@ -134,9 +135,11 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       setLoading(true);
       setError(null);
       try {
-        // Fetch event details
-        const eventRes = await axios.get(`${BASE}/events/${id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        // Fetch event details (use public endpoint if shared link or no token)
+        const isPublicView = new URLSearchParams(location.search).get('public') === '1';
+        const eventUrl = isPublicView || !token ? `${BASE}/events/public/${id}` : `${BASE}/events/${id}`;
+        const eventRes = await axios.get(eventUrl, {
+          headers: isPublicView || !token ? undefined : { Authorization: `Bearer ${token}` },
           signal: controller.signal as any,
         });
         
@@ -215,7 +218,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             }));
           const mergedComments = [
             ...comments,
-            ...reviewComments.filter((rc) => !comments.some((c: any) => c.id === rc.id)),
+            ...reviewComments.filter((rc: any) => !comments.some((c: any) => c.id === rc.id)),
           ];
           const normalizedEventWithRatings = { ...normalizedEvent, comments: mergedComments, ratings, averageRating: Number.isFinite(avg) ? avg : normalizedEvent.averageRating };
           setRemoteEvent(normalizedEventWithRatings);
@@ -443,7 +446,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
               }));
             const mergedComments = [
               ...existingComments,
-              ...reviewComments.filter((rc) => !existingComments.some((c: any) => c.id === rc.id)),
+              ...reviewComments.filter((rc: any) => !existingComments.some((c: any) => c.id === rc.id)),
             ];
             return { ...prev, ratings, averageRating: Number.isFinite(avg) ? avg : prev.averageRating, comments: mergedComments };
           });
@@ -615,10 +618,24 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           </div>
 
           <div className="absolute top-6 right-6 flex space-x-2">
-            <button className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition">
+            {/* <button className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition">
               <Heart className="h-4 w-4" />
-            </button>
-            <button className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition">
+            </button> */}
+            <button
+              onClick={async () => {
+                const isPublicView = new URLSearchParams(location.search).get('public') === '1';
+                const origin = window.location.origin.replace(/\/$/, '');
+                const shareLink = isPublicView ? window.location.href : `${origin}/event/${event.id}?public=1`;
+                try {
+                  await navigator.clipboard.writeText(shareLink);
+                  alert('Đã sao chép link chia sẻ vào clipboard!');
+                } catch {
+                  // Fallback: prompt copy
+                  prompt('Sao chép liên kết chia sẻ:', shareLink);
+                }
+              }}
+              className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition"
+            >
               <Share2 className="h-4 w-4" />
             </button>
           </div>

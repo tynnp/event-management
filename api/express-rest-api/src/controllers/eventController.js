@@ -117,6 +117,54 @@ exports.getEventDetail = async (req, res) => {
   }
 };
 
+// PUBLIC DETAIL: allow access via link even if private or not owner
+exports.getEventPublic = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    // Enrich participants best-effort for UI
+    try {
+      const Attendance = require('../models/Attendance');
+      const rows = await Attendance.findByEvent(req.params.id);
+      event.participants = rows.map(r => ({
+        userId: r.user_id,
+        joinedAt: r.joined_at,
+        qrCode: r.qr_code,
+        checkedIn: r.checked_in,
+        checkInTime: r.check_in_time
+      }));
+    } catch {
+      event.participants = [];
+    }
+
+    // Hide sensitive fields if any in future
+    return res.json(event);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching event', error: err.message });
+  }
+};
+
+// SHARE: returns a public link that can be shared
+exports.shareEventLink = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await Event.findById(id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    const canView = await Event.canEdit(id, req.user.id, req.user.role) || event.created_by === req.user.id;
+    if (!canView && !(req.user.role === 'admin' || req.user.role === 'moderator')) {
+      return res.status(403).json({ message: 'Not authorized to share this event' });
+    }
+
+    // For simplicity, direct public link by id
+    const origin = (process.env.PUBLIC_APP_URL || '').replace(/\/$/, '') || 'http://localhost:5173';
+    const link = `${origin}/event/${id}?public=1`;
+    return res.json({ link });
+  } catch (err) {
+    res.status(500).json({ message: 'Error generating share link', error: err.message });
+  }
+};
 // APPROVE
 exports.approveEvent = async (req, res) => {
   if (req.user.role !== 'moderator' && req.user.role !== 'admin') {
