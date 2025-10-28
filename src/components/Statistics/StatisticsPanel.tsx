@@ -16,6 +16,7 @@ export function StatisticsPanel() {
   const [remoteEvents, setRemoteEvents] = useState<any[] | null>(null);
   const [remoteParticipations, setRemoteParticipations] = useState<any[] | null>(null);
   const [systemStats, setSystemStats] = useState<any | null>(null);
+  const [participantStatsByEvent, setParticipantStatsByEvent] = useState<Record<string, { total: number; checked: number }>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,6 +90,32 @@ export function StatisticsPanel() {
         setRemoteUsers(usersRes.data || []);
         setRemoteParticipations(myPartRes?.data || null);
         if (systemRes) setSystemStats(systemRes.data || null);
+
+        // Fetch per-event participant stats for events I created (total & checked)
+        const myEventIds = normalizedEvents.filter((e: any) => e.createdBy === currentUser.id).map((e: any) => e.id);
+        if (myEventIds.length > 0) {
+          try {
+            const statsEntries = await Promise.all(
+              myEventIds.map(async (eventId: string) => {
+                try {
+                  const res = await axios.get(`${BASE}/attendance/participants`, {
+                    params: { event_id: eventId },
+                    headers,
+                  });
+                  const rows = Array.isArray(res.data) ? res.data : [];
+                  const total = rows.length;
+                  const checked = rows.filter((r: any) => !!(r.checked_in ?? r.checkedIn)).length;
+                  return [eventId, { total, checked }] as const;
+                } catch {
+                  return [eventId, { total: 0, checked: 0 }] as const;
+                }
+              })
+            );
+            const statsMap: Record<string, { total: number; checked: number }> = {};
+            for (const [id, stats] of statsEntries) statsMap[id] = stats;
+            setParticipantStatsByEvent(statsMap);
+          } catch {}
+        }
       } catch (err: any) {
         console.error("Error fetching statistics:", err);
         setError(err?.response?.data?.message || "Không thể tải thống kê từ API");
@@ -130,6 +157,17 @@ export function StatisticsPanel() {
       0
     );
   }, [dataMyParticipations, myParticipations, currentUser.id]);
+
+  // Build quick lookup for my participation by event id
+  const myParticipationMap: Record<string, any> = useMemo(() => {
+    const map: Record<string, any> = {};
+    if (Array.isArray(dataMyParticipations)) {
+      for (const r of dataMyParticipations) {
+        map[r.event_id] = r;
+      }
+    }
+    return map;
+  }, [dataMyParticipations]);
 
   // --- Cards ---
   const adminStats = [
@@ -193,6 +231,8 @@ export function StatisticsPanel() {
     {
       title: "Người tham gia sự kiện của tôi",
       value: myEvents.reduce((sum, e: any) => {
+        const stats = participantStatsByEvent[e.id];
+        if (stats) return sum + stats.total;
         const count = Array.isArray(e.participants) ? e.participants.length : Number(e.current_participants ?? 0);
         return sum + (Number.isFinite(count) ? count : 0);
       }, 0),
@@ -255,11 +295,12 @@ export function StatisticsPanel() {
     { name: "User", value: dataUsers.filter((u: any) => u.role === "user").length },
   ];
 
-  const participantsPerEvent = myEvents.map((e) => ({
-    name: e.title,
-    đăngKý: e.participants.length,
-    thamGia: e.participants.filter((p: Participant) => p.checkedIn).length,
-  }));
+  const participantsPerEvent = myEvents.map((e) => {
+    const stats = participantStatsByEvent[e.id];
+    const registered = stats ? stats.total : (Array.isArray(e.participants) ? e.participants.length : 0);
+    const checked = stats ? stats.checked : (Array.isArray(e.participants) ? e.participants.filter((p: Participant) => p.checkedIn).length : 0);
+    return { name: e.title, đăngKý: registered, thamGia: checked };
+  });
 
   const ratingsPerEvent = myEvents.map((e) => ({
     name: e.title,
@@ -618,9 +659,7 @@ export function StatisticsPanel() {
             </thead>
             <tbody>
               {myParticipations.map((e) => {
-                const participant = e.participants.find(
-                  (p: Participant) => p.userId === currentUser.id
-                );
+                const myRow = myParticipationMap[e.id];
                 const rating = e.ratings.find(
                   (r: Rating) => r.userId === currentUser.id
                 );
@@ -637,7 +676,7 @@ export function StatisticsPanel() {
                       {new Date(e.startTime).toLocaleDateString("vi-VN")}
                     </td>
                     <td className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
-                      {participant?.checkedIn ? (
+                      {myRow ? (!!myRow.checked_in ? (
                         <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-green-100 dark:bg-green-700 text-green-800 dark:text-green-100 rounded-full shadow-sm transition hover:scale-105">
                           <CheckCircle className="w-4 h-4" />
                           Đã Check-in
@@ -647,6 +686,19 @@ export function StatisticsPanel() {
                           <XCircle className="w-4 h-4" />
                           Chưa Check-in
                         </span>
+                      )) : (
+                        // Fallback to event participants if myRow missing
+                        e.participants.find((p: Participant) => p.userId === currentUser.id && p.checkedIn) ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-green-100 dark:bg-green-700 text-green-800 dark:text-green-100 rounded-full shadow-sm transition hover:scale-105">
+                            <CheckCircle className="w-4 h-4" />
+                            Đã Check-in
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-red-100 dark:bg-red-700 text-red-800 dark:text-red-100 rounded-full shadow-sm transition hover:scale-105">
+                            <XCircle className="w-4 h-4" />
+                            Chưa Check-in
+                          </span>
+                        )
                       )}
                     </td>
                     <td className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
