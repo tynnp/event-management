@@ -290,6 +290,19 @@ export function EventList() {
                     {event.category_name || "Khác"}
                   </span>
                 </div>
+                {isMyEvents && (
+                  <div className="absolute bottom-4 right-4">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full bg-white/20 backdrop-blur-sm text-white ${
+                        event.isPublic
+                          ? "bg-green-500/20 text-green-200"
+                          : "bg-red-500/20 text-red-200"
+                      }`}
+                    >
+                      {event.isPublic ? "Công khai" : "Riêng tư"}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="p-6">
