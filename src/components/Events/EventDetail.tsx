@@ -180,7 +180,49 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
         const normalizedEvent = normalizeEvent(raw);
         normalizedEvent.comments = comments;
         
-        setRemoteEvent(normalizedEvent);
+        // Fetch reviews/ratings and stats
+        try {
+          const reviewsRes = await axios.get(`${BASE}/chats/reviews/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          });
+          const reviewsPayload = reviewsRes.data;
+          const ratings = (reviewsPayload.reviews || reviewsPayload || []).map((r: any) => ({
+            id: r.id,
+            userId: r.user_id ?? r.userId,
+            eventId: r.event_id ?? r.eventId,
+            rating: Number(r.rating),
+            review: r.review ?? r.feedback ?? '',
+            createdAt: r.created_at ?? r.createdAt ?? new Date().toISOString(),
+          }));
+          let avg = Number(reviewsPayload.stats?.average_rating ?? reviewsPayload.average_rating ?? 0);
+          // Fallback: compute average from ratings array if stats missing or zero but we have ratings
+          if ((!Number.isFinite(avg) || avg === 0) && ratings.length > 0) {
+            const sum = ratings.reduce((s: number, r: any) => s + (Number(r.rating) || 0), 0);
+            avg = sum / ratings.length;
+          }
+          // Merge reviews with text into comments
+          const reviewComments = ratings
+            .filter((r: any) => (r.review ?? '').trim().length > 0)
+            .map((r: any) => ({
+              id: `rev-${r.id}`,
+              eventId: r.eventId,
+              userId: r.userId,
+              content: r.review,
+              createdAt: r.createdAt,
+              isHidden: false,
+              parentId: null,
+              replies: [],
+            }));
+          const mergedComments = [
+            ...comments,
+            ...reviewComments.filter((rc) => !comments.some((c: any) => c.id === rc.id)),
+          ];
+          const normalizedEventWithRatings = { ...normalizedEvent, comments: mergedComments, ratings, averageRating: Number.isFinite(avg) ? avg : normalizedEvent.averageRating };
+          setRemoteEvent(normalizedEventWithRatings);
+        } catch (err) {
+          // fallback: set without ratings
+          setRemoteEvent(normalizedEvent);
+        }
         
         // Fetch users để có avatar
         try {
@@ -356,17 +398,57 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const postRating = async (payload: Partial<Rating>) => {
     try {
       setSendingRating(true);
-      const res = await axios.post(`${BASE}/ratings`, payload, {
+      const res = await axios.post(`${BASE}/chats/reviews`, {
+        event_id: payload.eventId,
+        rating: payload.rating,
+        review: payload.review,
+      }, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
-      const created: Rating = res.data?.data ?? res.data;
-      setRemoteEvent((prev) => {
-        if (!prev) return prev;
-        const ratings = [...(prev.ratings ?? []), created];
-        const avg = ratings.reduce((s, r) => s + (r.rating ?? r.rating ?? 0), 0) / ratings.length;
-        return { ...prev, ratings, averageRating: Number.isFinite(avg) ? Number(avg) : prev.averageRating };
-      });
-      dispatch?.({ type: "ADD_RATING", payload: created });
+      // Refetch reviews and stats after saving
+      if (event?.id) {
+        try {
+          const reviewsRes = await axios.get(`${BASE}/chats/reviews/${event.id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          });
+          const reviewsPayload = reviewsRes.data;
+          const ratings = (reviewsPayload.reviews || reviewsPayload || []).map((r: any) => ({
+            id: r.id,
+            userId: r.user_id ?? r.userId,
+            eventId: r.event_id ?? r.eventId,
+            rating: Number(r.rating),
+            review: r.review ?? r.feedback ?? '',
+            createdAt: r.created_at ?? r.createdAt ?? new Date().toISOString(),
+          }));
+          let avg = Number(reviewsPayload.stats?.average_rating ?? reviewsPayload.average_rating ?? 0);
+          if ((!Number.isFinite(avg) || avg === 0) && ratings.length > 0) {
+            const sum = ratings.reduce((s: number, r: any) => s + (Number(r.rating) || 0), 0);
+            avg = sum / ratings.length;
+          }
+          // Merge reviews with text into comments after submit
+          setRemoteEvent((prev) => {
+            if (!prev) return prev;
+            const existingComments = prev.comments ?? [];
+            const reviewComments = ratings
+              .filter((r: any) => (r.review ?? '').trim().length > 0)
+              .map((r: any) => ({
+                id: `rev-${r.id}`,
+                eventId: r.eventId,
+                userId: r.userId,
+                content: r.review,
+                createdAt: r.createdAt,
+                isHidden: false,
+                parentId: null,
+                replies: [],
+              }));
+            const mergedComments = [
+              ...existingComments,
+              ...reviewComments.filter((rc) => !existingComments.some((c: any) => c.id === rc.id)),
+            ];
+            return { ...prev, ratings, averageRating: Number.isFinite(avg) ? avg : prev.averageRating, comments: mergedComments };
+          });
+        } catch {}
+      }
       setNewRating(0);
       setNewReview("");
     } catch (err: any) {
@@ -601,6 +683,17 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                     </button>
 
                     {userParticipant.checkedIn && <div className="text-center text-sm text-green-600">✓ Đã điểm danh: {new Date(userParticipant.checkInTime!).toLocaleString("vi-VN")}</div>}
+
+                    {/* User's rating status in action card */}
+                    {(() => {
+                      const myRating = eventRatings.find((r) => r.userId === currentUser?.id);
+                      if (!myRating) return null;
+                      return (
+                        <div className="flex items-center justify-center bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 py-2 px-3 rounded">
+                          <Star className="h-4 w-4 mr-1 fill-current" /> Bạn đã đánh giá: {myRating.rating}/5
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
@@ -610,7 +703,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                   </div>
                 )}
 
-                {(event.averageRating ?? 0) > 0 && (
+                {/* For creator: show average rating prominently */}
+                {isCreator && (
                   <div className="mt-4 text-center">
                     <div className="flex items-center justify-center space-x-2">
                       <Star className="h-5 w-5 text-yellow-500 fill-current" />
