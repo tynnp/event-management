@@ -328,10 +328,13 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const refetchComments = async () => {
     if (!event?.id) return;
     try {
-      const commentRes = await axios.get(`${BASE}/chats/comments/${event.id}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      const comments = (commentRes.data || []).map((c: any) => ({
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      const [commentRes, reviewsRes] = await Promise.all([
+        axios.get(`${BASE}/chats/comments/${event.id}`, { headers }),
+        axios.get(`${BASE}/chats/reviews/${event.id}`, { headers })
+      ]);
+
+      const baseComments = (commentRes.data || []).map((c: any) => ({
         id: c._id || c.id,
         eventId: c.eventId,
         userId: c.userId,
@@ -349,9 +352,45 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           parentId: r.parentId
         }))
       }));
+
+      const reviewsPayload = reviewsRes.data;
+      const ratings = (reviewsPayload.reviews || reviewsPayload || []).map((r: any) => ({
+        id: r.id,
+        userId: r.user_id ?? r.userId,
+        eventId: r.event_id ?? r.eventId,
+        rating: Number(r.rating),
+        review: r.review ?? r.feedback ?? '',
+        createdAt: r.created_at ?? r.createdAt ?? new Date().toISOString(),
+      }));
+      const reviewComments = ratings
+        .filter((r: any) => (r.review ?? '').trim().length > 0)
+        .map((r: any) => ({
+          id: `rev-${r.id}`,
+          eventId: r.eventId,
+          userId: r.userId,
+          content: r.review,
+          createdAt: r.createdAt,
+          isHidden: false,
+          parentId: null,
+          replies: [],
+        }));
+      const mergedComments = [
+        ...baseComments,
+        ...reviewComments.filter((rc: any) => !baseComments.some((c: any) => c.id === rc.id)),
+      ];
+
+      const avg = Number(reviewsPayload.stats?.average_rating ?? reviewsPayload.average_rating ?? 0);
+
       setRemoteEvent((prev) => {
         if (!prev) return prev;
-        return { ...prev, comments };
+        return {
+          ...prev,
+          comments: mergedComments,
+          ratings,
+          averageRating: Number.isFinite(avg) && avg > 0
+            ? avg
+            : (ratings.length > 0 ? ratings.reduce((s: number, r: any) => s + (Number(r.rating) || 0), 0) / ratings.length : prev.averageRating)
+        };
       });
     } catch (err) {
       console.warn('Could not refetch comments:', err);
