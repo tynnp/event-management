@@ -668,7 +668,7 @@ export function StatisticsPanel() {
         </div>
 
         {/* History */}
-        <div className="overflow-x-auto animate-fadeIn rounded-xl border border-gray-200 dark:border-dark-border shadow-sm">
+        <div className="overflow-x-auto hover:overflow-x-hidden animate-fadeIn rounded-xl border border-gray-200 dark:border-dark-border shadow-sm">
           <table className="min-w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-dark-bg-secondary dark:to-dark-bg-tertiary">
