@@ -135,8 +135,8 @@ export function UserManagement() {
       {/* Title */}
       <h2 className="text-3xl font-[800] text-gray-900 dark:text-dark-text-primary flex items-center gap-3 mb-6">
         {/* <span className="text-4xl animate-bounce">👤</span>  */}
-        <span className="pb-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-md transition-all duration-500 hover:from-pink-500 hover:via-orange-500 hover:to-yellow-400">
-          👤  Quản lý người dùng
+        <span className="pb-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-md transition-all duration-500">
+            Quản lý người dùng
         </span>
       </h2>
 

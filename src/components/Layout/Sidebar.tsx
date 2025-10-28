@@ -1,15 +1,5 @@
 // import React from "react";
-import {
-  Home,
-  Calendar,
-  Users,
-  BarChart3,
-  Settings,
-  Plus,
-  CheckSquare,
-  Shield,
-  X,
-} from "lucide-react";
+import { Home, Calendar, Users, BarChart3, Settings, Plus, CheckSquare, Shield, X, List } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Link } from "react-router-dom";
 
@@ -113,8 +103,11 @@ export function Sidebar({
       >
         {/* Header */}
         <div className="bg-white/70 dark:bg-indigo-950/60 backdrop-blur-md border-b border-gray-200 dark:border-indigo-800/40 px-4 h-16 flex justify-between items-center shadow-md">
-          <span className="text-lg font-bold tracking-wide bg-gradient-to-r from-indigo-500 via-pink-500 to-purple-600 bg-clip-text text-transparent animate-gradient-x">
-            📂 MENU
+          <span className="flex items-center gap-2 text-lg font-bold tracking-wide">
+            <List className="h-6 w-6 text-indigo-500" />
+            <span className="bg-gradient-to-r from-indigo-500 via-pink-500 to-purple-600 bg-clip-text text-transparent animate-gradient-x">
+              MENU
+            </span>
           </span>
           <button
             onClick={onClose}

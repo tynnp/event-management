@@ -256,7 +256,6 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
         {/* Tiêu đề */}
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
-            🎟️
             <span className="pb-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
               Tạo sự kiện mới
             </span>

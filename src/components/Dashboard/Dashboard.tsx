@@ -226,7 +226,6 @@ export function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
-          <span className="text-4xl animate-bounce">👋</span>
           <span className="inline-block text-gray-700 pb-2">Chào mừng, </span>
           <span className="inline-block bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent pb-2">
             {getRoleText(currentUser?.role || "")} {currentUser?.name}

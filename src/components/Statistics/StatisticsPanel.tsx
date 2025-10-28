@@ -221,7 +221,6 @@ export function StatisticsPanel() {
       {currentUser?.role === "admin" && (
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
-            <span className="text-4xl animate-bounce">📊</span>
             <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
               Thống kê tổng quan
             </span>
@@ -316,7 +315,6 @@ export function StatisticsPanel() {
       {(currentUser.role === "admin" || currentUser.role === "moderator") && (
         <div className="space-y-6">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
-            <span className="text-4xl animate-bounce">📊</span>
             <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
               Thống kê sự kiện tôi tạo
             </span>
@@ -558,7 +556,6 @@ export function StatisticsPanel() {
       {/* --- User block (admin, mod, user) --- */}
       <div className="space-y-6">
         <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
-          <span className="text-4xl animate-bounce">📊</span>
           <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
             Thống kê sự kiện tôi tham gia
           </span>
