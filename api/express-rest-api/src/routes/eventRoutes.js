@@ -6,8 +6,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const { upload } = require('../middleware/uploadMiddleware');
 
-// Public access to shared link
-router.get('/public/:id', eventController.getEventPublic);
+// Shared link (now requires auth as requested)
+router.get('/public/:id', authMiddleware, eventController.getEventPublic);
 
 // Bắt buộc đăng nhập cho tất cả route events
 router.use(authMiddleware);

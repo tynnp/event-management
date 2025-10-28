@@ -137,9 +137,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       try {
         // Fetch event details (use public endpoint if shared link or no token)
         const isPublicView = new URLSearchParams(location.search).get('public') === '1';
-        const eventUrl = isPublicView || !token ? `${BASE}/events/public/${id}` : `${BASE}/events/${id}`;
+        const eventUrl = isPublicView ? `${BASE}/events/public/${id}` : `${BASE}/events/${id}`;
         const eventRes = await axios.get(eventUrl, {
-          headers: isPublicView || !token ? undefined : { Authorization: `Bearer ${token}` },
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           signal: controller.signal as any,
         });
         
@@ -664,7 +664,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
               onClick={async () => {
                 const isPublicView = new URLSearchParams(location.search).get('public') === '1';
                 const origin = window.location.origin.replace(/\/$/, '');
-                const shareLink = isPublicView ? window.location.href : `${origin}/event/${event.id}?public=1`;
+                const shareLink = isPublicView ? window.location.href : `${origin}/events/${event.id}?public=1`;
                 try {
                   await navigator.clipboard.writeText(shareLink);
                   alert('Đã sao chép link chia sẻ vào clipboard!');

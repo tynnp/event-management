@@ -55,11 +55,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/email', emailRoutes);
 
 // ---------------------------
+// ROUTES WITH PUBLIC SEGMENTS BEFORE GLOBAL AUTH
+// ---------------------------
+// Mount events router BEFORE global auth so /api/events/public/:id remains public.
+app.use('/api/events', eventRoutes);
+
+// ---------------------------
 // ROUTES PRIVATE
 // ---------------------------
 app.use('/api', authMiddleware);
 app.use('/api/users', userRoutes);
-app.use('/api/events', eventRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/chats', commentRoutes);
 app.use('/api/reviews', reviewRoutes);

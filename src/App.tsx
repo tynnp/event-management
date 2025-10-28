@@ -44,6 +44,8 @@ function AppContent() {
     }
   }, [location.pathname]);
 
+  // Require login even for shared links
+  const isPublicView = new URLSearchParams(location.search).get('public') === '1';
   if (!currentUser) {
     return <LoginForm />;
   }
@@ -52,16 +54,15 @@ function AppContent() {
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg-primary transition-all duration-300">
       <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex relative transition-all duration-300">
-        <Sidebar
+        (<Sidebar
           activeSection={activeSection}
           onSectionChange={setActiveSection}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-        />
+        />)
 
         <main
-          className={`flex-1 p-8 transition-all duration-300 ${sidebarOpen ? 'ml-[250px]' : 'ml-0'
-            }`}
+          className={`flex-1 p-8 transition-all duration-300 ${sidebarOpen ? 'ml-[250px]' : 'ml-0'}`}
         >
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
