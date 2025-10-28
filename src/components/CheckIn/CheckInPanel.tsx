@@ -307,7 +307,7 @@ export function CheckInPanel() {
       {/* QR Scanner + Event Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* QR Scanner Card */}
-        <div className="rounded-3xl p-8 shadow-2xl bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 dark:from-blue-800 dark:via-blue-700 dark:to-blue-900 border border-gray-200 dark:border-gray-700 animate-fade-in-up hover:shadow-3xl hover:-translate-y-1 transition-all duration-300">
+        <div className="rounded-3xl p-8 shadow-2xl bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 dark:from-blue-800 dark:via-blue-700 dark:to-blue-900 border border-gray-200 dark:border-gray-700 animate-fade-in-up min-h-[420px]">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
             <Scan className="h-6 w-6 mr-2 text-blue-700 animate-pulse" />
             Quét mã QR
@@ -352,7 +352,7 @@ export function CheckInPanel() {
                 <button
                   onClick={handleScanButtonClick}
                   disabled={!selectedEvent}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-200 disabled:bg-gray-400 flex items-center"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-lg hover:shadow-2xl transition-colors duration-200 disabled:bg-gray-400 flex items-center"
                 >
                   <QrCode className="h-5 w-5 mr-2 animate-spin-slow" />
                   Quét
