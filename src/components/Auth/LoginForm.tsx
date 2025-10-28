@@ -39,8 +39,9 @@ export function LoginForm() {
       // Assuming the API returns user data and a token
       const { user, token } = response.data;
 
-      // Save token to localStorage or context
+      // Save token and user to localStorage for session persistence
       localStorage.setItem("authToken", token);
+      localStorage.setItem("currentUser", JSON.stringify(user));
 
       // Update currentUser in context
       dispatch({ type: "LOGIN", payload: { user, token } });
