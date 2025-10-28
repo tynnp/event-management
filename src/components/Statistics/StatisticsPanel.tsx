@@ -16,6 +16,7 @@ export function StatisticsPanel() {
   const [remoteEvents, setRemoteEvents] = useState<any[] | null>(null);
   const [remoteParticipations, setRemoteParticipations] = useState<any[] | null>(null);
   const [systemStats, setSystemStats] = useState<any | null>(null);
+  const [userRatingsByEvent, setUserRatingsByEvent] = useState<Record<string, number>>({});
   const [participantStatsByEvent, setParticipantStatsByEvent] = useState<Record<string, { total: number; checked: number }>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,6 +117,34 @@ export function StatisticsPanel() {
             setParticipantStatsByEvent(statsMap);
           } catch {}
         }
+
+        // Fetch my rating per participated event (ensure correct display in history)
+        try {
+          const myEventIdsParticipated: string[] = Array.isArray(myPartRes?.data)
+            ? myPartRes.data.map((r: any) => r.event_id)
+            : normalizedEvents
+                .filter((e: any) => (e.participants ?? []).some((p: any) => p.userId === currentUser.id))
+                .map((e: any) => e.id);
+          const uniqueIds = Array.from(new Set(myEventIdsParticipated));
+          const entries = await Promise.all(
+            uniqueIds.map(async (eventId: string) => {
+              try {
+                const res = await axios.get(`${BASE}/chats/reviews/${eventId}`, { headers });
+                const list = (res.data?.reviews ?? res.data ?? []) as any[];
+                const mine = list.find((r: any) => (r.user_id ?? r.userId) === currentUser.id);
+                const value = mine ? Number(mine.rating) : undefined;
+                return [eventId, value] as const;
+              } catch {
+                return [eventId, undefined] as const;
+              }
+            })
+          );
+          const map: Record<string, number> = {};
+          for (const [id, value] of entries) {
+            if (Number.isFinite(value as any)) map[id] = value as number;
+          }
+          setUserRatingsByEvent(map);
+        } catch {}
       } catch (err: any) {
         console.error("Error fetching statistics:", err);
         setError(err?.response?.data?.message || "Không thể tải thống kê từ API");
@@ -660,9 +689,8 @@ export function StatisticsPanel() {
             <tbody>
               {myParticipations.map((e) => {
                 const myRow = myParticipationMap[e.id];
-                const rating = e.ratings.find(
-                  (r: Rating) => r.userId === currentUser.id
-                );
+                const ratingObj = e.ratings.find((r: Rating) => r.userId === currentUser.id);
+                const ratingValue = userRatingsByEvent[e.id] ?? ratingObj?.rating;
 
                 return (
                   <tr
@@ -702,13 +730,18 @@ export function StatisticsPanel() {
                       )}
                     </td>
                     <td className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
-                      {rating ? (
-                        <span className="flex items-center gap-1 text-yellow-500 font-semibold">
-                          {rating.rating}
-                          {"⭐".repeat(rating.rating)}
-                        </span>
+                      {Number.isFinite(ratingValue as any) ? (
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                          <div className="flex items-center gap-[2px] text-yellow-500">
+                            {[1,2,3,4,5].map((i) => (
+                              <Star key={i} className={`w-4 h-4 ${i <= Number(ratingValue) ? 'fill-current' : ''}`} />
+                            ))}
+                          </div>
+                          <span className="text-yellow-700 dark:text-yellow-300 text-sm font-medium">{Number(ratingValue).toFixed(1)}/5</span>
+                        </div>
                       ) : (
-                        <span className="text-gray-400 italic">
+                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 text-sm">
+                          <Star className="w-4 h-4" />
                           Chưa đánh giá
                         </span>
                       )}
