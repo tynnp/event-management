@@ -903,8 +903,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                         <div className="mt-4 ml-4 space-y-3">
                           {comment.replies.map((reply) => {
                             const replyUser = allUsers.find((u: User) => u.id === reply.userId);
+                            const replyHidden = reply.isHidden;
                             return (
-                              <div key={reply.id} className="flex space-x-3 p-3 bg-gray-50 dark:bg-dark-bg-tertiary rounded-lg">
+                              <div key={reply.id} className={`flex items-start space-x-3 p-3 rounded-lg ${replyHidden ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
                                 {replyUser?.avatar_url ? (
                                   <img 
                                     src={replyUser.avatar_url.startsWith('http') ? replyUser.avatar_url : `${RAW_BASE}${replyUser.avatar_url}`}
@@ -917,11 +918,31 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                   </div>
                                 )}
                                 <div className="flex-1">
-                                  <div className="flex items-center space-x-2 mb-1">
-                                    <span className="font-medium text-gray-900 dark:text-dark-text-primary text-sm">{replyUser?.name ?? "Người dùng"}</span>
-                                    <span className="text-gray-500 dark:text-dark-text-tertiary text-xs">{new Date(reply.createdAt).toLocaleString("vi-VN")}</span>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center space-x-2">
+                                      <span className="font-medium text-gray-900 dark:text-dark-text-primary text-sm">{replyUser?.name ?? "Người dùng"}</span>
+                                      <span className="text-gray-500 dark:text-dark-text-tertiary text-xs">{new Date(reply.createdAt).toLocaleString("vi-VN")}</span>
+                                      {replyHidden && <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-[10px] rounded-full">Đã ẩn</span>}
+                                    </div>
+                                    {/* Reply actions: hide/unhide, delete (no reply button) */}
+                                    {canModerate && (
+                                      <div className="flex items-center space-x-2">
+                                        {replyHidden ? (
+                                          <button onClick={() => handleUnhideComment(reply.id)} className="p-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors" title="Hiện lại bình luận">
+                                            <Eye className="h-4 w-4" />
+                                          </button>
+                                        ) : (
+                                          <button onClick={() => handleHideComment(reply.id)} className="p-1 text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition-colors" title="Ẩn bình luận">
+                                            <EyeOff className="h-4 w-4" />
+                                          </button>
+                                        )}
+                                        <button onClick={() => handleDeleteComment(reply.id)} className="p-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors" title="Xóa bình luận">
+                                          <Trash2 className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
-                                  <p className="text-gray-700 dark:text-dark-text-secondary text-sm">{reply.content}</p>
+                                  <p className={`${replyHidden ? "text-gray-500 dark:text-dark-text-tertiary" : "text-gray-700 dark:text-dark-text-secondary"} text-sm`}>{reply.content}</p>
                                 </div>
                               </div>
                             );
