@@ -220,9 +220,15 @@ export function StatisticsPanel() {
     },
     {
       title: "Sự kiện bị từ chối",
-      value: dataEvents.filter((e: any) => e.status === "rejected").length,
+      value: systemStats?.rejected_events ?? dataEvents.filter((e: any) => e.status === "rejected").length,
       icon: Calendar,
       color: "bg-red-500",
+    },
+    {
+      title: "Sự kiện bị hủy",
+      value: systemStats?.cancelled_events ?? dataEvents.filter((e: any) => e.status === "cancelled").length,
+      icon: XCircle,
+      color: "bg-rose-500",
     },
     // {
     //   title: "Tổng lượt tham gia",
@@ -256,6 +262,12 @@ export function StatisticsPanel() {
       value: myEvents.filter((e) => e.status === "rejected").length,
       icon: XCircle,
       color: "bg-red-500"
+    },
+    {
+      title: "Sự kiện bị hủy",
+      value: myEvents.filter((e) => e.status === "cancelled").length,
+      icon: XCircle,
+      color: "bg-rose-500"
     },
     {
       title: "Người tham gia sự kiện của tôi",
@@ -311,6 +323,10 @@ export function StatisticsPanel() {
     },
     {
       name: "Bị từ chối",
+      value: dataEvents.filter((e: any) => e.status === "rejected").length,
+    },
+    {
+      name: "Bị hủy",
       value: dataEvents.filter((e: any) => e.status === "cancelled").length,
     },
   ];

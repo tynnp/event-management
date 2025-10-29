@@ -49,6 +49,8 @@ exports.systemStatistics = async (req, res) => {
     // Count events by status
     const pendingEvents = allEvents.filter(e => e.status === 'pending').length;
     const approvedEvents = allEvents.filter(e => e.status === 'approved').length;
+    const cancelledEvents = allEvents.filter(e => e.status === 'cancelled').length;
+    const rejectedEvents = allEvents.filter(e => e.status === 'rejected').length;
     
     // Count upcoming approved events
     const now = new Date();
@@ -70,6 +72,8 @@ exports.systemStatistics = async (req, res) => {
       total_events: allEvents.length,
       pending_events: pendingEvents,
       approved_events: approvedEvents,
+      cancelled_events: cancelledEvents,
+      rejected_events: rejectedEvents,
       total_participations: parseInt(totalParticipantsResult.rows[0].total, 10),
       upcoming_events: upcomingEvents,
       average_rating: parseFloat(avgRatingResult.rows[0].average),
