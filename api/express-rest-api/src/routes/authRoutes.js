@@ -5,8 +5,9 @@ const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { loginLimiter } = require('../middleware/rateLimiter'); // 🔹 thêm dòng này
 
-// Register
-router.post('/register', authController.register);
+// Register with OTP
+router.post('/register/start', authController.registerStart);
+router.post('/register/verify', authController.registerVerify);
 
 // Login (thêm rate limiter)
 router.post('/login', loginLimiter, authController.login); // 🔹 giới hạn 5 lần / 5 phút

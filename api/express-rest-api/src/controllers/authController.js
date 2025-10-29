@@ -4,11 +4,23 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Session = require('../models/Session');
 const { v4: uuidv4 } = require('uuid');
+const { connectRedis } = require('../config/redis');
+const { sendMail } = require('../utils/emailService');
 
-exports.register = async (req, res) => {
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Step 1: Start registration - send OTP and store pending data in Redis
+exports.registerStart = async (req, res) => {
   const { email, password, name, phone } = req.body;
 
-  const pwPattern = /^(?=.{8,}$)(?=.*[A-Za-z])(?=.*\d).*/; // ít nhất 8 ký tự, có chữ và số
+  if (!email || !password || !name) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  // basic pattern: at least 8 chars, letters and numbers
+  const pwPattern = /^(?=.{8,}$)(?=.*[A-Za-z])(?=.*\d).*/;
   if (!pwPattern.test(password)) {
     return res.status(400).json({
       message: 'Password must be at least 8 characters long and include letters and numbers'
@@ -16,26 +28,73 @@ exports.register = async (req, res) => {
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const id = uuidv4();
-    
-    await User.create({
-      id,
-      email,
-      password_hash: hashedPassword,
-      name,
-      phone,
-      role: 'user'
-    });
-    
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (err) {
-    // Nếu lỗi duplicate key
-    if (err.code === '23505') {
+    // Check email already exists
+    const exists = await User.findByEmail(email);
+    if (exists) {
       return res.status(400).json({ message: 'Email has been registered' });
     }
-    // Lỗi khác
-    res.status(500).json({ message: 'Registration failed', error: err.message });
+
+    const client = await connectRedis();
+    const otp = generateOTP();
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Store pending registration for 10 minutes
+    const pending = { email, name, phone: phone || null, password_hash: hashedPassword };
+    await client.setEx(`register:${email}`, 600, JSON.stringify({ otp, pending }));
+
+    // Send email with OTP
+    await sendMail(email, 'Xác thực đăng ký tài khoản', `Mã OTP của bạn là: ${otp}. Mã có hiệu lực trong 10 phút.`);
+
+    return res.status(200).json({ message: 'OTP sent to your email. Please verify to complete registration.' });
+  } catch (err) {
+    console.error('registerStart error:', err);
+    return res.status(500).json({ message: 'Failed to start registration', error: err.message });
+  }
+};
+
+// Step 2: Verify OTP and create user
+exports.registerVerify = async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ message: 'Email and OTP are required' });
+  }
+
+  try {
+    const client = await connectRedis();
+    const data = await client.get(`register:${email}`);
+    if (!data) {
+      return res.status(400).json({ message: 'OTP expired or not found' });
+    }
+
+    const parsed = JSON.parse(data);
+    if (parsed.otp !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    // Ensure email still not registered
+    const exists = await User.findByEmail(email);
+    if (exists) {
+      await client.del(`register:${email}`);
+      return res.status(400).json({ message: 'Email has been registered' });
+    }
+
+    const id = uuidv4();
+    const { pending } = parsed;
+    await User.create({
+      id,
+      email: pending.email,
+      password_hash: pending.password_hash,
+      name: pending.name,
+      phone: pending.phone,
+      role: 'user'
+    });
+
+    await client.del(`register:${email}`);
+
+    return res.status(201).json({ message: 'User registered successfully' });
+  } catch (err) {
+    console.error('registerVerify error:', err);
+    return res.status(500).json({ message: 'Registration verification failed', error: err.message });
   }
 };
 

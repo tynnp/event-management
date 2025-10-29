@@ -16,6 +16,8 @@ export function LoginForm() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isAwaitingOtp, setIsAwaitingOtp] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
   const [registerData, setRegisterData] = useState({
     name: "",
     phone: "",
@@ -91,23 +93,16 @@ export function LoginForm() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register", {
+      const res = await axios.post("http://localhost:5000/api/auth/register/start", {
         name: registerData.name,
         phone: registerData.phone,
         email: registerData.email,
         password: registerData.password,
       });
 
-      if (res.status === 201 || res.status === 200) {
-        toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
-        setIsRegistering(false); // chuyển về trang đăng nhập
-        setRegisterData({
-          name: "",
-          phone: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-        });
+      if (res.status === 200) {
+        toast.success("Đã gửi mã OTP tới email. Vui lòng kiểm tra hộp thư.");
+        setIsAwaitingOtp(true);
       } else {
         throw new Error(res.data.message || "Lỗi không xác định");
       }
@@ -118,7 +113,42 @@ export function LoginForm() {
       } else {
         setError("Đăng ký thất bại. Vui lòng thử lại sau.");
       }
-      toast.error("Đăng ký thất bại!");
+      toast.error("Không thể gửi OTP!");
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!otpCode || otpCode.length < 6) {
+      setError("Vui lòng nhập mã OTP hợp lệ");
+      return;
+    }
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/register/verify", {
+        email: registerData.email,
+        otp: otpCode,
+      });
+
+      if (res.status === 201 || res.status === 200) {
+        toast.success("Xác thực thành công! Bạn có thể đăng nhập.");
+        setIsAwaitingOtp(false);
+        setIsRegistering(false);
+        setOtpCode("");
+        setRegisterData({ name: "", phone: "", email: "", password: "", confirmPassword: "" });
+      } else {
+        throw new Error(res.data.message || "Lỗi không xác định");
+      }
+    } catch (err: any) {
+      console.error("Verify OTP error:", err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Xác thực OTP thất bại. Vui lòng thử lại.");
+      }
+      toast.error("Xác thực OTP thất bại!");
     }
   };
 
@@ -226,13 +256,13 @@ export function LoginForm() {
               </form>
             ) : (
               // Form đăng ký
-              <form className="space-y-6" onSubmit={handleRegister}>
+              <form className="space-y-6" onSubmit={isAwaitingOtp ? handleVerifyOtp : handleRegister}>
                 {error && (
                   <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
                     {error}
                   </div>
                 )}
-
+                {!isAwaitingOtp && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                     Họ và tên
@@ -251,7 +281,9 @@ export function LoginForm() {
                     placeholder="Nhập họ và tên"
                   />
                 </div>
+                )}
 
+                {!isAwaitingOtp && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                     Số điện thoại
@@ -269,7 +301,9 @@ export function LoginForm() {
                     placeholder="Nhập số điện thoại"
                   />
                 </div>
+                )}
 
+                {!isAwaitingOtp && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                     Email
@@ -288,7 +322,9 @@ export function LoginForm() {
                     placeholder="Nhập email của bạn"
                   />
                 </div>
+                )}
 
+                {!isAwaitingOtp && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                     Mật khẩu
@@ -319,7 +355,9 @@ export function LoginForm() {
                     </button>
                   </div>
                 </div>
+                )}
 
+                {!isAwaitingOtp && (
                 <div className="relative mt-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
                     Xác nhận mật khẩu
@@ -357,12 +395,32 @@ export function LoginForm() {
                     </button>
                   </div>
                 </div>
+                )}
+
+                {isAwaitingOtp && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+                      Nhập mã OTP (đã gửi tới {registerData.email})
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border placeholder-gray-500 dark:placeholder-dark-text-tertiary text-gray-900 dark:text-dark-text-primary bg-white dark:bg-dark-bg-tertiary rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Nhập mã OTP 6 chữ số"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Mã có hiệu lực trong 10 phút.</p>
+                  </div>
+                )}
 
                 <button
                   type="submit"
                   className="w-full py-2 px-4 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 shadow-lg hover:shadow-indigo-500/40 dark:hover:shadow-pink-500/30 font-medium transition-all transform hover:scale-[1.02]"
                 >
-                  Đăng ký
+                  {isAwaitingOtp ? "Xác thực OTP" : "Đăng ký"}
                 </button>
               </form>
             )}
