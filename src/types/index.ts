@@ -50,6 +50,11 @@ export interface Comment {
   isHidden: boolean;
   parentId?: string; // ID của comment gốc nếu đây là reply
   replies?: Comment[]; // Danh sách các reply
+  likes?: number;
+  dislikes?: number;
+  // Convenience flags for UI (derived on client)
+  hasLiked?: boolean;
+  hasDisliked?: boolean;
 }
 
 export interface Rating {

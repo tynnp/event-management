@@ -12,11 +12,12 @@ import {
   ArrowLeft,
   CheckCircle,
   UserPlus,
-  Heart,
   Eye,
   EyeOff,
   Trash2,
   Reply,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event, Comment, Rating, Participant, User } from "../../types";
@@ -28,7 +29,7 @@ import { QRCodeSVG } from "qrcode.react";
 
 export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBack?: () => void }) {
   const { state, dispatch } = useApp();
-  const { currentUser, users = [], comments = [], ratings = [] } = state;
+  const { currentUser, users = [] } = state;
   const { id: paramId } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -159,6 +160,10 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             createdAt: c.createdAt,
             isHidden: c.isHidden || false,
             parentId: c.parentId,
+            likes: Number(c.likes) || 0,
+            dislikes: Number(c.dislikes) || 0,
+            hasLiked: Array.isArray(c.likedBy) ? c.likedBy.includes(currentUser?.id) : false,
+            hasDisliked: Array.isArray(c.dislikedBy) ? c.dislikedBy.includes(currentUser?.id) : false,
             replies: (c.replies || []).map((r: any) => ({
               id: r._id || r.id,
               eventId: r.eventId,
@@ -166,7 +171,11 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
               content: r.content,
               createdAt: r.createdAt,
               isHidden: r.isHidden || false,
-              parentId: r.parentId
+              parentId: r.parentId,
+              likes: Number(r.likes) || 0,
+              dislikes: Number(r.dislikes) || 0,
+              hasLiked: Array.isArray(r.likedBy) ? r.likedBy.includes(currentUser?.id) : false,
+              hasDisliked: Array.isArray(r.dislikedBy) ? r.dislikedBy.includes(currentUser?.id) : false,
             }))
           }));
         } catch (err) {
@@ -343,6 +352,10 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
         createdAt: c.createdAt,
         isHidden: c.isHidden || false,
         parentId: c.parentId,
+        likes: Number(c.likes) || 0,
+        dislikes: Number(c.dislikes) || 0,
+        hasLiked: Array.isArray(c.likedBy) ? c.likedBy.includes(currentUser?.id) : false,
+        hasDisliked: Array.isArray(c.dislikedBy) ? c.dislikedBy.includes(currentUser?.id) : false,
         replies: (c.replies || []).map((r: any) => ({
           id: r._id || r.id,
           eventId: r.eventId,
@@ -350,7 +363,11 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           content: r.content,
           createdAt: r.createdAt,
           isHidden: r.isHidden || false,
-          parentId: r.parentId
+          parentId: r.parentId,
+          likes: Number(r.likes) || 0,
+          dislikes: Number(r.dislikes) || 0,
+          hasLiked: Array.isArray(r.likedBy) ? r.likedBy.includes(currentUser?.id) : false,
+          hasDisliked: Array.isArray(r.dislikedBy) ? r.dislikedBy.includes(currentUser?.id) : false,
         }))
       }));
 
@@ -441,7 +458,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const postRating = async (payload: Partial<Rating>) => {
     try {
       setSendingRating(true);
-      const res = await axios.post(`${BASE}/chats/reviews`, {
+      await axios.post(`${BASE}/chats/reviews`, {
         event_id: payload.eventId,
         rating: payload.rating,
         review: payload.review,
@@ -606,6 +623,40 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     setReplyingTo(null);
     setReplyContent("");
   };
+
+  const handleToggleLike = async (commentId: string) => {
+    if (!currentUser) {
+      toast.error("Bạn cần đăng nhập để thích bình luận.");
+      return;
+    }
+    try {
+      await axios.patch(
+        `${BASE}/chats/${commentId}`,
+        { action: 'like' },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      await refetchComments();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? "Không thể thực hiện thao tác thích.");
+    }
+  };
+
+  const handleToggleDislike = async (commentId: string) => {
+    if (!currentUser) {
+      toast.error("Bạn cần đăng nhập để không thích bình luận.");
+      return;
+    }
+    try {
+      await axios.patch(
+        `${BASE}/chats/${commentId}`,
+        { action: 'dislike' },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      await refetchComments();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? "Không thể thực hiện thao tác không thích.");
+    }
+  };
   const handleSubmitReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyContent.trim() || !currentUser || !replyingTo) return;
@@ -634,7 +685,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   };
 
   const eventStatus = getEventStatus();
-  const currentParticipant = participants.find((p: any) => p.userId === currentUser?.id) as Participant | undefined;
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
@@ -722,8 +772,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             <div className="lg:ml-8 lg:min-w-[300px]">
               <div className="bg-gray-50 dark:bg-dark-bg-tertiary rounded-xl p-6">
                 {!isParticipant && !isCreator && eventStatus.status !== "ended" && (
-                  <button onClick={handleJoinEvent} className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                    <UserPlus className="h-4 w-4 inline mr-2" /> Tham gia sự kiện
+                  <button disabled={joining} onClick={handleJoinEvent} className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400">
+                    <UserPlus className="h-4 w-4 inline mr-2" /> {joining ? 'Đang tham gia...' : 'Tham gia sự kiện'}
                   </button>
                 )}
 
@@ -874,7 +924,21 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                           {isHidden && <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded-full">Đã ẩn</span>}
                         </div>
 
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => handleToggleLike(comment.id)}
+                            className={`flex items-center px-2 py-1 rounded text-sm transition-colors ${comment.hasLiked ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400'}`}
+                            title="Thích"
+                          >
+                            <ThumbsUp className="h-4 w-4 mr-1" /> {comment.likes ?? 0}
+                          </button>
+                          <button
+                            onClick={() => handleToggleDislike(comment.id)}
+                            className={`flex items-center px-2 py-1 rounded text-sm transition-colors ${comment.hasDisliked ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400'}`}
+                            title="Không thích"
+                          >
+                            <ThumbsDown className="h-4 w-4 mr-1" /> {comment.dislikes ?? 0}
+                          </button>
                           <button onClick={() => handleReply(comment.id)} className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" title="Trả lời">
                             <Reply className="h-4 w-4" />
                           </button>
@@ -927,8 +991,23 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                       {replyHidden && <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-[10px] rounded-full">Đã ẩn</span>}
                                     </div>
                                     {/* Reply actions: hide/unhide, delete (no reply button) */}
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                          onClick={() => handleToggleLike(reply.id)}
+                                          className={`flex items-center px-2 py-1 rounded text-xs transition-colors ${reply.hasLiked ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400'}`}
+                                          title="Thích"
+                                        >
+                                          <ThumbsUp className="h-3 w-3 mr-1" /> {reply.likes ?? 0}
+                                        </button>
+                                        <button
+                                          onClick={() => handleToggleDislike(reply.id)}
+                                          className={`flex items-center px-2 py-1 rounded text-xs transition-colors ${reply.hasDisliked ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400'}`}
+                                          title="Không thích"
+                                        >
+                                          <ThumbsDown className="h-3 w-3 mr-1" /> {reply.dislikes ?? 0}
+                                        </button>
                                     {canModerate && (
-                                      <div className="flex items-center space-x-2">
+                                      <>
                                         {replyHidden ? (
                                           <button onClick={() => handleUnhideComment(reply.id)} className="p-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors" title="Hiện lại bình luận">
                                             <Eye className="h-4 w-4" />
@@ -941,8 +1020,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                         <button onClick={() => handleDeleteComment(reply.id)} className="p-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors" title="Xóa bình luận">
                                           <Trash2 className="h-4 w-4" />
                                         </button>
-                                      </div>
+                                      </>
                                     )}
+                                    </div>
                                   </div>
                                   <p className={`${replyHidden ? "text-gray-500 dark:text-dark-text-tertiary" : "text-gray-700 dark:text-dark-text-secondary"} text-sm`}>{reply.content}</p>
                                 </div>
