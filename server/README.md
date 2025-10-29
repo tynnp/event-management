@@ -28,7 +28,7 @@ Dự án này là một RESTful API được xây dựng bằng Node.js và Expr
 ## Project Structure
 
 ```
-express-rest-api
+server
 ├── src
 │   ├── app.js
 │   ├── controllers
@@ -87,7 +87,7 @@ express-rest-api
 
 2. Navigate to the project directory:
    ```
-   cd express-rest-api
+   cd server
    ```
 
 3. Install dependencies:
