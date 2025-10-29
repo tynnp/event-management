@@ -2,6 +2,7 @@
 const AttendanceModel = require('../models/Attendance'); // PostgreSQL model
 const AttendanceMongo = require('../models/Attendance'); // Mongo model (optional)
 const { v4: uuidv4 } = require('uuid');
+const { sendNotification } = require('./notificationController');
 
 function parseQrData(qrData) {
   // qrData có thể là JSON string hoặc data URL chứa JSON
@@ -87,6 +88,19 @@ exports.checkIn = async (req, res) => {
     if (participant) {
       // Chỉ tăng events_attended nếu participant chưa check-in trước đó
       await User.incrementEventsAttended(req.user.id);
+
+      // Gửi thông báo cho người tham gia (người được điểm danh)
+      try {
+        await sendNotification(
+          participant.user_id,
+          'Điểm danh thành công',
+          `Bạn đã điểm danh thành công cho sự kiện "${event.title}"`,
+          'checkin_success',
+          eventId
+        );
+      } catch (notifErr) {
+        console.warn('Failed to send check-in notification:', notifErr.message);
+      }
 
       // Ghi Mongo Attendance (option)
       try {

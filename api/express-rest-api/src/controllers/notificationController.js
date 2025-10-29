@@ -5,7 +5,7 @@ const { getPostgresPool } = require('../config/database');
 // Gửi thông báo (dùng nội bộ)
 exports.sendNotification = async (userId, title, message, type, relatedEventId = null) => {
   try {
-    await Notification.create({
+    const notification = await Notification.create({
       id: uuidv4(),
       user_id: userId,
       title,
@@ -13,8 +13,12 @@ exports.sendNotification = async (userId, title, message, type, relatedEventId =
       type,
       related_event_id: relatedEventId
     });
+    console.log(`✅ Notification sent: ${type} to user ${userId}`, { title, message });
+    return notification;
   } catch (err) {
-    console.error('Error sending notification:', err.message);
+    console.error('❌ Error sending notification:', err.message);
+    console.error('Details:', { userId, title, message, type, relatedEventId });
+    throw err; // Don't silently fail - let caller handle it
   }
 };
 

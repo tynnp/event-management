@@ -28,7 +28,24 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
-  const getToken = (): string | null => localStorage.getItem("authToken");
+  
+  const getToken = (): string | null => {
+    const keys = ["token", "accessToken", "authToken", "currentUser", "user"];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.token) return parsed.token;
+        if (parsed?.accessToken) return parsed.accessToken;
+        if (parsed?.data?.token) return parsed.data.token;
+        if (parsed?.tokenString) return parsed.tokenString;
+      } catch {
+        if (raw && raw.length < 500) return raw;
+      }
+    }
+    return null;
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -36,10 +53,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
       const res = await axios.get(`${BASE}/notifications`, { headers });
       const rows = res.data || [];
+      console.log('📬 Notifications fetched:', rows);
       setNotifications(rows);
       setUnreadCount(rows.filter((n: any) => !n.is_read).length);
-    } catch (err) {
-      // silent
+    } catch (err: any) {
+      console.error('❌ Error fetching notifications:', err.message, err.response?.data);
     }
   };
 

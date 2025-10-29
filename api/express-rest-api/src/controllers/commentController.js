@@ -1,5 +1,6 @@
 //file: api/express-rest-api/src/controllers/commentController.js
 const Comment = require('../models/Comment');
+const { sendNotification } = require('./notificationController');
 
 exports.addComment = async (req, res) => {
   try {
@@ -17,7 +18,7 @@ exports.addComment = async (req, res) => {
     });
     await comment.save();
     
-    // Nếu là reply, thêm comment này vào danh sách replies của parent
+    // Nếu là reply, thêm comment này vào danh sách replies của parent và gửi thông báo
     if (parentId) {
       const parentComment = await Comment.findById(parentId);
       if (!parentComment) {
@@ -29,6 +30,23 @@ exports.addComment = async (req, res) => {
       if (!existingReply) {
         parentComment.replies.push(comment._id);
         await parentComment.save();
+      }
+      
+      // Gửi thông báo cho chủ bình luận gốc (nếu không phải chính mình)
+      if (parentComment.userId !== req.user.id) {
+        try {
+          const User = require('../models/User');
+          const user = await User.findById(req.user.id);
+          await sendNotification(
+            parentComment.userId,
+            'Có người trả lời bình luận của bạn',
+            `${user?.name || 'Ai đó'} đã trả lời bình luận của bạn: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
+            'comment_replied',
+            parentComment.eventId
+          );
+        } catch (notifErr) {
+          console.warn('Failed to send reply notification:', notifErr.message);
+        }
       }
     }
     
@@ -86,6 +104,22 @@ exports.updateComment = async (req, res) => {
             comment.dislikedBy = comment.dislikedBy.filter(id => id !== userId);
             comment.dislikes = Math.max(comment.dislikes - 1, 0);
           }
+          // Gửi thông báo cho chủ bình luận (nếu không phải chính mình)
+          if (comment.userId !== userId) {
+            try {
+              const User = require('../models/User');
+              const user = await User.findById(userId);
+              await sendNotification(
+                comment.userId,
+                'Có người thích bình luận của bạn',
+                `${user?.name || 'Ai đó'} đã thích bình luận của bạn trong sự kiện`,
+                'comment_liked',
+                comment.eventId
+              );
+            } catch (notifErr) {
+              console.warn('Failed to send like notification:', notifErr.message);
+            }
+          }
         }
         break;
 
@@ -113,6 +147,23 @@ exports.updateComment = async (req, res) => {
         });
         await reply.save();
         comment.replies.push(reply._id);
+        
+        // Gửi thông báo cho chủ bình luận gốc (nếu không phải chính mình)
+        if (comment.userId !== userId) {
+          try {
+            const User = require('../models/User');
+            const user = await User.findById(userId);
+            await sendNotification(
+              comment.userId,
+              'Có người trả lời bình luận của bạn',
+              `${user?.name || 'Ai đó'} đã trả lời bình luận của bạn: "${replyContent.substring(0, 50)}${replyContent.length > 50 ? '...' : ''}"`,
+              'comment_replied',
+              comment.eventId
+            );
+          } catch (notifErr) {
+            console.warn('Failed to send reply notification:', notifErr.message);
+          }
+        }
         break;
 
       case 'delete':
