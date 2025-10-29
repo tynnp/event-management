@@ -33,7 +33,6 @@ database/
 │   └── seed_data.js              # Dữ liệu mẫu
 ├── config/
 │   ├── database.js               # Cấu hình kết nối
-│   └── env.example               # Environment variables
 └── scripts/
     └── setup.js                  # Script thiết lập database
 ```
@@ -255,10 +254,10 @@ npm install pg mongodb
 
 ### 2. Cấu hình Environment Variables
 
-Copy file `database/config/env.example` thành `.env` và cập nhật các giá trị:
+Copy file `.env.example` thành `.env` và cập nhật các giá trị:
 
 ```bash
-cp database/config/env.example .env
+cp .env.example .env
 ```
 
 ### 3. Chạy Setup Script
