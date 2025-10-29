@@ -1,26 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { createPortal } from "react-dom";
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Share2,
-  MessageSquare,
-  Star,
-  QrCode,
-  ArrowLeft,
-  CheckCircle,
-  UserPlus,
-  Eye,
-  EyeOff,
-  Trash2,
-  Reply,
-  ThumbsUp,
-  ThumbsDown,
-  XCircle,
-  AlertTriangle,
-} from "lucide-react";
+import { Calendar, MapPin, Users, Share2, MessageSquare, Star, QrCode, ArrowLeft, CheckCircle, UserPlus, Eye, EyeOff, Trash2, Reply, ThumbsUp, ThumbsDown, XCircle, AlertTriangle } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event, Comment, Rating, Participant, User } from "../../types";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -28,7 +9,6 @@ import axios from "axios";
 import { QRCodeSVG } from "qrcode.react";
 
 // ApiParticipant removed (unused)
-
 export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBack?: () => void }) {
   const { state, dispatch } = useApp();
   const { currentUser, users = [] } = state;
@@ -77,9 +57,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     }
     return null;
   };
-
   const token = getAuthToken() ?? undefined;
-  // Create a portal root for modals (ensures highest stacking and outside app layout)
+
   useEffect(() => {
     const el = document.createElement('div');
     el.setAttribute('id', 'app-modal-root');
@@ -91,7 +70,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     };
   }, []);
 
-  // Lock background scroll when QR modal is open
   useEffect(() => {
     if (showQR) {
       const original = document.body.style.overflow;
@@ -101,7 +79,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       };
     }
   }, [showQR]);
-
 
   const normalizeEvent = (raw: any): Event => {
     const averageRatingNum = Number(raw.averageRating ?? raw.average_rating ?? 0);
@@ -604,7 +581,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       toast.error(err.response?.data?.message ?? "Không thể ẩn bình luận.");
     }
   };
-
+  
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
     try {
@@ -679,10 +656,17 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
       toast.success("Sự kiện đã được hủy thành công.");
+      setRemoteEvent((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          status: 'cancelled',
+          cancellationReason: cancelReason.trim(),
+        };
+      });
       setShowCancelModal(false);
       setCancelReason("");
-      // Refetch event data to update status
-      window.location.reload();
+
     } catch (err: any) {
       toast.error(err.response?.data?.message ?? "Không thể hủy sự kiện.");
     }
@@ -704,7 +688,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   };
 
   // generateQRCode removed (unused)
-
   const getEventStatus = () => {
     const now = Date.now();
     const start = new Date(event.startTime).getTime();
@@ -829,9 +812,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                     >
                       <QrCode className="h-4 w-4 inline mr-2" /> Xem mã QR
                     </button>
-
+                    
                     {userParticipant.checkedIn && <div className="text-center text-sm text-green-600">✓ Đã điểm danh: {new Date(userParticipant.checkInTime!).toLocaleString("vi-VN")}</div>}
-
                     {/* User's rating status in action card */}
                     {(() => {
                       const myRating = eventRatings.find((r) => r.userId === currentUser?.id);
@@ -852,7 +834,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                     </div>
                     
                     {/* Cancel Event Button - only show for upcoming/ongoing events */}
-                    {event.status !== 'cancelled' && event.status !== 'rejected' && 
+                    {event.status !== 'cancelled' && event.status !== 'rejected' &&
                      new Date(event.endTime) > new Date() && (
                       <button
                         onClick={() => setShowCancelModal(true)}
@@ -866,8 +848,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 )}
 
                 {/* Admin/Moderator Cancel Button - only show for upcoming/ongoing events */}
-                {!isCreator && (currentUser?.role === 'admin' || currentUser?.role === 'moderator') && 
-                 event.status !== 'cancelled' && event.status !== 'rejected' && 
+                {!isCreator && (currentUser?.role === 'admin' || currentUser?.role === 'moderator') &&
+                 event.status !== 'cancelled' && event.status !== 'rejected' &&
                  new Date(event.endTime) > new Date() && (
                   <button
                     onClick={() => setShowCancelModal(true)}
@@ -970,7 +952,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             <form onSubmit={handleAddComment} className="mb-8">
               <div className="flex space-x-4">
                 {currentUser?.avatar_url ? (
-                  <img 
+                  <img
                     src={currentUser.avatar_url.startsWith('http') ? currentUser.avatar_url : `${RAW_BASE}${currentUser.avatar_url}`}
                     alt={currentUser.name}
                     className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
@@ -999,7 +981,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 return (
                   <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400" : "bg-white dark:bg-dark-bg-secondary"}`}>
                     {user?.avatar_url ? (
-                      <img 
+                      <img
                         src={user.avatar_url.startsWith('http') ? user.avatar_url : `${RAW_BASE}${user.avatar_url}`}
                         alt={user.name}
                         className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
@@ -1056,7 +1038,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                       </div>
 
                       <p className={`${isHidden ? "text-gray-500 dark:text-dark-text-tertiary" : "text-gray-700 dark:text-dark-text-secondary"}`}>{comment.content}</p>
-
+                      
                       {/* Replies */}
                       {comment.replies && comment.replies.length > 0 && (
                         <div className="mt-4 ml-4 space-y-3">
@@ -1066,7 +1048,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                             return (
                               <div key={reply.id} className={`flex items-start space-x-3 p-3 rounded-lg ${replyHidden ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
                                 {replyUser?.avatar_url ? (
-                                  <img 
+                                  <img
                                     src={replyUser.avatar_url.startsWith('http') ? replyUser.avatar_url : `${RAW_BASE}${replyUser.avatar_url}`}
                                     alt={replyUser.name}
                                     className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
@@ -1130,7 +1112,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                         <form onSubmit={handleSubmitReply} className="mt-4 ml-4">
                           <div className="flex space-x-3">
                             {currentUser?.avatar_url ? (
-                              <img 
+                              <img
                                 src={currentUser.avatar_url.startsWith('http') ? currentUser.avatar_url : `${RAW_BASE}${currentUser.avatar_url}`}
                                 alt={currentUser.name}
                                 className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
@@ -1297,7 +1279,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                   placeholder="Nhập lý do hủy sự kiện..."
                 />
               </div>
-
+              
               <div className="flex items-center justify-center gap-3">
                 <button
                   onClick={() => setShowCancelModal(false)}
