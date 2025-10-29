@@ -220,7 +220,7 @@ export function StatisticsPanel() {
     },
     {
       title: "Sự kiện bị từ chối",
-      value: dataEvents.filter((e: any) => e.status === "rejected").length,
+      value: dataEvents.filter((e: any) => e.status === "cancelled").length,
       icon: Calendar,
       color: "bg-red-500",
     },
@@ -311,7 +311,7 @@ export function StatisticsPanel() {
     },
     {
       name: "Bị từ chối",
-      value: dataEvents.filter((e: any) => e.status === "rejected").length,
+      value: dataEvents.filter((e: any) => e.status === "cancelled").length,
     },
   ];
 
