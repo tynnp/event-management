@@ -18,6 +18,8 @@ import {
   Reply,
   ThumbsUp,
   ThumbsDown,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event, Comment, Rating, Participant, User } from "../../types";
@@ -52,6 +54,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [modalRoot, setModalRoot] = useState<HTMLDivElement | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -115,6 +119,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
       status: raw.status ?? "pending",
       rejectionReason: raw.rejectionReason ?? raw.rejection_reason,
+      cancellationReason: raw.cancellationReason ?? raw.cancellation_reason,
       participants: (raw.participants ?? raw.attendees ?? []) as Participant[],
       comments: (raw.comments ?? []) as Comment[],
       ratings: (raw.ratings ?? []) as Rating[],
@@ -657,6 +662,31 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       toast.error(err.response?.data?.message ?? "Không thể thực hiện thao tác không thích.");
     }
   };
+
+  const handleCancelEvent = async () => {
+    if (!currentUser) {
+      toast.error("Bạn cần đăng nhập để hủy sự kiện.");
+      return;
+    }
+    if (!cancelReason.trim()) {
+      toast.error("Vui lòng nhập lý do hủy sự kiện.");
+      return;
+    }
+    try {
+      await axios.put(
+        `${BASE}/events/${event.id}/cancel`,
+        { reason: cancelReason.trim() },
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      );
+      toast.success("Sự kiện đã được hủy thành công.");
+      setShowCancelModal(false);
+      setCancelReason("");
+      // Refetch event data to update status
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? "Không thể hủy sự kiện.");
+    }
+  };
   const handleSubmitReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyContent.trim() || !currentUser || !replyingTo) return;
@@ -679,6 +709,16 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     const now = Date.now();
     const start = new Date(event.startTime).getTime();
     const end = new Date(event.endTime).getTime();
+    
+    if (event.status === 'cancelled') {
+      return { status: "cancelled", text: "Đã hủy", color: "bg-red-100 text-red-800" };
+    }
+    if (event.status === 'rejected') {
+      return { status: "rejected", text: "Bị từ chối", color: "bg-red-100 text-red-800" };
+    }
+    if (event.status === 'pending') {
+      return { status: "pending", text: "Chờ duyệt", color: "bg-yellow-100 text-yellow-800" };
+    }
     if (now < start) return { status: "upcoming", text: "Sắp diễn ra", color: "bg-blue-100 text-blue-800" };
     if (now >= start && now <= end) return { status: "ongoing", text: "Đang diễn ra", color: "bg-green-100 text-green-800" };
     return { status: "ended", text: "Đã kết thúc", color: "bg-gray-100 text-gray-800" };
@@ -806,9 +846,36 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 )}
 
                 {isCreator && (
-                  <div className="text-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 py-3 px-4 rounded-lg">
-                    <span className="font-medium">Bạn là người tạo sự kiện này</span>
+                  <div className="space-y-4">
+                    <div className="text-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 py-3 px-4 rounded-lg">
+                      <span className="font-medium">Bạn là người tạo sự kiện này</span>
+                    </div>
+                    
+                    {/* Cancel Event Button - only show for upcoming/ongoing events */}
+                    {event.status !== 'cancelled' && event.status !== 'rejected' && 
+                     new Date(event.endTime) > new Date() && (
+                      <button
+                        onClick={() => setShowCancelModal(true)}
+                        className="w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Hủy sự kiện
+                      </button>
+                    )}
                   </div>
+                )}
+
+                {/* Admin/Moderator Cancel Button - only show for upcoming/ongoing events */}
+                {!isCreator && (currentUser?.role === 'admin' || currentUser?.role === 'moderator') && 
+                 event.status !== 'cancelled' && event.status !== 'rejected' && 
+                 new Date(event.endTime) > new Date() && (
+                  <button
+                    onClick={() => setShowCancelModal(true)}
+                    className="w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Hủy sự kiện
+                  </button>
                 )}
 
                 {/* For creator: show average rating prominently */}
@@ -824,6 +891,32 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
               </div>
             </div>
           </div>
+
+          {/* Cancellation Notice */}
+          {event.status === 'cancelled' && event.cancellationReason && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-8">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-red-900 dark:text-red-300 mb-2">Sự kiện đã bị hủy</h3>
+                  <p className="text-red-700 dark:text-red-400">{event.cancellationReason}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rejection Notice */}
+          {event.status === 'rejected' && event.rejectionReason && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-8">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-red-900 dark:text-red-300 mb-2">Sự kiện bị từ chối</h3>
+                  <p className="text-red-700 dark:text-red-400">{event.rejectionReason}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Rating Section */}
           {canRate && !eventRatings.some((r) => r.userId === currentUser?.id) && (
@@ -1162,6 +1255,65 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
               </button>
             </div>
           </div>
+          </div>
+        </div>,
+        modalRoot
+      )}
+
+      {/* Cancel Event Modal */}
+      {showCancelModal && modalRoot && createPortal(
+        <div className="fixed inset-0 z-[2147483647]">
+          <div onClick={() => setShowCancelModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative animate-[fadeIn_.15s_ease]">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center justify-center mb-4">
+                <XCircle className="h-12 w-12 text-red-500" />
+              </div>
+
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Hủy sự kiện
+              </h2>
+
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Bạn có chắc chắn muốn hủy sự kiện "{event.title}"? Hành động này không thể hoàn tác.
+              </p>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
+                  Lý do hủy sự kiện *
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  rows={3}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder="Nhập lý do hủy sự kiện..."
+                />
+              </div>
+
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleCancelEvent}
+                  disabled={!cancelReason.trim()}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  Xác nhận hủy
+                </button>
+              </div>
+            </div>
           </div>
         </div>,
         modalRoot

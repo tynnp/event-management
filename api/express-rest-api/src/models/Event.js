@@ -122,6 +122,16 @@ class Event {
     return result.rows[0];
   }
 
+  // Cancel event
+  static async cancel(eventId, reason) {
+    const pool = getPostgresPool();
+    const result = await pool.query(
+      'UPDATE events SET status = $1, cancellation_reason = $2, updated_at = NOW() WHERE id = $3 RETURNING *',
+      ['cancelled', reason, eventId]
+    );
+    return result.rows[0];
+  }
+
   // Delete event
   static async delete(eventId) {
     const pool = getPostgresPool();
@@ -168,6 +178,30 @@ class Event {
     
     const event = result.rows[0];
     return event.created_by === userId || userRole === 'moderator' || userRole === 'admin';
+  }
+
+  // Check if user can cancel event
+  static async canCancel(eventId, userId, userRole) {
+    const pool = getPostgresPool();
+    const result = await pool.query('SELECT created_by, status, start_time, end_time FROM events WHERE id = $1', [eventId]);
+    
+    if (result.rows.length === 0) return false;
+    
+    const event = result.rows[0];
+    // Can cancel if: owner OR admin/moderator
+    const isOwner = event.created_by === userId;
+    const isAdminMod = userRole === 'moderator' || userRole === 'admin';
+    if (!isOwner && !isAdminMod) return false;
+    
+    // Event must not already be cancelled or rejected
+    if (event.status === 'cancelled' || event.status === 'rejected') return false;
+    
+    // Event must be upcoming or ongoing (not ended)
+    const now = new Date();
+    const endTime = new Date(event.end_time);
+    
+    // Can only cancel if event hasn't ended yet
+    return endTime > now;
   }
 }
 

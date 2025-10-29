@@ -49,6 +49,7 @@ CREATE TABLE events (
     category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled')),
     rejection_reason TEXT,
+    cancellation_reason TEXT,
     average_rating DECIMAL(3,2) DEFAULT 0.00,
     total_ratings INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

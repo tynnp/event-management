@@ -103,6 +103,7 @@ export function EventList() {
           createdAt: event.created_at || event.createdAt,
           status: event.status,
           rejectionReason: event.rejection_reason || event.rejectionReason,
+          cancellationReason: event.cancellation_reason || event.cancellationReason,
           participants: event.participants || [],
           comments: event.comments || [],
           ratings: event.ratings || [],
@@ -115,10 +116,10 @@ export function EventList() {
         // Filter events based on route
         let filteredList: EventWithExtras[];
         if (isMyEvents && currentUser) {
-          // "Sự kiện của tôi" - chỉ hiển thị events user đã tạo
+          // "Sự kiện của tôi" - hiển thị tất cả events user đã tạo (bao gồm cả cancelled/rejected)
           filteredList = list.filter((e) => e.createdBy === currentUser.id);
         } else {
-          // "Khám phá sự kiện" - hiển thị tất cả events đã approved
+          // "Khám phá sự kiện" - chỉ hiển thị events đã approved (không hiển thị cancelled/rejected)
           filteredList = list.filter((e) => e.status === "approved");
         }
 
@@ -171,6 +172,18 @@ export function EventList() {
     const start = new Date(event.startTime);
     const end = new Date(event.endTime);
 
+    // Check event status first
+    if (event.status === 'cancelled') {
+      return { text: "Đã hủy", color: "bg-red-100 text-red-800" };
+    }
+    if (event.status === 'rejected') {
+      return { text: "Bị từ chối", color: "bg-red-100 text-red-800" };
+    }
+    if (event.status === 'pending') {
+      return { text: "Chờ duyệt", color: "bg-yellow-100 text-yellow-800" };
+    }
+
+    // For approved events, check time-based status
     if (now < start)
       return { text: "Sắp diễn ra", color: "bg-blue-100 text-blue-800" };
     if (now >= start && now <= end)

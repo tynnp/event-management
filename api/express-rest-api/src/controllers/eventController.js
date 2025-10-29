@@ -216,6 +216,44 @@ exports.rejectEvent = async (req, res) => {
   }
 };
 
+// CANCEL
+exports.cancelEvent = async (req, res) => {
+  const { reason } = req.body;
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    const canCancel = await Event.canCancel(req.params.id, req.user.id, req.user.role);
+    if (!canCancel) {
+      return res.status(403).json({ message: 'Not authorized to cancel this event' });
+    }
+
+    const cancelledEvent = await Event.cancel(req.params.id, reason);
+
+    // 🔔 Gửi thông báo cho tất cả người tham gia
+    try {
+      const Attendance = require('../models/Attendance');
+      const participants = await Attendance.findByEvent(req.params.id);
+      
+      for (const participant of participants) {
+        await sendNotification(
+          participant.user_id,
+          'Sự kiện đã bị hủy',
+          `Sự kiện "${event.title}" đã bị hủy. Lý do: ${reason || 'Không xác định'}.`,
+          'event_cancelled',
+          event.id
+        );
+      }
+    } catch (notificationErr) {
+      console.warn('Failed to send cancellation notifications:', notificationErr);
+    }
+
+    res.json({ message: 'Event cancelled', event: cancelledEvent });
+  } catch (err) {
+    res.status(500).json({ message: 'Error cancelling event', error: err.message });
+  }
+};
+
 // UPDATE - improved
 exports.updateEvent = async (req, res) => {
   const allowedFields = ['title','description','start_time','end_time','location','image_url','is_public','max_participants','category_id'];

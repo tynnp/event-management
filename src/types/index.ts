@@ -26,6 +26,7 @@ export interface Event {
   createdAt: string;
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   rejectionReason?: string;
+  cancellationReason?: string;
   participants: Participant[];
   comments: Comment[];
   ratings: Rating[];

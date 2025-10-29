@@ -22,6 +22,9 @@ router.put('/:id', upload.single('image'), eventController.updateEvent);
 router.put('/:id/approve', roleMiddleware(['moderator','admin']), eventController.approveEvent);
 router.put('/:id/reject', roleMiddleware(['moderator','admin']), eventController.rejectEvent);
 
+// Hủy sự kiện (chủ nhân hoặc admin/moderator)
+router.put('/:id/cancel', eventController.cancelEvent);
+
 // Lấy danh sách + chi tiết event không cần phân quyền
 router.get('/', eventController.getEvents);
 router.get('/:id', eventController.getEventDetail);
