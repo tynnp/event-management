@@ -230,6 +230,18 @@ export function StatisticsPanel() {
       icon: XCircle,
       color: "bg-rose-500",
     },
+    {
+      title: "Tổng số người tham gia",
+      value: (systemStats?.total_participations != null)
+        ? systemStats.total_participations
+        : dataEvents.reduce((sum: number, e: any) => {
+            if (Array.isArray(e.participants)) return sum + e.participants.length;
+            const count = Number(e.current_participants ?? 0);
+            return sum + (Number.isFinite(count) ? count : 0);
+          }, 0),
+      icon: Users,
+      color: "bg-purple-500",
+    },
     // {
     //   title: "Tổng lượt tham gia",
     //   value: events.reduce((sum, e) => sum + e.participants.length, 0),
@@ -250,12 +262,6 @@ export function StatisticsPanel() {
       value: myEvents.filter((e) => e.status === "approved").length,
       icon: CheckCircle,
       color: "bg-green-500",
-    },
-    {
-      title: "Chờ duyệt",
-      value: myEvents.filter((e) => e.status === "pending").length,
-      icon: Clock,
-      color: "bg-orange-500",
     },
     {
       title: "Sự kiện bị từ chối",
@@ -390,7 +396,7 @@ export function StatisticsPanel() {
       {currentUser.role === "admin" && (
         <>
           {/* Cards */}
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6">
             {adminStats.map((stat, i) => (
               <div key={i} className="card p-6 rounded-2xl shadow-lg">
                 <div className="flex items-center justify-between">
