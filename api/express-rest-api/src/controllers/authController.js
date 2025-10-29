@@ -103,10 +103,22 @@ exports.login = async (req, res) => {
 
   try {
     const user = await User.findByEmail(email);
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!user) {
+      // If user not found, check if there is a pending registration awaiting OTP
+      try {
+        const client = await connectRedis();
+        const pending = await client.get(`register:${email}`);
+        if (pending) {
+          return res.status(403).json({ message: 'Tài khoản chưa kích hoạt. Vui lòng kiểm tra email để nhập OTP.' });
+        }
+      } catch (e) {
+        // ignore redis errors, fall back to generic message
+      }
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
     if (user.is_locked) {
-      return res.status(403).json({ message: 'Account is locked. Please contact admin.' });
+      return res.status(403).json({ message: 'Tài khoản đã bị khóa. Vui lòng liên hệ admin.' });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);

@@ -68,7 +68,9 @@ export function LoginForm() {
       // Redirect to Dashboard
       navigate("/dashboard");
     } catch (error) {
-      setError("Email hoặc mật khẩu không đúng");
+      const anyErr: any = error as any;
+      const msg = anyErr?.response?.data?.message || "Email hoặc mật khẩu không đúng";
+      setError(msg);
       console.error("Login error:", error);
     }
   };
