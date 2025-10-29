@@ -93,7 +93,7 @@ function App() {
           <Toaster
             position="top-right"
             toastOptions={{
-              duration: 4000,
+              duration: 3000,
               style: {
                 background: 'linear-gradient(135deg, #667eea, #764ba2)',
                 color: '#fff',
