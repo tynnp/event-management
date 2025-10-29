@@ -248,6 +248,7 @@ export function LoginForm() {
                         name: e.target.value,
                       }))
                     }
+                    placeholder="Nhập họ và tên"
                   />
                 </div>
 
@@ -265,6 +266,7 @@ export function LoginForm() {
                         phone: e.target.value,
                       }))
                     }
+                    placeholder="Nhập số điện thoại"
                   />
                 </div>
 
@@ -283,6 +285,7 @@ export function LoginForm() {
                         email: e.target.value,
                       }))
                     }
+                    placeholder="Nhập email của bạn"
                   />
                 </div>
 
