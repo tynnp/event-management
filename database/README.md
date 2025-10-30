@@ -69,6 +69,7 @@ database/
 - category_id (UUID, Foreign Key)
 - status (ENUM: pending, approved, rejected, cancelled)
 - rejection_reason (TEXT)
+- cancellation_reason (TEXT)
 - average_rating (DECIMAL)
 - total_ratings (INTEGER)
 - created_at, updated_at (TIMESTAMP)
