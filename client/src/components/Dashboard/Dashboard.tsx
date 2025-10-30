@@ -77,13 +77,14 @@ export function Dashboard() {
           createdAt: e.created_at || e.createdAt,
           status: e.status,
           rejectionReason: e.rejection_reason || e.rejectionReason,
-          participants: e.participants || [],
+          currentParticipants: e.current_participants,
           comments: e.comments || [],
           ratings: e.ratings || [],
           averageRating: e.average_rating || e.averageRating || 0,
           category: e.category_name || e.category
         })) || [];
 
+        console.log("Raw events from backend:", eventsRes.data);
         setEvents(normalizedEvents);
         setUsers(usersRes.data || []);
 
@@ -106,8 +107,7 @@ export function Dashboard() {
 
   const userEvents = safeEvents.filter(
     (event) =>
-      event.createdBy === currentUser?.id ||
-      (event.participants ?? []).some((p: any) => p.userId === currentUser?.id)
+      event.createdBy === currentUser?.id
   );
 
   const approvedEvents = safeEvents.filter((event) => event.status === "approved");
@@ -119,25 +119,17 @@ export function Dashboard() {
   const stats = [
     {
       title: "Sự kiện đã tham gia",
-      value: userEvents.filter((event) =>
-        (event.participants ?? []).some(
-          (p: any) => p.userId === currentUser?.id && p.checkedIn
-        )
-      ).length,
+      value: userEvents.length,
       icon: CheckCircle,
       color: "bg-green-500",
-
     },
     {
       title: "Sự kiện sắp diễn ra",
       value: statistics?.upcoming_events ?? approvedEvents.filter(
-        (event) =>
-          new Date(event.startTime) > new Date() &&
-          (event.participants ?? []).some((p: any) => p.userId === currentUser?.id)
+        (event) => new Date(event.startTime) > new Date()
       ).length,
       icon: Calendar,
       color: "bg-blue-500",
-      // trend: "3 sự kiện tuần này",
     },
     {
       title: "Đánh giá trung bình",
@@ -317,7 +309,7 @@ export function Dashboard() {
                 </p>
                 <p className="text-3xl font-extrabold mt-1 bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
                   {statistics?.total_participations ?? safeEvents.reduce(
-                    (sum, event) => sum + ((event.participants ?? []).length || 0),
+                    (sum, event) => sum + (event.currentParticipants ?? 0),
                     0
                   )}
                 </p>
@@ -365,7 +357,7 @@ export function Dashboard() {
                     </span>
                     <span className="flex items-center gap-1.5 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
                       <Users className="w-4 h-4" />
-                      <span>{(event.participants ?? []).length} người tham gia</span>
+                      <span>{event.currentParticipants ?? 0} người tham gia</span>
                     </span>
                   </div>
                 </div>
