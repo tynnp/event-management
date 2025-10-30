@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { createPortal } from "react-dom";
-import { Calendar, MapPin, Users, Share2, MessageSquare, Star, QrCode, ArrowLeft, CheckCircle, UserPlus, Eye, EyeOff, Trash2, Reply, ThumbsUp, ThumbsDown, XCircle, AlertTriangle } from "lucide-react";
+import { Calendar, MapPin, Users, Share2, MessageSquare, Star, QrCode, ArrowLeft, CheckCircle, UserPlus, Eye, EyeOff, Trash2, Reply, ThumbsUp, ThumbsDown, XCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event, Comment, Rating, Participant, User } from "../../types";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -931,14 +931,16 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           <div className="border-t border-gray-200 dark:border-dark-border pt-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-xl flex items-center text-gray-900 dark:text-dark-text-primary">
-                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận và Đánh giá ({allComments.length})
+                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận ({allComments.filter(c => !c.id.startsWith('rev-')).length})
               </h3>
               <button
                 onClick={() => setShowReviews((v) => !v)}
-                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary text-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800/40 text-yellow-800 dark:text-yellow-300 hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/30 dark:hover:to-orange-900/30 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
               >
-                <Star className="h-4 w-4 mr-1 text-yellow-500 fill-current" />
-                {showReviews ? `Ẩn đánh giá (${eventRatings.length})` : `Hiển thị đánh giá (${eventRatings.length})`}
+                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                <span>{showReviews ? 'Ẩn đánh giá' : 'Hiển thị đánh giá'}</span>
+                <span className="bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full text-xs font-semibold">{eventRatings.length}</span>
+                {showReviews ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
             </div>
 
@@ -1018,38 +1020,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 const user = allUsers.find((u: User) => u.id === comment.userId);
                 const isReview = comment.id.startsWith('rev-');
                 
-                // Nếu là đánh giá
+                // Skip reviews - chúng đã được hiển thị trong phần "Hiển thị đánh giá" riêng
                 if (isReview) {
-                  const rating = eventRatings.find(r => `rev-${r.id}` === comment.id);
-                  return (
-                    <div key={comment.id} className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <img
-                          src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
-                          alt={user?.name || 'User'}
-                          className="w-8 h-8 rounded-full"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center mb-1">
-                            <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name || "Người dùng"}</span>
-                            <span className="mx-2 text-gray-400">•</span>
-                            <span className="text-gray-500 dark:text-dark-text-secondary text-sm">
-                              {new Date(comment.createdAt).toLocaleString("vi-VN")}
-                            </span>
-                          </div>
-                          <div className="flex items-center mb-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`h-4 w-4 ${star <= (rating?.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                              />
-                            ))}
-                          </div>
-                          <p className="text-gray-700 dark:text-dark-text-secondary">{comment.content}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
+                  return null;
                 }
 
                 // Nếu là bình luận thông thường
@@ -1215,7 +1188,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 );
               })}
 
-              {allComments.length === 0 && <p className="text-gray-500 dark:text-dark-text-tertiary text-center py-8">Chưa có bình luận nào</p>}
+              {allComments.filter(c => !c.id.startsWith('rev-')).length === 0 && <p className="text-gray-500 dark:text-dark-text-tertiary text-center py-8">Chưa có bình luận nào</p>}
             </div>
           </div>
         </div>
