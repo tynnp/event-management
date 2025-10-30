@@ -55,6 +55,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, currentUser: action.payload.user, token: action.payload.token };
 
     case 'LOGOUT':
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("token");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
       return { ...state, currentUser: null, token: null };
 
     case 'REGISTER':
