@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { createPortal } from "react-dom";
-import { Calendar, MapPin, Users, Share2, MessageSquare, Star, QrCode, ArrowLeft, CheckCircle, UserPlus, Eye, EyeOff, Trash2, Reply, ThumbsUp, ThumbsDown, XCircle, AlertTriangle } from "lucide-react";
+import { Calendar, MapPin, Users, Share2, MessageSquare, Star, QrCode, ArrowLeft, CheckCircle, UserPlus, Eye, EyeOff, Trash2, Reply, ThumbsUp, ThumbsDown, XCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event, Comment, Rating, Participant, User } from "../../types";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -36,6 +36,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [modalRoot, setModalRoot] = useState<HTMLDivElement | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [showReviews, setShowReviews] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -582,18 +585,27 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     }
   };
   
-  const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+  const handleDeleteComment = (commentId: string) => {
+    setCommentToDelete(commentId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
     try {
       await axios.patch(
-        `${BASE}/chats/${commentId}`,
+        `${BASE}/chats/${commentToDelete}`,
         { action: 'delete' },
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
       await refetchComments();
-      dispatch?.({ type: "DELETE_COMMENT", payload: commentId });
+      dispatch?.({ type: "DELETE_COMMENT", payload: commentToDelete });
+      toast.success("Đã xóa bình luận thành công.");
     } catch (err: any) {
       toast.error(err.response?.data?.message ?? "Không thể xóa bình luận.");
+    } finally {
+      setShowDeleteModal(false);
+      setCommentToDelete(null);
     }
   };
 
@@ -928,12 +940,68 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
           {/* Comments and Reviews */}
           <div className="border-t border-gray-200 dark:border-dark-border pt-8">
-            <div className="flex items-center mb-6">
+            <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-xl flex items-center text-gray-900 dark:text-dark-text-primary">
-                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận và Đánh giá ({allComments.length})
+                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận ({allComments.filter(c => !c.id.startsWith('rev-')).length})
               </h3>
+              <button
+                onClick={() => setShowReviews((v) => !v)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800/40 text-yellow-800 dark:text-yellow-300 hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/30 dark:hover:to-orange-900/30 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
+              >
+                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                <span>{showReviews ? 'Ẩn đánh giá' : 'Hiển thị đánh giá'}</span>
+                <span className="bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full text-xs font-semibold">{eventRatings.length}</span>
+                {showReviews ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
             </div>
 
+            {showReviews && (
+              <div className="space-y-4 mb-8">
+                {eventRatings.length === 0 && (
+                  <p className="text-gray-500 dark:text-dark-text-tertiary">Chưa có đánh giá nào</p>
+                )}
+                {eventRatings.map((r) => {
+                  const user = allUsers.find((u: User) => u.id === r.userId);
+                  return (
+                    <div key={r.id} className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                      <div className="flex items-start space-x-3">
+                        {user?.avatar_url ? (
+                          <img
+                            src={user.avatar_url.startsWith('http') ? user.avatar_url : `${RAW_BASE}${user.avatar_url}`}
+                            alt={user.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-300 dark:bg-dark-bg-tertiary rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300">
+                            {user?.name?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center mb-1">
+                            <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name || 'Người dùng'}</span>
+                            <span className="mx-2 text-gray-400">•</span>
+                            <span className="text-gray-500 dark:text-dark-text-secondary text-sm">{new Date(r.createdAt).toLocaleString('vi-VN')}</span>
+                          </div>
+                          <div className="flex items-center mb-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-4 w-4 ${star <= (r.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                              />
+                            ))}
+                          </div>
+                          {r.review?.trim() ? (
+                            <p className="text-gray-700 dark:text-dark-text-secondary">{r.review}</p>
+                          ) : (
+                            <p className="text-gray-500 italic">(Không có bình luận)</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             {/* Add Comment */}
             <form onSubmit={handleAddComment} className="mb-8">
               <div className="flex space-x-4">
@@ -963,38 +1031,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 const user = allUsers.find((u: User) => u.id === comment.userId);
                 const isReview = comment.id.startsWith('rev-');
                 
-                // Nếu là đánh giá
+                // Skip reviews - chúng đã được hiển thị trong phần "Hiển thị đánh giá" riêng
                 if (isReview) {
-                  const rating = eventRatings.find(r => `rev-${r.id}` === comment.id);
-                  return (
-                    <div key={comment.id} className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <img
-                          src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
-                          alt={user?.name || 'User'}
-                          className="w-8 h-8 rounded-full"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center mb-1">
-                            <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name || "Người dùng"}</span>
-                            <span className="mx-2 text-gray-400">•</span>
-                            <span className="text-gray-500 dark:text-dark-text-secondary text-sm">
-                              {new Date(comment.createdAt).toLocaleString("vi-VN")}
-                            </span>
-                          </div>
-                          <div className="flex items-center mb-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`h-4 w-4 ${star <= (rating?.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                              />
-                            ))}
-                          </div>
-                          <p className="text-gray-700 dark:text-dark-text-secondary">{comment.content}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
+                  return null;
                 }
 
                 // Nếu là bình luận thông thường
@@ -1160,7 +1199,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 );
               })}
 
-              {allComments.length === 0 && <p className="text-gray-500 dark:text-dark-text-tertiary text-center py-8">Chưa có bình luận nào</p>}
+              {allComments.filter(c => !c.id.startsWith('rev-')).length === 0 && <p className="text-gray-500 dark:text-dark-text-tertiary text-center py-8">Chưa có bình luận nào</p>}
             </div>
           </div>
         </div>
@@ -1316,6 +1355,51 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                   className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Xác nhận hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        modalRoot
+      )}
+
+      {/* Delete Comment Modal */}
+      {showDeleteModal && modalRoot && createPortal(
+        <div className="fixed inset-0 z-[2147483647]">
+          <div onClick={() => setShowDeleteModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative animate-[fadeIn_.15s_ease]">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center justify-center mb-4">
+                <Trash2 className="h-12 w-12 text-red-500" />
+              </div>
+
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Xóa bình luận
+              </h2>
+
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác.
+              </p>
+              
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={confirmDeleteComment}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition"
+                >
+                  Xác nhận xóa
                 </button>
               </div>
             </div>
