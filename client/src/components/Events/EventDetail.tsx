@@ -36,6 +36,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [modalRoot, setModalRoot] = useState<HTMLDivElement | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [showReviews, setShowReviews] = useState(false);
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -928,12 +929,66 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
           {/* Comments and Reviews */}
           <div className="border-t border-gray-200 dark:border-dark-border pt-8">
-            <div className="flex items-center mb-6">
+            <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-xl flex items-center text-gray-900 dark:text-dark-text-primary">
                 <MessageSquare className="h-5 w-5 mr-2" /> Bình luận và Đánh giá ({allComments.length})
               </h3>
+              <button
+                onClick={() => setShowReviews((v) => !v)}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary text-sm"
+              >
+                <Star className="h-4 w-4 mr-1 text-yellow-500 fill-current" />
+                {showReviews ? `Ẩn đánh giá (${eventRatings.length})` : `Hiển thị đánh giá (${eventRatings.length})`}
+              </button>
             </div>
 
+            {showReviews && (
+              <div className="space-y-4 mb-8">
+                {eventRatings.length === 0 && (
+                  <p className="text-gray-500 dark:text-dark-text-tertiary">Chưa có đánh giá nào</p>
+                )}
+                {eventRatings.map((r) => {
+                  const user = allUsers.find((u: User) => u.id === r.userId);
+                  return (
+                    <div key={r.id} className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                      <div className="flex items-start space-x-3">
+                        {user?.avatar_url ? (
+                          <img
+                            src={user.avatar_url.startsWith('http') ? user.avatar_url : `${RAW_BASE}${user.avatar_url}`}
+                            alt={user.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-300 dark:bg-dark-bg-tertiary rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300">
+                            {user?.name?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center mb-1">
+                            <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name || 'Người dùng'}</span>
+                            <span className="mx-2 text-gray-400">•</span>
+                            <span className="text-gray-500 dark:text-dark-text-secondary text-sm">{new Date(r.createdAt).toLocaleString('vi-VN')}</span>
+                          </div>
+                          <div className="flex items-center mb-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-4 w-4 ${star <= (r.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                              />
+                            ))}
+                          </div>
+                          {r.review?.trim() ? (
+                            <p className="text-gray-700 dark:text-dark-text-secondary">{r.review}</p>
+                          ) : (
+                            <p className="text-gray-500 italic">(Không có bình luận)</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             {/* Add Comment */}
             <form onSubmit={handleAddComment} className="mb-8">
               <div className="flex space-x-4">
