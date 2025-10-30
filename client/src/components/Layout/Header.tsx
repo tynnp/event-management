@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { User, LogOut, Bell, Settings, Menu, Check, Trash2, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LogOut, Bell, Settings, Menu, Check, Trash2, Clock } from "lucide-react";
 import axios from "axios";
 import { useApp } from "../../context/AppContext";
 import { ThemeToggle } from "./ThemeToggle";
@@ -13,13 +13,6 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
   const { currentUser } = state;
-
-  const [showModal, setShowModal] = useState(false);
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   // Notifications state
   const [openNotif, setOpenNotif] = useState(false);
@@ -96,46 +89,12 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const getAvatarUrl = (url?: string) => {
     if (!url) return "/default-avatar.png";
     if (url.startsWith("http")) return url;
-    return `http://localhost:5000/${url}`;
+    return `${RAW_BASE}/${url}`;
   };
 
   const handleLogout = () => {
     dispatch({ type: "LOGOUT" });
     navigate("/login");
-  };
-
-  const handleOpenModal = () => {
-    setShowModal(true);
-    setError("");
-    setSuccess("");
-    setOldPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  };
-
-  const handleChangePassword = () => {
-    if (!currentUser) return;
-
-    if (oldPassword !== currentUser.password) {
-      setError("Mật khẩu cũ không đúng!");
-      return;
-    }
-    if (newPassword.length < 6) {
-      setError("Mật khẩu mới phải có ít nhất 6 ký tự!");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp!");
-      return;
-    }
-
-    dispatch({
-      type: "CHANGE_PASSWORD",
-      payload: { email: currentUser.email, newPassword },
-    });
-
-    setSuccess("Đổi mật khẩu thành công!");
-    setTimeout(() => setShowModal(false), 1200);
   };
 
   const getGreeting = () => {

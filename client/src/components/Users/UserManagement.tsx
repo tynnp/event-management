@@ -6,6 +6,8 @@ import { toast } from "react-hot-toast";
 import { Trash, Lock, Unlock, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export function UserManagement() {
   const { state, dispatch } = useApp();
   const { users } = state;
@@ -24,7 +26,7 @@ export function UserManagement() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const response = await axios.get("http://localhost:5000/api/users", {
+      const response = await axios.get(`${API_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       dispatch({ type: "SET_USERS", payload: response.data });
@@ -72,7 +74,7 @@ export function UserManagement() {
     if (!selectedUser) return;
     try {
       const token = localStorage.getItem("authToken");
-      await axios.delete(`http://localhost:5000/api/users/${selectedUser.id}`, {
+      await axios.delete(`${API_URL}/api/users/${selectedUser.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Không cần dispatch DELETE_USER nữa, thay vào đó refetch để đảm bảo sync với server
@@ -93,7 +95,7 @@ export function UserManagement() {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.put(
-        `http://localhost:5000/api/users/${id}/role`,
+        `${API_URL}/api/users/${id}/role`,
         { newRole },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -111,7 +113,7 @@ export function UserManagement() {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.put(
-        `http://localhost:5000/api/users/${id}/lock`,
+        `${API_URL}/api/users/${id}/lock`,
         { lock: isLocked },
         { headers: { Authorization: `Bearer ${token}` } }
       );
