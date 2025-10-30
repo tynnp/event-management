@@ -926,26 +926,12 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             </div>
           )}
 
-          {/* Comments */}
+          {/* Comments and Reviews */}
           <div className="border-t border-gray-200 dark:border-dark-border pt-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center mb-6">
               <h3 className="font-semibold text-xl flex items-center text-gray-900 dark:text-dark-text-primary">
-                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận ({allComments.length})
+                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận và Đánh giá ({allComments.length})
               </h3>
-
-              {hiddenComments.length > 0 && (
-                <button onClick={() => setShowHiddenComments(!showHiddenComments)} className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-                  {showHiddenComments ? (
-                    <>
-                      <EyeOff className="h-4 w-4 mr-1" /> Ẩn bình luận đã ẩn
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="h-4 w-4 mr-1" /> Hiện bình luận đã ẩn ({hiddenComments.length})
-                    </>
-                  )}
-                </button>
-              )}
             </div>
 
             {/* Add Comment */}
@@ -975,6 +961,43 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             <div className="space-y-6">
               {allComments.map((comment) => {
                 const user = allUsers.find((u: User) => u.id === comment.userId);
+                const isReview = comment.id.startsWith('rev-');
+                
+                // Nếu là đánh giá
+                if (isReview) {
+                  const rating = eventRatings.find(r => `rev-${r.id}` === comment.id);
+                  return (
+                    <div key={comment.id} className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                      <div className="flex items-start space-x-3">
+                        <img
+                          src={user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
+                          alt={user?.name || 'User'}
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center mb-1">
+                            <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name || "Người dùng"}</span>
+                            <span className="mx-2 text-gray-400">•</span>
+                            <span className="text-gray-500 dark:text-dark-text-secondary text-sm">
+                              {new Date(comment.createdAt).toLocaleString("vi-VN")}
+                            </span>
+                          </div>
+                          <div className="flex items-center mb-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-4 w-4 ${star <= (rating?.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                              />
+                            ))}
+                          </div>
+                          <p className="text-gray-700 dark:text-dark-text-secondary">{comment.content}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Nếu là bình luận thông thường
                 const isHidden = comment.isHidden;
                 const canModerate = currentUser?.role === "admin" || currentUser?.role === "moderator";
 
