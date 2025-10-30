@@ -109,7 +109,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'CREATE_EVENT':
       return {
         ...state,
-        events: [...state.events, action.payload],
+        events: [...state.events, { ...action.payload, participants: action.payload.participants || [] }],
       };
 
     case 'UPDATE_EVENT':
@@ -134,7 +134,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
             ? {
               ...event,
               participants: [
-                ...event.participants,
+                ...(event.participants || []),
                 {
                   userId: action.payload.userId,
                   joinedAt: new Date().toISOString(),
