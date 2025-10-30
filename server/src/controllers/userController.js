@@ -2,7 +2,7 @@
 const User = require('../models/User');
 const { sendMail } = require('../utils/emailService');
 const bcrypt = require('bcryptjs');
-const { buildImageUrl } = require('../middleware/uploadMiddleware');
+const { buildImageUrl, normalizeImagePath } = require('../middleware/uploadMiddleware');
 
 const fs = require('fs');
 const path = require('path');
@@ -48,8 +48,8 @@ exports.updateUserProfile = async (req, res) => {
     }
 
     if (req.file) {
-      filePath = req.file.path.replace(/\\/g, '/');
-
+      const rawPath = req.file.path.replace(/\\/g, '/');
+      
       try {
         const old = await User.findById(req.user.id);
         const oldPath = old?.avatar_url;
@@ -69,6 +69,8 @@ exports.updateUserProfile = async (req, res) => {
         console.error('Error removing old avatar:', err);
       }
 
+      // Lưu path tương đối vào database (vd: /uploads/123.jpg)
+      filePath = normalizeImagePath(rawPath);
       updates.avatar_url = filePath;
     }
 
@@ -77,11 +79,13 @@ exports.updateUserProfile = async (req, res) => {
     }
 
     await User.updateProfile(req.user.id, updates);
+    
+    // Trả về URL đầy đủ cho client
     const updatedAvatarUrl = req.file ? buildImageUrl(filePath) : undefined;
 
     res.json({
       message: 'Profile updated successfully',
-      avatar_url: updatedAvatarUrl
+      avatar_url: updatedAvatarUrl  // URL đầy đủ để client hiển thị
     });
   } catch (err) {
     res.status(500).json({ message: 'Error updating profile', error: err.message });

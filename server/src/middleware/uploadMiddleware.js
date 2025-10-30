@@ -31,20 +31,48 @@ const upload = multer({
   fileFilter,
 });
 
-// Tạo image URL (baseURL/uploads/filename)
-const buildImageUrl = (filePath) => {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+// Chuẩn hóa path để lưu vào database (chỉ lưu /uploads/filename)
+const normalizeImagePath = (filePath) => {
   if (!filePath) return null;
-
-  // chuẩn hóa path (tránh \\ trên Windows)
+  
+  // Chuẩn hóa path (tránh \\ trên Windows)
   let clean = String(filePath).replace(/\\/g, '/').replace(/^\/+/, '');
-
-  // nếu giá trị trong DB đã có 'uploads/' rồi, thì không thêm nữa
-  if (clean.startsWith('uploads/')) {
-    return `${baseUrl}/${clean}`;
-  } else {
-    return `${baseUrl}/uploads/${clean}`;
+  
+  // Nếu đã có http:// hoặc https:// thì chỉ lấy phần path
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    const match = clean.match(/\/uploads\/.+$/);
+    return match ? match[0] : null;
   }
+  
+  // Nếu đã có 'uploads/' thì thêm '/' ở đầu
+  if (clean.startsWith('uploads/')) {
+    return `/${clean}`;
+  }
+  
+  // Nếu đã có '/uploads/' thì giữ nguyên
+  if (clean.startsWith('/uploads/')) {
+    return clean;
+  }
+  
+  // Còn lại thì thêm '/uploads/' ở đầu
+  return `/uploads/${clean}`;
 };
 
-module.exports = { upload, buildImageUrl };
+// Tạo image URL đầy đủ (baseURL + path) - chỉ dùng khi trả về client
+const buildImageUrl = (filePath) => {
+  const baseUrl = (process.env.BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
+  if (!filePath) return null;
+
+  // Nếu đã là URL đầy đủ thì return luôn
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    return filePath;
+  }
+
+  // Chuẩn hóa path trước
+  const normalizedPath = normalizeImagePath(filePath);
+  if (!normalizedPath) return null;
+  
+  return `${baseUrl}${normalizedPath}`;
+};
+
+module.exports = { upload, buildImageUrl, normalizeImagePath };
