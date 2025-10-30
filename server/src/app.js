@@ -5,7 +5,7 @@ const { connectMongoDB } = require('./config/database');
 const authMiddleware = require('./middleware/authMiddleware');
 const auditLogger = require('./middleware/auditLogger');
 const errorHandler = require('./middleware/errorHandler');
-const { generalLimiter } = require('./middleware/rateLimiter'); // Thêm dòng này
+const { generalLimiter } = require('./middleware/rateLimiter');
 const { connectRedis } = require('./config/redis');
 
 // Routes
@@ -27,7 +27,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173', // hoặc '*' nếu bạn chỉ test tạm
+  origin: 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -41,7 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 // ---------------------------
 // RATE LIMITER TOÀN CỤC
 // ---------------------------
-app.use(generalLimiter); // Giới hạn toàn bộ request (ví dụ: 100 req/15 phút/IP)
+app.use(generalLimiter);
 
 // ---------------------------
 // GHI LOG TOÀN BỘ REQUEST (kể cả public)

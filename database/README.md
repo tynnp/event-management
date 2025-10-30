@@ -249,6 +249,7 @@ database/
 ### 1. Cài đặt Dependencies
 
 ```bash
+cd database
 npm install pg mongodb
 ```
 
@@ -263,7 +264,7 @@ cp .env.example .env
 ### 3. Chạy Setup Script
 
 ```bash
-node database/scripts/setup.js
+node scripts/setup.js
 ```
 
 Script này sẽ:

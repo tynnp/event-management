@@ -1,4 +1,3 @@
-//file: api/express-rest-api/src/utils/qrGenerator.js
 const QRCode = require('qrcode');
 
 const generateQRCode = async (data) => {

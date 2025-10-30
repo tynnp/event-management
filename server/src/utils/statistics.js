@@ -1,4 +1,3 @@
-//file: api/express-rest-api/src/utils/statistics.js
 const calculateUserStats = (users) => {
     const totalUsers = users.length;
     const activeUsers = users.filter(user => user.isActive).length;

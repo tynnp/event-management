@@ -4,16 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getPostgresPool, connectMongoDB, getMongoDB } from '../config/database.js';
-import { 
-  commentsData, 
-  userActivitiesData, 
-  eventAnalyticsData, 
-  systemLogsData, 
-  notificationsQueueData, 
-  searchIndexData, 
-  userPreferencesData 
-} from '../mongodb/seed_data.js';
+import { getPostgresPool, connectMongoDB } from '../config/database.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -56,58 +47,6 @@ const seedPostgreSQL = async () => {
     console.log('PostgreSQL data seeded successfully');
   } catch (error) {
     console.error('PostgreSQL seeding error:', error);
-    throw error;
-  }
-};
-
-// Function to seed MongoDB data
-const seedMongoDB = async () => {
-  const db = await connectMongoDB();
-  
-  try {
-    console.log('Seeding MongoDB data...');
-    
-    // Clear existing data
-    await db.collection('comments').deleteMany({});
-    await db.collection('user_activities').deleteMany({});
-    await db.collection('event_analytics').deleteMany({});
-    await db.collection('system_logs').deleteMany({});
-    await db.collection('notifications_queue').deleteMany({});
-    await db.collection('search_index').deleteMany({});
-    await db.collection('user_preferences').deleteMany({});
-    
-    // Insert seed data
-    if (commentsData.length > 0) {
-      await db.collection('comments').insertMany(commentsData);
-    }
-    
-    if (userActivitiesData.length > 0) {
-      await db.collection('user_activities').insertMany(userActivitiesData);
-    }
-    
-    if (eventAnalyticsData.length > 0) {
-      await db.collection('event_analytics').insertMany(eventAnalyticsData);
-    }
-    
-    if (systemLogsData.length > 0) {
-      await db.collection('system_logs').insertMany(systemLogsData);
-    }
-    
-    if (notificationsQueueData.length > 0) {
-      await db.collection('notifications_queue').insertMany(notificationsQueueData);
-    }
-    
-    if (searchIndexData.length > 0) {
-      await db.collection('search_index').insertMany(searchIndexData);
-    }
-    
-    if (userPreferencesData.length > 0) {
-      await db.collection('user_preferences').insertMany(userPreferencesData);
-    }
-    
-    console.log('MongoDB data seeded successfully');
-  } catch (error) {
-    console.error('MongoDB seeding error:', error);
     throw error;
   }
 };
@@ -184,9 +123,6 @@ const setup = async () => {
     // Create MongoDB indexes
     await createMongoIndexes();
     
-    // Seed MongoDB data
-    await seedMongoDB();
-    
     console.log('Database setup completed successfully!');
   } catch (error) {
     console.error('Database setup failed:', error);
@@ -202,7 +138,6 @@ if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).
 export {
   runMigrations,
   seedPostgreSQL,
-  seedMongoDB,
   createMongoIndexes,
   setup
 };
