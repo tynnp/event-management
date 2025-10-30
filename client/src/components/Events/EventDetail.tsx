@@ -37,6 +37,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [showReviews, setShowReviews] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -583,18 +585,27 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     }
   };
   
-  const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+  const handleDeleteComment = (commentId: string) => {
+    setCommentToDelete(commentId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
     try {
       await axios.patch(
-        `${BASE}/chats/${commentId}`,
+        `${BASE}/chats/${commentToDelete}`,
         { action: 'delete' },
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
       await refetchComments();
-      dispatch?.({ type: "DELETE_COMMENT", payload: commentId });
+      dispatch?.({ type: "DELETE_COMMENT", payload: commentToDelete });
+      toast.success("Đã xóa bình luận thành công.");
     } catch (err: any) {
       toast.error(err.response?.data?.message ?? "Không thể xóa bình luận.");
+    } finally {
+      setShowDeleteModal(false);
+      setCommentToDelete(null);
     }
   };
 
@@ -1344,6 +1355,51 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                   className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Xác nhận hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        modalRoot
+      )}
+
+      {/* Delete Comment Modal */}
+      {showDeleteModal && modalRoot && createPortal(
+        <div className="fixed inset-0 z-[2147483647]">
+          <div onClick={() => setShowDeleteModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative animate-[fadeIn_.15s_ease]">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center justify-center mb-4">
+                <Trash2 className="h-12 w-12 text-red-500" />
+              </div>
+
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Xóa bình luận
+              </h2>
+
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác.
+              </p>
+              
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={confirmDeleteComment}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition"
+                >
+                  Xác nhận xóa
                 </button>
               </div>
             </div>
