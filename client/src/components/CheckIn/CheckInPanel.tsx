@@ -305,7 +305,7 @@ export function CheckInPanel() {
   };
 
   return (
-    <div className="space-x-6">
+  <div className="space-y-6">
       {/* Header */}
       <div className="text-center mb-12 relative">
         <h2 className="text-3xl md:text-4xl font-extrabold flex items-center justify-center gap-3">
@@ -321,7 +321,7 @@ export function CheckInPanel() {
       {/* QR Scanner + Event Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* QR Scanner Card */}
-        <div className="rounded-3xl p-8 shadow-2xl bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 dark:from-blue-800 dark:via-blue-700 dark:to-blue-900 border border-gray-200 dark:border-gray-700 animate-fade-in-up min-h-[420px]">
+  <div className="rounded-2xl p-8 shadow-lg bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up min-h-[420px]">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
             <Scan className="h-6 w-6 mr-2 text-blue-700 animate-pulse" />
             Quét mã QR
@@ -366,14 +366,14 @@ export function CheckInPanel() {
                 <button
                   onClick={handleScanButtonClick}
                   disabled={!selectedEvent}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-lg hover:shadow-2xl transition-colors duration-200 disabled:bg-gray-400 flex items-center"
+                  className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-xl shadow hover:bg-blue-600 transition-colors duration-200 disabled:bg-gray-400 flex items-center"
                 >
                   <QrCode className="h-5 w-5 mr-2 animate-spin-slow" />
                   Quét
                 </button>
               </div>
               {isScanning && (
-                <div className="mt-4 p-3 rounded-2xl bg-white/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700">
+                <div className="mt-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                   <div className="relative w-full aspect-video overflow-hidden rounded-xl bg-black">
                     <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
                     <div className="absolute inset-0 border-2 border-blue-500/60 rounded-xl pointer-events-none" />
@@ -390,10 +390,10 @@ export function CheckInPanel() {
             {/* Scan Result */}
             {scanResult && (
               <div
-                className={`p-4 rounded-2xl border animate-fade-in-up transition-all duration-300 ${
+                className={`p-4 rounded-xl border animate-fade-in-up transition-all duration-300 ${
                   scanResult.includes("thành công")
-                    ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800"
-                    : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
+                    ? "bg-green-50 text-green-800 border-green-200"
+                    : "bg-red-50 text-red-800 border-red-200"
                 }`}
               >
                 {scanResult}
@@ -404,7 +404,7 @@ export function CheckInPanel() {
 
         {/* Event Details Card */}
         {selectedEventData && (
-        <div className="rounded-3xl p-8 shadow-2xl bg-gradient-to-r from-purple-200 via-pink-200 to-pink-300 dark:from-purple-800 dark:via-pink-800 dark:to-pink-900 border border-gray-200 dark:border-gray-700 animate-fade-in-up hover:shadow-3xl hover:-translate-y-1 transition-all duration-300">
+  <div className="rounded-2xl p-8 shadow-lg bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
               Chi tiết sự kiện
             </h3>
@@ -455,8 +455,8 @@ export function CheckInPanel() {
               <div className="pt-5 border-t border-gray-300 dark:border-gray-600">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div className="hover:scale-105 transition-transform">
-                    <div className="flex items-center justify-center text-blue-600 mb-1">
-                      <Users className="h-5 w-5 mr-1 animate-bounce" />
+                    <div className="flex items-center justify-center text-blue-500 mb-1">
+                      <Users className="h-5 w-5 mr-1" />
                     </div>
                     <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       {selectedParticipants.length}
@@ -466,8 +466,8 @@ export function CheckInPanel() {
                     </p>
                   </div>
                   <div className="hover:scale-105 transition-transform">
-                    <div className="flex items-center justify-center text-green-600 mb-1">
-                      <CheckCircle className="h-5 w-5 mr-1 animate-bounce" />
+                    <div className="flex items-center justify-center text-green-500 mb-1">
+                      <CheckCircle className="h-5 w-5 mr-1" />
                     </div>
                     <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       {
@@ -479,8 +479,8 @@ export function CheckInPanel() {
                     </p>
                   </div>
                   <div className="hover:scale-105 transition-transform">
-                    <div className="flex items-center justify-center text-orange-600 mb-1">
-                      <Clock className="h-5 w-5 mr-1 animate-bounce" />
+                    <div className="flex items-center justify-center text-orange-500 mb-1">
+                      <Clock className="h-5 w-5 mr-1" />
                     </div>
                     <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       {
@@ -500,7 +500,7 @@ export function CheckInPanel() {
 
       {/* Participants List Card */}
       {selectedEventData && (
-        <div className="rounded-3xl shadow-2xl bg-gradient-to-r from-green-100 via-green-200 to-green-300 dark:from-green-800 dark:via-green-700 dark:to-green-900 border border-gray-200 dark:border-gray-700 backdrop-blur-sm animate-fade-in-up overflow-hidden mt-10">
+  <div className="rounded-2xl shadow-lg bg-gray-50 dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up overflow-hidden mt-10">
           <div className="px-8 py-5 border-b border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               Danh sách người tham gia ({selectedParticipants.length})
@@ -517,9 +517,17 @@ export function CheckInPanel() {
                   style={{ animationDelay: `${idx * 80}ms` }}
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                      {(user?.name?.[0] || 'U').toUpperCase()}
-                    </div>
+                    {user?.avatar_url ? (
+                      <img 
+                        src={user.avatar_url} 
+                        alt={user.name}
+                        className="w-12 h-12 rounded-full object-cover shadow-md"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                        {(user?.name?.[0] || 'U').toUpperCase()}
+                      </div>
+                    )}
                     <div>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
                         {user?.name || 'Người dùng'}
