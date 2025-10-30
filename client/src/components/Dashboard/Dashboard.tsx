@@ -77,7 +77,7 @@ export function Dashboard() {
           createdAt: e.created_at || e.createdAt,
           status: e.status,
           rejectionReason: e.rejection_reason || e.rejectionReason,
-          currentParticipants: e.current_participants,
+          currentParticipants: typeof e.current_participants === 'string' ? parseInt(e.current_participants, 10) : (typeof e.current_participants === 'number' ? e.current_participants : 0),
           comments: e.comments || [],
           ratings: e.ratings || [],
           averageRating: e.average_rating || e.averageRating || 0,
@@ -309,7 +309,7 @@ export function Dashboard() {
                 </p>
                 <p className="text-3xl font-extrabold mt-1 bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
                   {statistics?.total_participations ?? safeEvents.reduce(
-                    (sum, event) => sum + (event.currentParticipants ?? 0),
+                    (sum, event) => sum + (typeof event.currentParticipants === 'number' && !isNaN(event.currentParticipants) ? event.currentParticipants : 0),
                     0
                   )}
                 </p>
