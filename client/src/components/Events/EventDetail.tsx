@@ -724,9 +724,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const getAvatarUrl = (avatarUrl: string | undefined) => {
     if (!avatarUrl) return "/default-avatar.png";
     if (avatarUrl.startsWith('http')) return avatarUrl;
-    // Ensure there's a / between base and path
-    const path = avatarUrl.startsWith('/') ? avatarUrl : `/${avatarUrl}`;
-    return `${RAW_BASE}${path}`;
+    // Remove leading slashes and add exactly one between base and path
+    const cleanPath = avatarUrl.replace(/^\/+/, '');
+    return `${RAW_BASE}/${cleanPath}`;
   };
 
   return (

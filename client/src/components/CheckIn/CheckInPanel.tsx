@@ -23,6 +23,14 @@ export function CheckInPanel() {
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
 
+  const getAvatarUrl = (url?: string) => {
+    if (!url) return "/default-avatar.png";
+    if (url.startsWith("http")) return url;
+    // Remove leading slashes and add exactly one between base and path
+    const cleanPath = url.replace(/^\/+/, '');
+    return `${RAW_BASE}/${cleanPath}`;
+  };
+
   const getToken = (): string | null => {
     const keys = ["token", "accessToken", "authToken", "currentUser", "user"];
     for (const key of keys) {
@@ -519,7 +527,7 @@ export function CheckInPanel() {
                   <div className="flex items-center space-x-4">
                     {user?.avatar_url ? (
                       <img 
-                        src={user.avatar_url} 
+                        src={getAvatarUrl(user.avatar_url)} 
                         alt={user.name}
                         className="w-12 h-12 rounded-full object-cover shadow-md"
                       />

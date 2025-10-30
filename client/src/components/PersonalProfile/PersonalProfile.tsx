@@ -58,7 +58,9 @@ export function PersonalProfile() {
   function getAvatarUrl(url?: string) {
     if (!url) return "/default-avatar.png";
     if (url.startsWith("http")) return url;
-    return `${API_URL}/${url}`;
+    // Remove leading slashes and add exactly one between base and path
+    const cleanPath = url.replace(/^\/+/, '');
+    return `${API_URL}/${cleanPath}`;
   }
 
   useEffect(() => {
