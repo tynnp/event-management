@@ -7,6 +7,8 @@ import { ForgotPassword } from "./ForgotPassword";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +35,7 @@ export function LoginForm() {
     setError("");
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password,
       });
@@ -52,7 +54,7 @@ export function LoginForm() {
       const fetchUsers = async () => {
         try {
           const token = localStorage.getItem("authToken");
-          const response = await axios.get("http://localhost:5000/api/users", {
+          const response = await axios.get(`${API_URL}/api/users`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -95,7 +97,7 @@ export function LoginForm() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register/start", {
+      const res = await axios.post(`${API_URL}/api/auth/register/start`, {
         name: registerData.name,
         phone: registerData.phone,
         email: registerData.email,
@@ -129,7 +131,7 @@ export function LoginForm() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register/verify", {
+      const res = await axios.post(`${API_URL}/api/auth/register/verify`, {
         email: registerData.email,
         otp: otpCode,
       });

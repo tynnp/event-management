@@ -15,7 +15,8 @@ export function ForgotPassword({ onBack }: ForgotPasswordProps) {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/email";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const API_BASE = `${API_URL}/api/email`;
 
   // --- Gửi OTP ---
   const handleSendOtp = async (e: React.FormEvent) => {

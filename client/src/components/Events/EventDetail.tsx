@@ -721,6 +721,14 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
   const eventStatus = getEventStatus();
 
+  const getAvatarUrl = (avatarUrl: string | undefined) => {
+    if (!avatarUrl) return "/default-avatar.png";
+    if (avatarUrl.startsWith('http')) return avatarUrl;
+    // Remove leading slashes and add exactly one between base and path
+    const cleanPath = avatarUrl.replace(/^\/+/, '');
+    return `${RAW_BASE}/${cleanPath}`;
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
       {/* Nút quay lại */}
@@ -967,7 +975,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                       <div className="flex items-start space-x-3">
                         {user?.avatar_url ? (
                           <img
-                            src={user.avatar_url.startsWith('http') ? user.avatar_url : `${RAW_BASE}${user.avatar_url}`}
+                            src={getAvatarUrl(user.avatar_url)}
                             alt={user.name}
                             className="w-8 h-8 rounded-full object-cover"
                           />
@@ -1007,7 +1015,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
               <div className="flex space-x-4">
                 {currentUser?.avatar_url ? (
                   <img
-                    src={currentUser.avatar_url.startsWith('http') ? currentUser.avatar_url : `${RAW_BASE}${currentUser.avatar_url}`}
+                    src={getAvatarUrl(currentUser.avatar_url)}
                     alt={currentUser.name}
                     className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
                   />
@@ -1044,7 +1052,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                   <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400" : "bg-white dark:bg-dark-bg-secondary"}`}>
                     {user?.avatar_url ? (
                       <img
-                        src={user.avatar_url.startsWith('http') ? user.avatar_url : `${RAW_BASE}${user.avatar_url}`}
+                        src={getAvatarUrl(user.avatar_url)}
                         alt={user.name}
                         className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
                       />
@@ -1111,7 +1119,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                               <div key={reply.id} className={`flex items-start space-x-3 p-3 rounded-lg ${replyHidden ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
                                 {replyUser?.avatar_url ? (
                                   <img
-                                    src={replyUser.avatar_url.startsWith('http') ? replyUser.avatar_url : `${RAW_BASE}${replyUser.avatar_url}`}
+                                    src={getAvatarUrl(replyUser.avatar_url)}
                                     alt={replyUser.name}
                                     className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
                                   />
@@ -1175,7 +1183,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                           <div className="flex space-x-3">
                             {currentUser?.avatar_url ? (
                               <img
-                                src={currentUser.avatar_url.startsWith('http') ? currentUser.avatar_url : `${RAW_BASE}${currentUser.avatar_url}`}
+                                src={getAvatarUrl(currentUser.avatar_url)}
                                 alt={currentUser.name}
                                 className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
                               />

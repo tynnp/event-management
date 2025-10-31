@@ -4,6 +4,8 @@ import { useApp } from "../../context/AppContext";
 import { Eye, EyeOff, Lock, Camera, X } from "lucide-react";
 import Cropper, { Area } from "react-easy-crop";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 // Kiểu vùng crop
 interface CropArea {
   x: number;
@@ -56,7 +58,9 @@ export function PersonalProfile() {
   function getAvatarUrl(url?: string) {
     if (!url) return "/default-avatar.png";
     if (url.startsWith("http")) return url;
-    return `http://localhost:5000/${url}`;
+    // Remove leading slashes and add exactly one between base and path
+    const cleanPath = url.replace(/^\/+/, '');
+    return `${API_URL}/${cleanPath}`;
   }
 
   useEffect(() => {
@@ -110,7 +114,7 @@ export function PersonalProfile() {
     formData.append("avatar", blob, "avatar.jpg");
 
     try {
-      const res = await fetch("http://localhost:5000/api/users/profile", {
+      const res = await fetch(`${API_URL}/api/users/profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${state.token}`,
@@ -153,7 +157,7 @@ export function PersonalProfile() {
         formData.append("name", name);
         formData.append("phone", phone);
 
-        const res = await fetch("http://localhost:5000/api/users/profile", {
+        const res = await fetch(`${API_URL}/api/users/profile`, {
           method: "PUT",
           headers: { Authorization: `Bearer ${state.token}` },
           body: formData,
@@ -170,7 +174,7 @@ export function PersonalProfile() {
         if (newPassword !== confirmPassword)
           throw new Error("Mật khẩu xác nhận không khớp!");
 
-        const res = await fetch("http://localhost:5000/api/users/change-password", {
+        const res = await fetch(`${API_URL}/api/users/change-password`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

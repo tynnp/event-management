@@ -26,14 +26,45 @@ dotenv.config();
 
 const app = express();
 
+// CORS configuration
+const allowedOrigins = [
+  process.env.PUBLIC_APP_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+].filter(Boolean); // Remove undefined/null values
+
+// Add local network IPs dynamically
+const networkInterfaces = require('os').networkInterfaces();
+Object.values(networkInterfaces).forEach(interfaces => {
+  interfaces?.forEach(iface => {
+    if (iface.family === 'IPv4' && !iface.internal) {
+      allowedOrigins.push(`http://${iface.address}:5173`);
+      allowedOrigins.push(`http://${iface.address}:3000`);
+    }
+  });
+});
+
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.SERVER_HOST || 'localhost';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -84,7 +115,9 @@ app.use('/uploads', express.static(process.env.UPLOAD_DIR || 'uploads'));
 
 connectMongoDB().then(async() => {
   await connectRedis();
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on http://${HOST}:${PORT}`);
+    console.log(`CORS allowed origins:`);
+    allowedOrigins.forEach(origin => console.log(`  - ${origin}`));
   });
 });

@@ -3,6 +3,7 @@ const Event = require('../models/Event');
 const Category = require('../models/Category');
 const { v4: uuidv4 } = require('uuid');
 const { sendNotification } = require('./notificationController');
+const { buildImageUrl } = require('../middleware/uploadMiddleware');
 
 // CREATE: logic duyệt dựa trên role và is_public
 exports.createEvent = async (req, res) => {
@@ -12,8 +13,9 @@ exports.createEvent = async (req, res) => {
     // Nếu có upload hình
     let image_url = null;
     if (req.file) {
-      const { buildImageUrl } = require('../middleware/uploadMiddleware');
-      image_url = buildImageUrl(req.file.path);
+      const { normalizeImagePath } = require('../middleware/uploadMiddleware');
+      // Lưu path tương đối vào database (vd: /uploads/123.jpg)
+      image_url = normalizeImagePath(req.file.path);
     }
 
     const id = uuidv4();
@@ -67,7 +69,12 @@ exports.createEvent = async (req, res) => {
 exports.getEvents = async (req, res) => {
   try {
     const events = await Event.findAll(req.user.id, req.user.role);
-    res.json(events);
+    // Build URL đầy đủ cho image_url
+    const eventsWithImages = events.map(event => ({
+      ...event,
+      image_url: event.image_url ? buildImageUrl(event.image_url) : null
+    }));
+    res.json(eventsWithImages);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching events', error: err.message });
   }
@@ -78,6 +85,11 @@ exports.getEventDetail = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    // Build URL đầy đủ cho image_url
+    if (event.image_url) {
+      event.image_url = buildImageUrl(event.image_url);
+    }
 
     // Admin/Mod có thể xem tất cả events
     // Enrich with participants for UI persistence
@@ -122,6 +134,11 @@ exports.getEventPublic = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    // Build URL đầy đủ cho image_url
+    if (event.image_url) {
+      event.image_url = buildImageUrl(event.image_url);
+    }
 
     // Enrich participants best-effort for UI
     try {
@@ -262,12 +279,14 @@ exports.updateEvent = async (req, res) => {
   try {
     // Nếu có upload hình
     if (req.file) {
-      const { buildImageUrl } = require('../middleware/uploadMiddleware');
-      payload.image_url = buildImageUrl(req.file.path);
+      const { normalizeImagePath } = require('../middleware/uploadMiddleware');
+      // Lưu path tương đối vào database (vd: /uploads/123.jpg)
+      const imagePath = normalizeImagePath(req.file.path);
+      payload.image_url = imagePath;
 
       // Chèn vào event_images
       const imageId = uuidv4();
-      await Event.addImage(imageId, req.params.id, payload.image_url);
+      await Event.addImage(imageId, req.params.id, imagePath);
     }
 
     const event = await Event.findById(req.params.id);
