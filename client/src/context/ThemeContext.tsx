@@ -18,11 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return savedTheme;
     }
     
-    // Kiểm tra system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    
+    // Mặc định là light mode
     return 'light';
   });
 
