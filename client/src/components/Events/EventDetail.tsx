@@ -1448,6 +1448,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 <div className="flex items-center gap-3">
                   <div className="flex-1 overflow-hidden">
                     <input
+                      id="share-link-input"
                       type="text"
                       value={shareLink}
                       readOnly
@@ -1457,12 +1458,29 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                   </div>
                   <button
                     onClick={async () => {
+                      const input = document.getElementById('share-link-input') as HTMLInputElement;
+                      if (!input) return;
+                      
                       try {
                         await navigator.clipboard.writeText(shareLink);
                         toast.success('Đã sao chép link!');
                         setShowShareModal(false);
                       } catch {
-                        toast.error('Không thể sao chép, vui lòng thử lại');
+                        try {
+                          input.select();
+                          input.setSelectionRange(0, 99999);
+                          const success = document.execCommand('copy');
+                          if (success) {
+                            toast.success('Đã sao chép link!');
+                            setShowShareModal(false);
+                          } else {
+                            toast('Vui lòng nhấn Ctrl+C để sao chép');
+                          }
+                        } catch {
+                          // Nếu cả hai đều thất bại, chọn text để user tự copy
+                          input.select();
+                          toast('Vui lòng nhấn Ctrl+C để sao chép');
+                        }
                       }
                     }}
                     className="flex-shrink-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 font-medium shadow-md hover:shadow-lg"
