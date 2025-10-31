@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { createPortal } from "react-dom";
-import { Calendar, MapPin, Users, Share2, MessageSquare, Star, QrCode, ArrowLeft, CheckCircle, UserPlus, Eye, EyeOff, Trash2, Reply, ThumbsUp, ThumbsDown, XCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, MapPin, Users, Share2, MessageSquare, Star, QrCode, ArrowLeft, CheckCircle, UserPlus, Eye, EyeOff, Trash2, Reply, ThumbsUp, ThumbsDown, XCircle, AlertTriangle, ChevronDown, ChevronUp, Copy, X } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { Event, Comment, Rating, Participant, User } from "../../types";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -39,6 +39,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [showReviews, setShowReviews] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState("");
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -758,14 +760,13 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
               onClick={async () => {
                 const isPublicView = new URLSearchParams(location.search).get('public') === '1';
                 const origin = window.location.origin.replace(/\/$/, '');
-                const shareLink = isPublicView ? window.location.href : `${origin}/events/${event.id}?public=1`;
+                const link = isPublicView ? window.location.href : `${origin}/events/${event.id}?public=1`;
                 try {
-                  await navigator.clipboard.writeText(shareLink);
+                  await navigator.clipboard.writeText(link);
                   toast.success('Đã sao chép link chia sẻ vào clipboard!');
                 } catch {
-                  // Fallback: prompt copy
-                  const copied = window.prompt('Sao chép liên kết chia sẻ:', shareLink);
-                  if (copied !== null) toast('Hãy dán liên kết để chia sẻ');
+                  setShareLink(link);
+                  setShowShareModal(true);
                 }
               }}
               className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition"
@@ -1408,6 +1409,76 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                   className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition"
                 >
                   Xác nhận xóa
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        modalRoot
+      )}
+
+      {/* Share Link Modal */}
+      {showShareModal && modalRoot && createPortal(
+        <div className="fixed inset-0 z-[2147483647]">
+          <div onClick={() => setShowShareModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-lg w-full relative animate-[fadeIn_.15s_ease]">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="flex items-center justify-center mb-6">
+                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-full">
+                  <Share2 className="h-8 w-8 text-white" />
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center">
+                Chia sẻ sự kiện
+              </h2>
+
+              <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">
+                Sao chép đường dẫn dưới đây để chia sẻ sự kiện với bạn bè
+              </p>
+
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 overflow-hidden">
+                    <input
+                      type="text"
+                      value={shareLink}
+                      readOnly
+                      className="w-full bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none select-all"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(shareLink);
+                        toast.success('Đã sao chép link!');
+                        setShowShareModal(false);
+                      } catch {
+                        toast.error('Không thể sao chép, vui lòng thử lại');
+                      }
+                    }}
+                    className="flex-shrink-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 font-medium shadow-md hover:shadow-lg"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span>Sao chép</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="px-6 py-2.5 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
+                >
+                  Đóng
                 </button>
               </div>
             </div>
