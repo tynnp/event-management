@@ -114,7 +114,7 @@ exports.login = async (req, res) => {
       } catch (e) {
         // ignore redis errors, fall back to generic message
       }
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Tài khoản hoặc mật khẩu không đúng' });
     }
 
     if (user.is_locked) {
@@ -122,7 +122,7 @@ exports.login = async (req, res) => {
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!valid) return res.status(401).json({ message: 'Tài khoản hoặc mật khẩu không đúng' });
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
