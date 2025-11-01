@@ -107,7 +107,7 @@ exports.changePassword = async (req, res) => {
     // Password policy: tối thiểu 8 ký tự, có chữ và số
     const pwPattern = /^(?=.{8,}$)(?=.*[A-Za-z])(?=.*\d).*/;
     if (!pwPattern.test(newPassword)) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters and include letters and numbers' });
+      return res.status(400).json({ message: 'Mật khẩu phải tối thiểu 8 ký tự, có chữ và số' });
     }
 
     // Lấy password hash hiện tại từ DB

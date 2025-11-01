@@ -23,7 +23,7 @@ exports.registerStart = async (req, res) => {
   const pwPattern = /^(?=.{8,}$)(?=.*[A-Za-z])(?=.*\d).*/;
   if (!pwPattern.test(password)) {
     return res.status(400).json({
-      message: 'Password must be at least 8 characters long and include letters and numbers'
+      message: 'Mật khẩu phải có ít nhất 8 ký tự và bao gồm cả chữ cái và số'
     });
   }
 
@@ -31,7 +31,7 @@ exports.registerStart = async (req, res) => {
     // Check email already exists
     const exists = await User.findByEmail(email);
     if (exists) {
-      return res.status(400).json({ message: 'Email has been registered' });
+      return res.status(400).json({ message: 'Email đã tồn tại trên hệ thống' });
     }
 
     const client = await connectRedis();
@@ -63,19 +63,19 @@ exports.registerVerify = async (req, res) => {
     const client = await connectRedis();
     const data = await client.get(`register:${email}`);
     if (!data) {
-      return res.status(400).json({ message: 'OTP expired or not found' });
+      return res.status(400).json({ message: 'Mã OTP đã hết hạn hoặc không tồn tại' });
     }
 
     const parsed = JSON.parse(data);
     if (parsed.otp !== otp) {
-      return res.status(400).json({ message: 'Invalid OTP' });
+      return res.status(400).json({ message: 'Mã OTP không hợp lệ' });
     }
 
     // Ensure email still not registered
     const exists = await User.findByEmail(email);
     if (exists) {
       await client.del(`register:${email}`);
-      return res.status(400).json({ message: 'Email has been registered' });
+      return res.status(400).json({ message: 'Email đã tồn tại trên hệ thống' });
     }
 
     const id = uuidv4();

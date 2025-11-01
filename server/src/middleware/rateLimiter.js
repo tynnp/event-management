@@ -28,7 +28,7 @@ const loginLimiter = rateLimit({
   handler: (req, res) => {
     res.status(429).json({
       status: 429,
-      message: 'Too many login attempts. Please try again later.'
+      message: 'Quá nhiều lần đăng nhập. Vui lòng thử lại sau'
     });
   }
 });

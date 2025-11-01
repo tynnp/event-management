@@ -48,10 +48,10 @@ exports.verifyChangeEmailOTP = async (req, res) => {
   const client = await connectRedis();
 
   const data = await client.get(`changeEmail:${req.user.id}`);
-  if (!data) return res.status(400).json({ message: 'OTP expired or not found' });
+  if (!data) return res.status(400).json({ message: 'Mã OTP đã hết hạn hoặc không tồn tại' });
 
   const { otp: storedOtp, newEmail } = JSON.parse(data);
-  if (otp !== storedOtp) return res.status(400).json({ message: 'Invalid OTP' });
+  if (otp !== storedOtp) return res.status(400).json({ message: 'Mã OTP không hợp lệ' });
 
   await User.updateProfile(req.user.id, { email: newEmail });
   await client.del(`changeEmail:${req.user.id}`);
@@ -65,13 +65,13 @@ exports.sendResetPasswordOTP = async (req, res) => {
   if (!email) return res.status(400).json({ message: 'Email required' });
 
   const user = await User.findByEmail(email);
-  if (!user) return res.status(404).json({ message: 'Email not found' });
+  if (!user) return res.status(404).json({ message: 'Không tìm thấy Email' });
 
   const client = await connectRedis();
   const otp = generateOTP();
   await client.setEx(`resetPassword:${user.id}`, 300, otp);
 
-  await sendMail(email, 'Reset your password', `Hãy nhập mã này để reset mật khẩu bạn nhé! Mã OTP của bạn là: ${otp}`);
+  await sendMail(email, 'Đổi mật khẩu mới', `Hãy nhập mã này để reset mật khẩu bạn nhé! Mã OTP của bạn là: ${otp}`);
 
   res.json({ message: 'OTP sent to your email' });
 };
@@ -85,8 +85,8 @@ exports.resetPassword = async (req, res) => {
 
   const client = await connectRedis();
   const storedOtp = await client.get(`resetPassword:${user.id}`);
-  if (!storedOtp) return res.status(400).json({ message: 'OTP expired or not found' });
-  if (storedOtp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
+  if (!storedOtp) return res.status(400).json({ message: 'Mã OTP đã hết hạn hoặc không tồn tại' });
+  if (storedOtp !== otp) return res.status(400).json({ message: 'Mã OTP không hợp lệ' });
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   await User.updatePassword(user.id, hashedPassword);
