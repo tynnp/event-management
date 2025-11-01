@@ -306,9 +306,12 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
   // comments grouping and visibility
   // Backend đã trả về comments với replies đã populated, chỉ cần filter hidden/visible
+  const canModerate = currentUser?.role === "admin" || currentUser?.role === "moderator";
   const visibleComments = (commentsOfEvent || []).filter((c) => !c.isHidden);
   const hiddenComments = (commentsOfEvent || []).filter((c) => c.isHidden);
-  const allComments = showHiddenComments ? [...visibleComments, ...hiddenComments] : visibleComments;
+  const allComments = canModerate 
+    ? (showHiddenComments ? [...visibleComments, ...hiddenComments] : visibleComments)
+    : visibleComments;
 
   // formatting
   const formatDate = (dateString: string) =>
@@ -951,17 +954,32 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           <div className="border-t border-gray-200 dark:border-dark-border pt-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-xl flex items-center text-gray-900 dark:text-dark-text-primary">
-                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận ({allComments.filter(c => !c.id.startsWith('rev-')).length})
+                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận ({visibleComments.filter(c => !c.id.startsWith('rev-')).length})
+                {canModerate && hiddenComments.length > 0 && (
+                  <span className="ml-2 text-sm text-yellow-600 dark:text-yellow-400">({hiddenComments.filter(c => !c.id.startsWith('rev-')).length} đã ẩn)</span>
+                )}
               </h3>
-              <button
-                onClick={() => setShowReviews((v) => !v)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800/40 text-yellow-800 dark:text-yellow-300 hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/30 dark:hover:to-orange-900/30 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
-              >
-                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                <span>{showReviews ? 'Ẩn đánh giá' : 'Hiển thị đánh giá'}</span>
-                <span className="bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full text-xs font-semibold">{eventRatings.length}</span>
-                {showReviews ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
+              <div className="flex items-center gap-3">
+                {canModerate && hiddenComments.length > 0 && (
+                  <button
+                    onClick={() => setShowHiddenComments((v) => !v)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
+                  >
+                    {showHiddenComments ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span>{showHiddenComments ? 'Ẩn bình luận đã ẩn' : 'Hiện bình luận đã ẩn'}</span>
+                    <span className="bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full text-xs font-semibold">{hiddenComments.filter(c => !c.id.startsWith('rev-')).length}</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowReviews((v) => !v)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800/40 text-yellow-800 dark:text-yellow-300 hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/30 dark:hover:to-orange-900/30 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
+                >
+                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  <span>{showReviews ? 'Ẩn đánh giá' : 'Hiển thị đánh giá'}</span>
+                  <span className="bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full text-xs font-semibold">{eventRatings.length}</span>
+                  {showReviews ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             {showReviews && (
@@ -1047,10 +1065,9 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
                 // Nếu là bình luận thông thường
                 const isHidden = comment.isHidden;
-                const canModerate = currentUser?.role === "admin" || currentUser?.role === "moderator";
 
                 return (
-                  <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400" : "bg-white dark:bg-dark-bg-secondary"}`}>
+                  <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? "bg-yellow-50 dark:bg-yellow-900/10 border-2 border-red-500 dark:border-red-600" : "bg-white dark:bg-dark-bg-secondary"}`}>
                     {user?.avatar_url ? (
                       <img
                         src={getAvatarUrl(user.avatar_url)}
@@ -1117,7 +1134,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                             const replyUser = allUsers.find((u: User) => u.id === reply.userId);
                             const replyHidden = reply.isHidden;
                             return (
-                              <div key={reply.id} className={`flex items-start space-x-3 p-3 rounded-lg ${replyHidden ? "bg-gray-100 dark:bg-gray-800 border-l-4 border-yellow-400" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
+                              <div key={reply.id} className={`flex items-start space-x-3 p-3 rounded-lg ${replyHidden ? "bg-yellow-50 dark:bg-yellow-900/10 border-2 border-red-500 dark:border-red-600" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
                                 {replyUser?.avatar_url ? (
                                   <img
                                     src={getAvatarUrl(replyUser.avatar_url)}
