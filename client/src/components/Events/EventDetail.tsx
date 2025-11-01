@@ -30,7 +30,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [joining, setJoining] = useState(false);
 
   const [showQR, setShowQR] = useState(false);
-  const [showHiddenComments, setShowHiddenComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [modalRoot, setModalRoot] = useState<HTMLDivElement | null>(null);
@@ -41,6 +40,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState("");
+  const [expandedHiddenComments, setExpandedHiddenComments] = useState<Set<string>>(new Set());
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -305,13 +305,10 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
   const userParticipant = participants.find((p: any) => p.userId === currentUser?.id);
 
   // comments grouping and visibility
-  // Backend đã trả về comments với replies đã populated, chỉ cần filter hidden/visible
+  // Backend đã trả về comments với replies đã populated, hiển thị tất cả (cả hidden)
   const canModerate = currentUser?.role === "admin" || currentUser?.role === "moderator";
-  const visibleComments = (commentsOfEvent || []).filter((c) => !c.isHidden);
-  const hiddenComments = (commentsOfEvent || []).filter((c) => c.isHidden);
-  const allComments = canModerate 
-    ? (showHiddenComments ? [...visibleComments, ...hiddenComments] : visibleComments)
-    : visibleComments;
+  const allComments = commentsOfEvent || [];
+  const hiddenCommentsCount = allComments.filter((c) => c.isHidden && !c.id.startsWith('rev-')).length;
 
   // formatting
   const formatDate = (dateString: string) =>
@@ -954,22 +951,12 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           <div className="border-t border-gray-200 dark:border-dark-border pt-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-xl flex items-center text-gray-900 dark:text-dark-text-primary">
-                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận ({visibleComments.filter(c => !c.id.startsWith('rev-')).length})
-                {canModerate && hiddenComments.length > 0 && (
-                  <span className="ml-2 text-sm text-yellow-600 dark:text-yellow-400">({hiddenComments.filter(c => !c.id.startsWith('rev-')).length} đã ẩn)</span>
+                <MessageSquare className="h-5 w-5 mr-2" /> Bình luận ({allComments.filter(c => !c.id.startsWith('rev-')).length})
+                {canModerate && hiddenCommentsCount > 0 && (
+                  <span className="ml-2 text-sm text-yellow-600 dark:text-yellow-400">({hiddenCommentsCount} đã ẩn)</span>
                 )}
               </h3>
               <div className="flex items-center gap-3">
-                {canModerate && hiddenComments.length > 0 && (
-                  <button
-                    onClick={() => setShowHiddenComments((v) => !v)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
-                  >
-                    {showHiddenComments ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    <span>{showHiddenComments ? 'Ẩn bình luận đã ẩn' : 'Hiện bình luận đã ẩn'}</span>
-                    <span className="bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full text-xs font-semibold">{hiddenComments.filter(c => !c.id.startsWith('rev-')).length}</span>
-                  </button>
-                )}
                 <button
                   onClick={() => setShowReviews((v) => !v)}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800/40 text-yellow-800 dark:text-yellow-300 hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/30 dark:hover:to-orange-900/30 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
@@ -1067,7 +1054,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 const isHidden = comment.isHidden;
 
                 return (
-                  <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? "bg-yellow-50 dark:bg-yellow-900/10 border-2 border-red-500 dark:border-red-600" : "bg-white dark:bg-dark-bg-secondary"}`}>
+                  <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? "bg-gray-100 dark:bg-gray-800/50" : "bg-white dark:bg-dark-bg-secondary"}`}>
                     {user?.avatar_url ? (
                       <img
                         src={getAvatarUrl(user.avatar_url)}
@@ -1125,7 +1112,44 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                         </div>
                       </div>
 
-                      <p className={`${isHidden ? "text-gray-500 dark:text-dark-text-tertiary" : "text-gray-700 dark:text-dark-text-secondary"}`}>{comment.content}</p>
+                      {isHidden ? (
+                        <div className="space-y-3">
+                          <p className="text-gray-500 dark:text-gray-400 italic">(bình luận đã bị ẩn)</p>
+                          {canModerate && (
+                            <button
+                              onClick={() => {
+                                setExpandedHiddenComments(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(comment.id)) {
+                                    next.delete(comment.id);
+                                  } else {
+                                    next.add(comment.id);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                            >
+                              {expandedHiddenComments.has(comment.id) ? (
+                                <>
+                                  <EyeOff className="h-3.5 w-3.5" />
+                                  <span>Ẩn nội dung gốc</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="h-3.5 w-3.5" />
+                                  <span>Xem nội dung gốc</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                          {canModerate && expandedHiddenComments.has(comment.id) && (
+                            <p className="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 p-3 rounded-md border border-gray-200 dark:border-gray-700">{comment.content}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-gray-700 dark:text-dark-text-secondary">{comment.content}</p>
+                      )}
                       
                       {/* Replies */}
                       {comment.replies && comment.replies.length > 0 && (
@@ -1134,7 +1158,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                             const replyUser = allUsers.find((u: User) => u.id === reply.userId);
                             const replyHidden = reply.isHidden;
                             return (
-                              <div key={reply.id} className={`flex items-start space-x-3 p-3 rounded-lg ${replyHidden ? "bg-yellow-50 dark:bg-yellow-900/10 border-2 border-red-500 dark:border-red-600" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
+                              <div key={reply.id} className={`flex items-start space-x-3 p-3 rounded-lg ${replyHidden ? "bg-gray-200 dark:bg-gray-700/50" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
                                 {replyUser?.avatar_url ? (
                                   <img
                                     src={getAvatarUrl(replyUser.avatar_url)}
@@ -1187,7 +1211,44 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                     )}
                                     </div>
                                   </div>
-                                  <p className={`${replyHidden ? "text-gray-500 dark:text-dark-text-tertiary" : "text-gray-700 dark:text-dark-text-secondary"} text-sm`}>{reply.content}</p>
+                                  {replyHidden ? (
+                                    <div className="space-y-2">
+                                      <p className="text-gray-500 dark:text-gray-400 italic text-sm">(bình luận đã bị ẩn)</p>
+                                      {canModerate && (
+                                        <button
+                                          onClick={() => {
+                                            setExpandedHiddenComments(prev => {
+                                              const next = new Set(prev);
+                                              if (next.has(reply.id)) {
+                                                next.delete(reply.id);
+                                              } else {
+                                                next.add(reply.id);
+                                              }
+                                              return next;
+                                            });
+                                          }}
+                                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                        >
+                                          {expandedHiddenComments.has(reply.id) ? (
+                                            <>
+                                              <EyeOff className="h-3 w-3" />
+                                              <span>Ẩn nội dung</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Eye className="h-3 w-3" />
+                                              <span>Xem nội dung</span>
+                                            </>
+                                          )}
+                                        </button>
+                                      )}
+                                      {canModerate && expandedHiddenComments.has(reply.id) && (
+                                        <p className="text-gray-700 dark:text-gray-300 text-sm bg-white dark:bg-gray-900 p-2.5 rounded-md border border-gray-200 dark:border-gray-700">{reply.content}</p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-gray-700 dark:text-dark-text-secondary text-sm">{reply.content}</p>
+                                  )}
                                 </div>
                               </div>
                             );
