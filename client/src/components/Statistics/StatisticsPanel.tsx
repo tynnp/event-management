@@ -475,7 +475,7 @@ export function StatisticsPanel() {
       {/* --- Organizer block --- */}
       {(currentUser.role === "admin" || currentUser.role === "moderator" || currentUser.role === "user") && (
         <div className="space-y-6">
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-dark-text-primary flex items-center gap-2">
             <span className="pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
               Thống kê sự kiện tôi tạo
             </span>
@@ -487,7 +487,7 @@ export function StatisticsPanel() {
             {organizerStats.map((stat, i) => (
               <div
                 key={i}
-                className="relative group rounded-2xl p-6 bg-white dark:bg-dark-bg-secondary shadow-md hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500 ease-[cubic-bezier(.2,1,.22,1)]"
+                className="relative group rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-white dark:bg-dark-bg-secondary shadow-md hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500 ease-[cubic-bezier(.2,1,.22,1)]"
               >
                 <div className="flex items-center justify-between relative z-10">
                   <div>
@@ -513,8 +513,8 @@ export function StatisticsPanel() {
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-            <div className="card rounded-xl shadow-sm  p-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">
+            <div className="card rounded-xl shadow-sm p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">
                 Xu hướng đăng ký & tham gia
               </h3>
               <ResponsiveContainer width="100%" height={300}>
@@ -528,8 +528,8 @@ export function StatisticsPanel() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div className="card rounded-xl shadow-sm  p-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">
+            <div className="card rounded-xl shadow-sm p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">
                 Độ hài lòng (trung bình)
               </h3>
               <ResponsiveContainer width="100%" height={300}>
@@ -544,27 +544,27 @@ export function StatisticsPanel() {
           </div>
 
           {/* Table */}
-          <div className="card rounded-xl shadow-sm  p-6">
+          <div className="card rounded-xl shadow-sm p-4 sm:p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">
               Bảng thống kê từng sự kiện
             </h3>
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-dark-bg-tertiary sticky top-0">
                   <tr>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
+                    <th className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                       Tên sự kiện
                     </th>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
+                    <th className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                       Đăng ký
                     </th>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
+                    <th className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                       Check-in
                     </th>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
+                    <th className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                       Tỷ lệ
                     </th>
-                    <th className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary">
+                    <th className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-left text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                       Đánh giá TB
                     </th>
                   </tr>
@@ -584,19 +584,19 @@ export function StatisticsPanel() {
                         key={e.id}
                         className="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary"
                       >
-                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
-                          {e.title}
+                        <td className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
+                          <div className="max-w-[200px] truncate">{e.title}</div>
                         </td>
-                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
+                        <td className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                           {registered}
                         </td>
-                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
+                        <td className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                           {checkedIn}
                         </td>
-                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
+                        <td className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                           {rate}
                         </td>
-                        <td className="px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary">
+                        <td className="px-2 sm:px-4 py-2 border-b border-gray-200 dark:border-dark-border text-gray-900 dark:text-dark-text-primary whitespace-nowrap">
                           {Number(e.averageRating ?? 0) > 0
                             ? Number(e.averageRating).toFixed(1)
                             : "Chưa có"}
