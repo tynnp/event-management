@@ -207,7 +207,14 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
           return;
         }
 
-        toast.error("Không thể tạo sự kiện. Vui lòng thử lại!"); 
+        // Kiểm tra lỗi giới hạn tạo event
+        if (res.status === 403 && created?.code === 'DAILY_LIMIT_REACHED') {
+          toast.error(created.message || "Bạn chỉ được phép tạo 1 sự kiện mỗi ngày. Vui lòng thử lại vào ngày mai.");
+          setLoading(false);
+          return;
+        }
+
+        toast.error(created?.message || "Không thể tạo sự kiện. Vui lòng thử lại!"); 
         throw new Error(`Server ${res.status}: ${JSON.stringify(created)}`);
       }
 
@@ -268,6 +275,18 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
             Tạo và quản lý sự kiện của bạn một cách dễ dàng
           </p>
         </div>
+
+        {/* Thông báo giới hạn cho user thường */}
+        {currentUser?.role === 'user' && (
+          <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <span><strong>Lưu ý:</strong> Bạn chỉ được phép tạo <strong>1 sự kiện mỗi ngày</strong>.</span>
+            </p>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">

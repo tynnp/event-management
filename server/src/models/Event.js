@@ -203,6 +203,18 @@ class Event {
     // Can only cancel if event hasn't ended yet
     return endTime > now;
   }
+
+  // Check if user has created event today
+  static async hasCreatedEventToday(userId) {
+    const pool = getPostgresPool();
+    const result = await pool.query(
+      `SELECT COUNT(*) as count FROM events 
+       WHERE created_by = $1 
+       AND DATE(created_at) = CURRENT_DATE`,
+      [userId]
+    );
+    return parseInt(result.rows[0].count) > 0;
+  }
 }
 
 module.exports = Event;

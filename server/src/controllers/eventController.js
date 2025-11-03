@@ -10,6 +10,17 @@ exports.createEvent = async (req, res) => {
   try {
     const { title, description, start_time, end_time, location, is_public, max_participants, category_id } = req.body;
 
+    // Kiểm tra giới hạn tạo event cho user thường (1 event/ngày)
+    if (req.user.role === 'user') {
+      const hasCreatedToday = await Event.hasCreatedEventToday(req.user.id);
+      if (hasCreatedToday) {
+        return res.status(403).json({ 
+          message: 'Bạn chỉ được phép tạo 1 sự kiện mỗi ngày. Vui lòng thử lại vào ngày mai.',
+          code: 'DAILY_LIMIT_REACHED'
+        });
+      }
+    }
+
     // Nếu có upload hình
     let image_url = null;
     if (req.file) {
