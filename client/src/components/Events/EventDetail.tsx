@@ -553,7 +553,14 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
       dispatch?.({ type: "JOIN_EVENT", payload: { eventId: event.id, userId: currentUser.id, qrCode: created.qr_code || created.qrCode } });
       setShowQR(true);
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Không thể tham gia sự kiện.");
+      const errorCode = err.response?.data?.code;
+      const errorMessage = err.response?.data?.message;
+      
+      if (errorCode === 'EVENT_FULL') {
+        toast.error(errorMessage || "Sự kiện đã đạt số lượng người tham gia tối đa.");
+      } else {
+        toast.error(errorMessage ?? "Không thể tham gia sự kiện.");
+      }
     } finally {
       setJoining(false);
     }
@@ -815,11 +822,26 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             {/* Action Buttons */}
             <div className="w-full lg:w-auto lg:ml-8 lg:min-w-[300px]">
               <div className="bg-gray-50 dark:bg-dark-bg-tertiary rounded-xl p-4 sm:p-6">
-                {!isParticipant && !isCreator && eventStatus.status !== "ended" && (
-                  <button disabled={joining} onClick={handleJoinEvent} className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400">
-                    <UserPlus className="h-4 w-4 inline mr-2" /> {joining ? 'Đang tham gia...' : 'Tham gia sự kiện'}
-                  </button>
-                )}
+                {!isParticipant && !isCreator && eventStatus.status !== "ended" && (() => {
+                  const isFull = !!(event.maxParticipants && participants.length >= event.maxParticipants);
+                  return (
+                    <>
+                      <button 
+                        disabled={joining || isFull} 
+                        onClick={handleJoinEvent} 
+                        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        <UserPlus className="h-4 w-4 inline mr-2" /> 
+                        {joining ? 'Đang tham gia...' : isFull ? 'Sự kiện đã đầy' : 'Tham gia sự kiện'}
+                      </button>
+                      {isFull && (
+                        <p className="text-sm text-red-600 dark:text-red-400 mt-2 text-center">
+                          Sự kiện đã đạt số lượng người tham gia tối đa
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {isParticipant && userParticipant && (
                   <div className="space-y-4">

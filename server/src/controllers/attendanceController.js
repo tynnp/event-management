@@ -160,6 +160,19 @@ exports.joinEvent = async (req, res) => {
       return res.json(existing.rows[0]);
     }
 
+    // Check if event has reached max participants
+    if (event.max_participants) {
+      const countResult = await pool.query('SELECT COUNT(*) as count FROM participants WHERE event_id = $1', [event_id]);
+      const currentCount = parseInt(countResult.rows[0].count);
+      
+      if (currentCount >= event.max_participants) {
+        return res.status(400).json({ 
+          message: 'Sự kiện đã đạt số lượng người tham gia tối đa',
+          code: 'EVENT_FULL'
+        });
+      }
+    }
+
     const participantId = uuidv4();
     const qrCode = uuidv4();
     const created = await AttendanceModel.createPending({
