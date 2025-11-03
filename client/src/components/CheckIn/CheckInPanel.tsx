@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { QrCode, Users, CheckCircle, Clock, Scan } from "lucide-react";
+import { QrCode, Users, CheckCircle, Clock, Scan, X } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { Html5Qrcode } from "html5-qrcode";
 
 export function CheckInPanel() {
   const { state, dispatch } = useApp();
@@ -15,10 +16,8 @@ export function CheckInPanel() {
   const [error, setError] = useState<string | null>(null);
   const [selectedParticipants, setSelectedParticipants] = useState<any[]>([]);
   const [isScanning, setIsScanning] = useState<boolean>(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const detectorRef = useRef<any>(null);
-  const scanAnimationRef = useRef<number | null>(null);
+  const qrScannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerDivId = "qr-reader";
 
   const RAW_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
   const BASE = RAW_BASE.replace(/\/$/, "") + "/api";
@@ -141,78 +140,149 @@ export function CheckInPanel() {
       setScanResult("Vui lòng chọn sự kiện trước");
       return;
     }
+    
+    setError(null);
+    setScanResult("");
+
+    if (qrScannerRef.current) {
+      console.log("Cleaning up existing scanner...");
+      try {
+        const state = await qrScannerRef.current.getState();
+        console.log("Current scanner state:", state);
+        if (state === 2) {
+          await qrScannerRef.current.stop();
+        }
+        await qrScannerRef.current.clear();
+      } catch (e) {
+        console.log("Error during cleanup:", e);
+      }
+      qrScannerRef.current = null;
+    }
+
+    setIsScanning(true);
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
-      setError(null);
-      setScanResult("");
-      setIsScanning(true);
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-        audio: false,
-      });
-      mediaStreamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream as any;
-        await videoRef.current.play();
+      const scannerElement = document.getElementById(scannerDivId);
+      if (!scannerElement) {
+        throw new Error(`HTML Element with id=${scannerDivId} not found`);
       }
+      scannerElement.innerHTML = "";
 
-      // Init detector if supported
-      const hasBarcodeDetector = typeof (window as any).BarcodeDetector !== "undefined";
-      if (hasBarcodeDetector) {
-        if (!detectorRef.current) {
-          try {
-            detectorRef.current = new (window as any).BarcodeDetector({ formats: ["qr_code"] });
-          } catch {
-            detectorRef.current = null;
-          }
-        }
-      }
+      console.log("Creating new scanner instance...");
+      qrScannerRef.current = new Html5Qrcode(scannerDivId);
 
-      const detectLoop = async () => {
-        if (!isScanning) return;
-        try {
-          if (detectorRef.current && videoRef.current) {
-            const results = await detectorRef.current.detect(videoRef.current);
-            if (results && results.length > 0) {
-              const value = results[0]?.rawValue || results[0]?.rawValue || "";
-              if (value) {
-                setQrInput(value);
-                await stopScanner();
-                await handleQRScan();
-                return;
-              }
-            }
-          }
-        } catch {
-          // ignore frame errors
-        }
-        scanAnimationRef.current = requestAnimationFrame(detectLoop);
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
       };
 
-      if (detectorRef.current) {
-        scanAnimationRef.current = requestAnimationFrame(detectLoop);
-      } else {
-        setScanResult("Trình duyệt không hỗ trợ quét QR. Vui lòng nhập mã thủ công.");
-      }
+      const onScanSuccess = async (decodedText: string) => {
+        setQrInput(decodedText);
+        await stopScanner();
+        setTimeout(async () => {
+          const event = (remoteEvents ?? events).find((e: any) => e.id === selectedEvent);
+          if (!event) {
+            setScanResult("Không tìm thấy sự kiện");
+            return;
+          }
+          const now = new Date();
+          const eventStart = new Date(event.startTime);
+          const eventEnd = new Date(event.endTime);
+          if (now < eventStart) {
+            setScanResult("Sự kiện chưa bắt đầu, không thể điểm danh");
+            return;
+          }
+          if (now > eventEnd) {
+            setScanResult("Sự kiện đã kết thúc, không thể điểm danh");
+            return;
+          }
+          try {
+            const token = getToken();
+            const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+            const raw = decodedText.trim();
+            const isJsonOrData = raw.startsWith("{") || raw.startsWith("data:");
+            const payload: any = { event_id: selectedEvent };
+            if (isJsonOrData) payload.qr_data = raw; else payload.qr_code = raw;
+            const res = await axios.post(`${BASE}/attendance/checkin`, payload, { headers });
+            const participant = res.data?.participant ?? res.data;
+            const checkedUserId = participant.user_id ?? participant.userId;
+            if (checkedUserId) {
+              dispatch({ type: "CHECK_IN", payload: { eventId: selectedEvent, userId: checkedUserId } });
+              setSelectedParticipants(prev => prev.map((p: any) => p.userId === checkedUserId ? { ...p, checkedIn: true, checkInTime: new Date().toISOString() } : p));
+            }
+            const user = allUsers.find((u) => u.id === checkedUserId);
+            setScanResult(`Điểm danh thành công${user?.name ? ` cho ${user.name}` : ""}`);
+            setQrInput("");
+          } catch (err: any) {
+            const backendMsg = err?.response?.data?.message;
+            const msg = backendMsg === 'Event not found'
+              ? 'Không tìm thấy sự kiện'
+              : backendMsg === 'QR code not found for this event'
+                ? 'Không tìm thấy mã QR này trong hệ thống'
+                : backendMsg || 'Điểm danh thất bại';
+            setScanResult(msg);
+          }
+        }, 100);
+      };
+
+      console.log("Starting camera...");
+      await qrScannerRef.current.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        (errorMessage) => { 
+          if (!errorMessage.includes("NotFoundException")) {
+            console.log("Scan error:", errorMessage);
+          }
+        }
+      );
+      console.log("Camera started successfully!");
     } catch (err: any) {
       setIsScanning(false);
-      setScanResult("Không thể mở camera. Vui lòng kiểm tra quyền truy cập.");
+      if (qrScannerRef.current) {
+        try {
+          await qrScannerRef.current.stop();
+          await qrScannerRef.current.clear();
+        } catch {}
+        qrScannerRef.current = null;
+      }
+      console.error("Scanner error:", err);
+      console.error("Error name:", err?.name);
+      console.error("Error message:", err?.message);
+      
+      const errorName = err?.name || "";
+      const errorMsg = err?.message || "";
+      
+      if (errorName === "NotAllowedError" || errorMsg.includes("Permission denied")) {
+        setScanResult("Quyền truy cập camera bị từ chối. Vui lòng cấp quyền trong cài đặt trình duyệt và tải lại trang.");
+      } else if (errorName === "NotFoundError" || errorMsg.includes("Requested device not found")) {
+        setScanResult("Không tìm thấy camera. Vui lòng kiểm tra thiết bị.");
+      } else if (errorName === "NotReadableError" || errorMsg.includes("Could not start video source")) {
+        setScanResult("Camera đang được sử dụng bởi ứng dụng khác. Vui lòng đóng các ứng dụng khác và thử lại.");
+      } else if (errorMsg.includes("Scanner is already scanning")) {
+        setScanResult("Scanner đang chạy. Vui lòng đợi hoặc tải lại trang.");
+      } else {
+        setScanResult(`Lỗi: ${errorMsg || err?.toString() || 'Không thể mở camera. Vui lòng thử lại hoặc tải lại trang.'}`);
+      }
     }
   };
 
   const stopScanner = async () => {
     setIsScanning(false);
-    if (scanAnimationRef.current) cancelAnimationFrame(scanAnimationRef.current);
-    scanAnimationRef.current = null;
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      mediaStreamRef.current = null;
-    }
-    if (videoRef.current) {
+    if (qrScannerRef.current) {
       try {
-        videoRef.current.pause();
-      } catch {}
-      (videoRef.current as any).srcObject = null;
+        const state = await qrScannerRef.current.getState();
+        if (state === 2) { // SCANNING state
+          await qrScannerRef.current.stop();
+        }
+        await qrScannerRef.current.clear();
+        qrScannerRef.current = null;
+      } catch (err) {
+        // Scanner might already be stopped
+      }
     }
   };
 
@@ -274,8 +344,8 @@ export function CheckInPanel() {
         setSelectedParticipants(prev => prev.map((p: any) => p.userId === checkedUserId ? { ...p, checkedIn: true, checkInTime: new Date().toISOString() } : p));
       }
 
-      const user = users.find((u) => u.id === checkedUserId);
-      setScanResult(`Điểm danh thành công${user?.name ? ` cho ${user.name}` : ""}`);
+      const user = allUsers.find((u) => u.id === checkedUserId);
+      setScanResult(`✅ Điểm danh thành công${user?.name ? ` cho ${user.name}` : ""}`);
       setQrInput("");
     } catch (err: any) {
       const backendMsg = err?.response?.data?.message;
@@ -382,12 +452,15 @@ export function CheckInPanel() {
               </div>
               {isScanning && (
                 <div className="mt-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <div className="relative w-full aspect-video overflow-hidden rounded-xl bg-black">
-                    <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
-                    <div className="absolute inset-0 border-2 border-blue-500/60 rounded-xl pointer-events-none" />
+                  <div className="relative">
+                    <div id={scannerDivId} className="w-full rounded-xl overflow-hidden" />
                   </div>
                   <div className="mt-3 flex justify-end">
-                    <button onClick={stopScanner} className="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                    <button 
+                      onClick={stopScanner} 
+                      className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors flex items-center gap-2"
+                    >
+                      <X className="h-4 w-4" />
                       Dừng quét
                     </button>
                   </div>
