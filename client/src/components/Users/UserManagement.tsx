@@ -204,8 +204,8 @@ export function UserManagement() {
           người dùng
         </div>
 
-        {/* Table */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-dark-border shadow-lg">
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200 dark:border-dark-border shadow-lg">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
             <thead className="bg-gradient-to-r from-indigo-50 to-pink-50 dark:from-dark-bg-tertiary dark:to-dark-bg-secondary">
               <tr>
@@ -280,20 +280,88 @@ export function UserManagement() {
           </table>
         </div>
 
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-4">
+          {currentUsers.map((user, idx) => (
+            <div
+              key={user.id}
+              className="bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-300"
+              style={{ animationDelay: `${idx * 80}ms` }}
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-1">
+                    {user.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-dark-text-secondary break-all">
+                    {user.email}
+                  </p>
+                </div>
+                <div className="flex space-x-2 ml-2">
+                  <button
+                    onClick={() => openDeleteModal(user)}
+                    className="p-2 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                    title="Xóa"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleToggleLock(user.id, !user.is_locked)}
+                    className={`p-2 rounded-lg transition-all duration-300 ${
+                      user.is_locked
+                        ? "text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                        : "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                    }`}
+                    title={user.is_locked ? "Mở khóa" : "Khóa"}
+                  >
+                    {user.is_locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-dark-text-tertiary">Vai trò:</span>
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
+                    className="rounded-md px-2 py-1 text-sm border border-gray-300 dark:border-dark-border focus:ring-2 focus:ring-indigo-500 transition duration-200 bg-white dark:bg-dark-bg-tertiary"
+                  >
+                    <option value="admin">Quản trị viên</option>
+                    <option value="moderator">Kiểm duyệt viên</option>
+                    <option value="user">Người dùng</option>
+                  </select>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-dark-text-tertiary">Trạng thái:</span>
+                  {user.is_locked ? (
+                    <span className="text-sm text-red-600 dark:text-red-400 font-semibold">
+                      Đã khóa
+                    </span>
+                  ) : (
+                    <span className="text-sm text-green-600 dark:text-green-400 font-semibold">
+                      Hoạt động
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-700 dark:text-dark-text-secondary">
               Trang <span className="font-semibold">{currentPage}</span> / {totalPages}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-wrap justify-center">
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 dark:text-dark-text-tertiary bg-white dark:bg-dark-bg-tertiary border border-gray-300 dark:border-dark-border rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Trước
+                <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Trước</span>
               </button>
               <div className="flex space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -322,8 +390,8 @@ export function UserManagement() {
                 disabled={currentPage === totalPages}
                 className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 dark:text-dark-text-tertiary bg-white dark:bg-dark-bg-tertiary border border-gray-300 dark:border-dark-border rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
               >
-                <ChevronRight className="h-4 w-4 ml-1" />
-                Sau
+                <span className="hidden sm:inline">Sau</span>
+                <ChevronRight className="h-4 w-4 sm:ml-1" />
               </button>
             </div>
           </div>

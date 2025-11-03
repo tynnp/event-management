@@ -251,20 +251,20 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
   return (
     <div className="max-w-2xl mx-auto transition-colors duration-300">
       <div
-        className="rounded-3xl p-8 shadow-2xl 
+        className="rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl 
       bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 
       dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 
       border border-gray-200 dark:border-gray-700
       animate-fade-in-up"
       >
         {/* Tiêu đề */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
             <span className="pb-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
               Tạo sự kiện mới
             </span>
           </h2>
-          <p className="text-gray-700 dark:text-gray-300 mt-2 text-lg">
+          <p className="text-gray-700 dark:text-gray-300 mt-2 text-base sm:text-lg">
             Tạo và quản lý sự kiện của bạn một cách dễ dàng
           </p>
         </div>

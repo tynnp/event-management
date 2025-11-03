@@ -315,21 +315,21 @@ export function CheckInPanel() {
   return (
   <div className="space-y-6">
       {/* Header */}
-      <div className="text-center mb-12 relative">
-        <h2 className="text-3xl md:text-4xl font-extrabold flex items-center justify-center gap-3">
+      <div className="text-center mb-8 sm:mb-12 relative">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center justify-center gap-2 sm:gap-3">
           <span className="pb-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
             Điểm danh sự kiện
           </span>
         </h2>
-        <p className="text-gray-700 dark:text-gray-300 mt-3 text-lg md:text-xl animate-fade-in-up">
+        <p className="text-gray-700 dark:text-gray-300 mt-2 sm:mt-3 text-base sm:text-lg md:text-xl animate-fade-in-up">
           Quét mã QR để điểm danh người tham gia
         </p>
       </div>
 
       {/* QR Scanner + Event Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
         {/* QR Scanner Card */}
-  <div className="rounded-2xl p-8 shadow-lg bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up min-h-[420px]">
+  <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
             <Scan className="h-6 w-6 mr-2 text-blue-700 animate-pulse" />
             Quét mã QR
@@ -363,7 +363,7 @@ export function CheckInPanel() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Mã QR hoặc nhập thủ công
               </label>
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
                   value={qrInput}
@@ -374,7 +374,7 @@ export function CheckInPanel() {
                 <button
                   onClick={handleScanButtonClick}
                   disabled={!selectedEvent}
-                  className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-xl shadow hover:bg-blue-600 transition-colors duration-200 disabled:bg-gray-400 flex items-center"
+                  className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-xl shadow hover:bg-blue-600 transition-colors duration-200 disabled:bg-gray-400 flex items-center justify-center"
                 >
                   <QrCode className="h-5 w-5 mr-2 animate-spin-slow" />
                   Quét
@@ -412,7 +412,7 @@ export function CheckInPanel() {
 
         {/* Event Details Card */}
         {selectedEventData && (
-  <div className="rounded-2xl p-8 shadow-lg bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+  <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
               Chi tiết sự kiện
             </h3>
@@ -427,7 +427,7 @@ export function CheckInPanel() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-sm">
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">
                     Thời gian:
@@ -461,7 +461,7 @@ export function CheckInPanel() {
 
               {/* Stats */}
               <div className="pt-5 border-t border-gray-300 dark:border-gray-600">
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                   <div className="hover:scale-105 transition-transform">
                     <div className="flex items-center justify-center text-blue-500 mb-1">
                       <Users className="h-5 w-5 mr-1" />
@@ -508,8 +508,8 @@ export function CheckInPanel() {
 
       {/* Participants List Card */}
       {selectedEventData && (
-  <div className="rounded-2xl shadow-lg bg-gray-50 dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up overflow-hidden mt-10">
-          <div className="px-8 py-5 border-b border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
+  <div className="rounded-xl sm:rounded-2xl shadow-lg bg-gray-50 dark:bg-dark-bg-secondary border border-gray-200 dark:border-gray-700 animate-fade-in-up overflow-hidden mt-6 sm:mt-10">
+          <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 border-b border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               Danh sách người tham gia ({selectedParticipants.length})
             </h3>
@@ -524,44 +524,46 @@ export function CheckInPanel() {
                   className="p-4 flex items-center justify-between hover:bg-gray-100/50 dark:hover:bg-gray-700 transition-colors animate-fade-in-up"
                   style={{ animationDelay: `${idx * 80}ms` }}
                 >
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
                     {user?.avatar_url ? (
                       <img 
                         src={getAvatarUrl(user.avatar_url)} 
                         alt={user.name}
-                        className="w-12 h-12 rounded-full object-cover shadow-md"
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-md flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md flex-shrink-0">
                         {(user?.name?.[0] || 'U').toUpperCase()}
                       </div>
                     )}
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
                         {user?.name || 'Người dùng'}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
                         {user?.email || participant.userId}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:space-x-4 flex-shrink-0">
+                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       Đăng ký:{" "}
                       {new Date(participant.joinedAt).toLocaleDateString(
                         "vi-VN"
                       )}
                     </span>
                     {participant.checkedIn ? (
-                      <span className="flex items-center text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm">
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Đã điểm danh
+                      <span className="flex items-center text-green-600 bg-green-50 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm whitespace-nowrap">
+                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <span className="hidden sm:inline">Đã điểm danh</span>
+                        <span className="sm:hidden">Đã ĐD</span>
                       </span>
                     ) : (
-                      <span className="flex items-center text-orange-600 bg-orange-50 px-3 py-1 rounded-full text-sm">
-                        <Clock className="h-4 w-4 mr-1" />
-                        Chưa điểm danh
+                      <span className="flex items-center text-orange-600 bg-orange-50 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm whitespace-nowrap">
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <span className="hidden sm:inline">Chưa điểm danh</span>
+                        <span className="sm:hidden">Chưa ĐD</span>
                       </span>
                     )}
                   </div>

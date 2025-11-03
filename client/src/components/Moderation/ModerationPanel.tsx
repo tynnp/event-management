@@ -209,10 +209,10 @@ export function ModerationPanel() {
             return (
               <div
                 key={event.id}
-                className="p-6 transition-all duration-200 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary border-b border-gray-100 dark:border-dark-border last:border-b-0"
+                className="p-4 sm:p-6 transition-all duration-200 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary border-b border-gray-100 dark:border-dark-border last:border-b-0"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                  <div className="flex-1 w-full">
                     <h4 className="text-lg font-semibold mb-2 text-gray-900 dark:text-dark-text-primary">
                       {event.title}
                     </h4>
@@ -280,17 +280,17 @@ export function ModerationPanel() {
                   </div>
 
                   {/* Buttons */}
-                  <div className="flex flex-col space-y-2 ml-6">
+                  <div className="flex flex-row sm:flex-col gap-2 sm:space-y-0 w-full sm:w-auto sm:ml-6">
                     {/* Nút Duyệt */}
                     <button
                       onClick={() => handleApproveEvent(event.id)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm 
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl font-semibold text-sm 
                bg-green-50 text-green-700 border border-green-200
                hover:bg-green-100 hover:shadow-md transition-all duration-200
                dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/30"
                     >
                       <Check className="w-4 h-4" />
-                      <span>Duyệt</span>
+                      <span className="hidden sm:inline">Duyệt</span>
                     </button>
 
                     {/* Nút Từ chối */}
@@ -299,25 +299,25 @@ export function ModerationPanel() {
                         setSelectedEvent(event);
                         setShowRejectModal(true);
                       }}
-                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm 
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl font-semibold text-sm 
                bg-red-50 text-red-700 border border-red-200
                hover:bg-red-100 hover:shadow-md transition-all duration-200
                dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/30"
                     >
                       <X className="w-4 h-4" />
-                      <span>Từ chối</span>
+                      <span className="hidden sm:inline">Từ chối</span>
                     </button>
 
                     {/* Nút Chi tiết */}
                     <button
                       onClick={() => navigate(`/events/${event.id}`)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm 
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl font-semibold text-sm 
                bg-gray-50 text-gray-700 border border-gray-200
                hover:bg-gray-100 hover:shadow-md transition-all duration-200
                dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800/60"
                     >
                       <Eye className="w-4 h-4" />
-                      <span>Chi tiết</span>
+                      <span className="hidden sm:inline">Chi tiết</span>
                     </button>
                   </div>
                 </div>

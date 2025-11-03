@@ -114,10 +114,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
       shadow-md border-b border-gray-200 dark:border-dark-border sticky top-0 z-50
       transition-colors duration-500"
       >
-        <div className="w-full px-4">
+        <div className="w-full px-2 sm:px-4">
           <div className="flex justify-between items-center h-16">
             {/* Logo + Menu */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <button
                 onClick={onMenuToggle}
                 className="relative p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-dark-bg-tertiary transition transform hover:scale-105 active:scale-95"
@@ -125,13 +125,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 <Menu className="h-5 w-5 text-gray-600 dark:text-dark-text-secondary transition-transform duration-300 group-hover:rotate-90" />
               </button>
 
-              <span className="text-2xl pb-1 font-[800] tracking-wide bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">
-                Quản lý sự kiện
+              <span className="text-lg sm:text-2xl pb-1 font-[800] tracking-wide bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">
+                <span className="hidden sm:inline">Quản lý sự kiện</span>
+                <span className="sm:hidden">QLSK</span>
               </span>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
               <ThemeToggle />
 
               {/* Bell */}
@@ -150,7 +151,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   )}
                 </button>
                 {openNotif && (
-                  <div className="absolute right-0 mt-2 w-[360px] max-h-[60vh] overflow-auto bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-xl shadow-2xl z-50">
+                  <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-[360px] max-w-md max-h-[60vh] overflow-auto bg-white dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-xl shadow-2xl z-50">
                     <div className="px-4 py-3 border-b border-gray-200 dark:border-dark-border flex items-center justify-between">
                       <span className="font-semibold text-gray-900 dark:text-dark-text-primary">Thông báo</span>
                       <button onClick={fetchNotifications} className="text-sm text-indigo-600 hover:text-indigo-500">Làm mới</button>
@@ -191,18 +192,18 @@ export function Header({ onMenuToggle }: HeaderProps) {
               </div>
 
               {/* User */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <div
                   className="flex items-center space-x-2 select-none"
                 >
-                  <div className="relative w-9 h-9 rounded-full ring-2 ring-indigo-400 dark:ring-indigo-500 shadow overflow-hidden">
+                  <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full ring-2 ring-indigo-400 dark:ring-indigo-500 shadow overflow-hidden">
                     <img
                       src={getAvatarUrl(currentUser?.avatar_url)}
                       alt="Avatar"
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="leading-tight">
+                  <div className="leading-tight hidden md:block">
                     <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">
                       {getGreeting()}
                     </p>

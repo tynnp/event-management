@@ -776,11 +776,11 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           </div>
         </div>
 
-        <div className="p-8">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8">
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-6 sm:mb-8 gap-6">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">{event.title}</h1>
-              <p className="text-gray-600 dark:text-dark-text-secondary text-lg mb-6">{event.description}</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text-primary mb-3 sm:mb-4">{event.title}</h1>
+              <p className="text-gray-600 dark:text-dark-text-secondary text-base sm:text-lg mb-4 sm:mb-6">{event.description}</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="space-y-4">
@@ -813,8 +813,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             </div>
 
             {/* Action Buttons */}
-            <div className="lg:ml-8 lg:min-w-[300px]">
-              <div className="bg-gray-50 dark:bg-dark-bg-tertiary rounded-xl p-6">
+            <div className="w-full lg:w-auto lg:ml-8 lg:min-w-[300px]">
+              <div className="bg-gray-50 dark:bg-dark-bg-tertiary rounded-xl p-4 sm:p-6">
                 {!isParticipant && !isCreator && eventStatus.status !== "ended" && (
                   <button disabled={joining} onClick={handleJoinEvent} className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400">
                     <UserPlus className="h-4 w-4 inline mr-2" /> {joining ? 'Đang tham gia...' : 'Tham gia sự kiện'}
@@ -897,7 +897,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
           {/* Cancellation Notice */}
           {event.status === 'cancelled' && event.cancellationReason && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-8">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
               <div className="flex items-start space-x-3">
                 <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
@@ -910,7 +910,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
           {/* Rejection Notice */}
           {event.status === 'rejected' && event.rejectionReason && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-8">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
               <div className="flex items-start space-x-3">
                 <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
@@ -923,7 +923,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
           {/* Rating Section */}
           {canRate && !eventRatings.some((r) => r.userId === currentUser?.id) && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 mb-8">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
               <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-4">Đánh giá sự kiện</h3>
               <form onSubmit={handleAddRating} className="space-y-4">
                 <div>
@@ -948,8 +948,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           )}
 
           {/* Comments and Reviews */}
-          <div className="border-t border-gray-200 dark:border-dark-border pt-8">
-            <div className="flex items-center justify-between mb-6">
+          <div className="border-t border-gray-200 dark:border-dark-border pt-6 sm:pt-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
               <h3 className="font-semibold text-xl flex items-center text-gray-900 dark:text-dark-text-primary">
                 <MessageSquare className="h-5 w-5 mr-2" /> Bình luận ({allComments.filter(c => !c.id.startsWith('rev-')).length})
                 {canModerate && hiddenCommentsCount > 0 && (
@@ -1017,8 +1017,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
               </div>
             )}
             {/* Add Comment */}
-            <form onSubmit={handleAddComment} className="mb-8">
-              <div className="flex space-x-4">
+            <form onSubmit={handleAddComment} className="mb-6 sm:mb-8">
+              <div className="flex space-x-3 sm:space-x-4">
                 {currentUser?.avatar_url ? (
                   <img
                     src={getAvatarUrl(currentUser.avatar_url)}
@@ -1054,7 +1054,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                 const isHidden = comment.isHidden;
 
                 return (
-                  <div key={comment.id} className={`flex space-x-4 p-4 rounded-lg ${isHidden ? "bg-gray-100 dark:bg-gray-800/50" : "bg-white dark:bg-dark-bg-secondary"}`}>
+                  <div key={comment.id} className={`flex space-x-3 sm:space-x-4 p-3 sm:p-4 rounded-lg ${isHidden ? "bg-gray-100 dark:bg-gray-800/50" : "bg-white dark:bg-dark-bg-secondary"}`}>
                     {user?.avatar_url ? (
                       <img
                         src={getAvatarUrl(user.avatar_url)}
@@ -1066,46 +1066,46 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                         {user?.name?.[0]?.toUpperCase() || 'U'}
                       </div>
                     )}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">{user?.name ?? "Người dùng"}</span>
-                          <span className="text-gray-500 dark:text-dark-text-tertiary text-sm">{new Date(comment.createdAt).toLocaleString("vi-VN")}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
+                        <div className="flex items-center space-x-2 flex-wrap">
+                          <span className="font-medium text-gray-900 dark:text-dark-text-primary text-sm sm:text-base">{user?.name ?? "Người dùng"}</span>
+                          <span className="text-gray-500 dark:text-dark-text-tertiary text-xs sm:text-sm">{new Date(comment.createdAt).toLocaleString("vi-VN")}</span>
                           {isHidden && <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded-full">Đã ẩn</span>}
                         </div>
 
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap">
                           <button
                             onClick={() => handleToggleLike(comment.id)}
-                            className={`flex items-center px-2 py-1 rounded text-sm transition-colors ${comment.hasLiked ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400'}`}
+                            className={`flex items-center px-2 py-1 rounded text-xs sm:text-sm transition-colors ${comment.hasLiked ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400'}`}
                             title="Thích"
                           >
-                            <ThumbsUp className="h-4 w-4 mr-1" /> {comment.likes ?? 0}
+                            <ThumbsUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> {comment.likes ?? 0}
                           </button>
                           <button
                             onClick={() => handleToggleDislike(comment.id)}
-                            className={`flex items-center px-2 py-1 rounded text-sm transition-colors ${comment.hasDisliked ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400'}`}
+                            className={`flex items-center px-2 py-1 rounded text-xs sm:text-sm transition-colors ${comment.hasDisliked ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400'}`}
                             title="Không thích"
                           >
-                            <ThumbsDown className="h-4 w-4 mr-1" /> {comment.dislikes ?? 0}
+                            <ThumbsDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> {comment.dislikes ?? 0}
                           </button>
                           <button onClick={() => handleReply(comment.id)} className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" title="Trả lời">
-                            <Reply className="h-4 w-4" />
+                            <Reply className="h-3 w-3 sm:h-4 sm:w-4" />
                           </button>
 
                           {canModerate && (
                             <>
                               {isHidden ? (
                                 <button onClick={() => handleUnhideComment(comment.id)} className="p-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors" title="Hiện lại bình luận">
-                                  <Eye className="h-4 w-4" />
+                                  <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </button>
                               ) : (
                                 <button onClick={() => handleHideComment(comment.id)} className="p-1 text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition-colors" title="Ẩn bình luận">
-                                  <EyeOff className="h-4 w-4" />
+                                  <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </button>
                               )}
                               <button onClick={() => handleDeleteComment(comment.id)} className="p-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors" title="Xóa bình luận">
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                               </button>
                             </>
                           )}
@@ -1148,17 +1148,17 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                           )}
                         </div>
                       ) : (
-                        <p className="text-gray-700 dark:text-dark-text-secondary">{comment.content}</p>
+                        <p className="text-gray-700 dark:text-dark-text-secondary text-sm sm:text-base break-words">{comment.content}</p>
                       )}
                       
                       {/* Replies */}
                       {comment.replies && comment.replies.length > 0 && (
-                        <div className="mt-4 ml-4 space-y-3">
+                        <div className="mt-3 sm:mt-4 ml-2 sm:ml-4 space-y-2 sm:space-y-3">
                           {comment.replies.map((reply) => {
                             const replyUser = allUsers.find((u: User) => u.id === reply.userId);
                             const replyHidden = reply.isHidden;
                             return (
-                              <div key={reply.id} className={`flex items-start space-x-3 p-3 rounded-lg ${replyHidden ? "bg-gray-200 dark:bg-gray-700/50" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
+                              <div key={reply.id} className={`flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg ${replyHidden ? "bg-gray-200 dark:bg-gray-700/50" : "bg-gray-50 dark:bg-dark-bg-tertiary"}`}>
                                 {replyUser?.avatar_url ? (
                                   <img
                                     src={getAvatarUrl(replyUser.avatar_url)}
@@ -1170,15 +1170,15 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                     {replyUser?.name?.[0]?.toUpperCase() || 'U'}
                                   </div>
                                 )}
-                                <div className="flex-1">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <div className="flex items-center space-x-2">
-                                      <span className="font-medium text-gray-900 dark:text-dark-text-primary text-sm">{replyUser?.name ?? "Người dùng"}</span>
-                                      <span className="text-gray-500 dark:text-dark-text-tertiary text-xs">{new Date(reply.createdAt).toLocaleString("vi-VN")}</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 gap-1 sm:gap-2">
+                                    <div className="flex items-center space-x-2 flex-wrap">
+                                      <span className="font-medium text-gray-900 dark:text-dark-text-primary text-xs sm:text-sm">{replyUser?.name ?? "Người dùng"}</span>
+                                      <span className="text-gray-500 dark:text-dark-text-tertiary text-[10px] sm:text-xs">{new Date(reply.createdAt).toLocaleString("vi-VN")}</span>
                                       {replyHidden && <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-[10px] rounded-full">Đã ẩn</span>}
                                     </div>
                                     {/* Reply actions: hide/unhide, delete (no reply button) */}
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap">
                                         <button
                                           onClick={() => handleToggleLike(reply.id)}
                                           className={`flex items-center px-2 py-1 rounded text-xs transition-colors ${reply.hasLiked ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400'}`}
@@ -1213,7 +1213,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                   </div>
                                   {replyHidden ? (
                                     <div className="space-y-2">
-                                      <p className="text-gray-500 dark:text-gray-400 italic text-sm">(bình luận đã bị ẩn)</p>
+                                      <p className="text-gray-500 dark:text-gray-400 italic text-xs sm:text-sm">(bình luận đã bị ẩn)</p>
                                       {canModerate && (
                                         <button
                                           onClick={() => {
@@ -1247,7 +1247,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                       )}
                                     </div>
                                   ) : (
-                                    <p className="text-gray-700 dark:text-dark-text-secondary text-sm">{reply.content}</p>
+                                    <p className="text-gray-700 dark:text-dark-text-secondary text-xs sm:text-sm break-words">{reply.content}</p>
                                   )}
                                 </div>
                               </div>
@@ -1258,8 +1258,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
                       {/* Reply Form */}
                       {replyingTo === comment.id && (
-                        <form onSubmit={handleSubmitReply} className="mt-4 ml-4">
-                          <div className="flex space-x-3">
+                        <form onSubmit={handleSubmitReply} className="mt-3 sm:mt-4 ml-2 sm:ml-4">
+                          <div className="flex space-x-2 sm:space-x-3">
                             {currentUser?.avatar_url ? (
                               <img
                                 src={getAvatarUrl(currentUser.avatar_url)}

@@ -62,7 +62,7 @@ function AppContent() {
         />
 
         <main
-          className={`flex-1 p-8 transition-all duration-300 ${sidebarOpen ? 'ml-[250px]' : 'ml-0'}`}
+          className={`flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'ml-0'}`}
         >
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
