@@ -21,8 +21,24 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (allowedTypes.includes(file.mimetype)) cb(null, true);
-  else cb(new Error('File type not allowed'), false);
+  // Nếu field là 'file' (bulk upload), cho phép Excel
+  if (file.fieldname === 'file') {
+    const excelTypes = [
+      'application/vnd.ms-excel', // .xls
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // .xlsx
+    ];
+    if (excelTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận file Excel (.xlsx, .xls)'), false);
+    }
+  }
+  // Nếu field khác (như 'avatar'), chỉ cho phép ảnh
+  else if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Định dạng file không được phép'), false);
+  }
 };
 
 const upload = multer({

@@ -34,4 +34,12 @@ router.delete('/:userId', authMiddleware, userController.deleteUserAccount);
 // Lấy danh sách tất cả người dùng
 router.get('/', authMiddleware, userController.getAllUsers);
 
+// Bulk upload users from Excel (admin only)
+router.post(
+  '/bulk-upload',
+  authMiddleware,
+  upload.single('file'), // field name trong form-data là "file"
+  userController.bulkUploadUsers
+);
+
 module.exports = router;
