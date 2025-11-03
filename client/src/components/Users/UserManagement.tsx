@@ -3,8 +3,9 @@ import { createPortal } from "react-dom";
 import { useApp } from "../../context/AppContext";
 import { User } from "../../types/index";
 import { toast } from "react-hot-toast";
-import { Trash, Lock, Unlock, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash, Lock, Unlock, Search, ChevronLeft, ChevronRight, Upload, Download, X } from "lucide-react";
 import axios from "axios";
+import * as XLSX from "xlsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -21,6 +22,12 @@ export function UserManagement() {
   // Modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Bulk upload state
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<any>(null);
 
   // Fetch users from API (extracted to function để gọi lại sau delete)
   const fetchUsers = async () => {
@@ -131,6 +138,87 @@ export function UserManagement() {
     }
   };
 
+  // Bulk upload handlers
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      // Validate file type
+      const validTypes = [
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ];
+      if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        toast.error("Vui lòng chọn file Excel (.xlsx hoặc .xls)");
+        return;
+      }
+      setSelectedFile(file);
+      setUploadResult(null);
+    }
+  };
+
+  const handleBulkUpload = async () => {
+    if (!selectedFile) {
+      toast.error("Vui lòng chọn file Excel!");
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.post(`${API_URL}/api/users/bulk-upload`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setUploadResult(response.data);
+      await fetchUsers(); // Refresh danh sách users
+      toast.success(`Thành công: ${response.data.successCount}/${response.data.total} tài khoản`);
+    } catch (error: any) {
+      console.error("Failed to bulk upload:", error);
+      toast.error(error.response?.data?.message || "Upload thất bại!");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const closeBulkUploadModal = () => {
+    setShowBulkUploadModal(false);
+    setSelectedFile(null);
+    setUploadResult(null);
+  };
+
+  const downloadTemplate = () => {
+    // Tạo template Excel
+    const template = [
+      ['email', 'name', 'password', 'role', 'phone'],
+      ['user1@example.com', 'Nguyen Van A', 'password123', 'user', '0901234567'],
+      ['user2@example.com', 'Tran Thi B', 'password123', 'moderator', '0912345678']
+    ];
+    
+    // Tạo workbook và worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(template);
+    
+    // Set column widths cho dễ nhìn
+    ws['!cols'] = [
+      { wch: 25 }, // email
+      { wch: 20 }, // name
+      { wch: 15 }, // password
+      { wch: 12 }, // role
+      { wch: 15 }  // phone
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Users');
+    
+    // Download file
+    XLSX.writeFile(wb, 'user_template.xlsx');
+  };
+
   // Modal JSX (sẽ dùng portal)
   const modalContent = showDeleteModal && selectedUser && (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -169,7 +257,7 @@ export function UserManagement() {
           </span>
         </h2>
 
-        {/* Search + Filter */}
+        {/* Search + Filter + Bulk Upload Button */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-dark-text-tertiary" />
@@ -193,6 +281,13 @@ export function UserManagement() {
               <option value="user">Người dùng</option>
             </select>
           </div>
+          <button
+            onClick={() => setShowBulkUploadModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
+          >
+            <Upload className="h-4 w-4" />
+            <span className="whitespace-nowrap">Thêm nhiều tài khoản</span>
+          </button>
         </div>
 
         {/* Stats */}
@@ -399,6 +494,138 @@ export function UserManagement() {
       </div>
 
       {createPortal(modalContent, document.body)}
+
+      {/* Bulk Upload Modal */}
+      {createPortal(
+        showBulkUploadModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-dark-bg-primary p-6 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-dark-text-primary">
+                  Thêm nhiều tài khoản từ Excel
+                </h3>
+                <button
+                  onClick={closeBulkUploadModal}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition"
+                >
+                  <X className="h-5 w-5 text-gray-500 dark:text-dark-text-tertiary" />
+                </button>
+              </div>
+
+              {/* Instructions */}
+              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
+                  Hướng dẫn:
+                </h4>
+                <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                  <li>File Excel phải có các cột: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">email</code>, <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">name</code>, <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">password</code></li>
+                  <li>Các cột tùy chọn: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">role</code> (user/moderator/admin), <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">phone</code></li>
+                  <li>Mật khẩu phải có tối thiểu 8 ký tự</li>
+                  <li>Email phải là duy nhất và hợp lệ</li>
+                </ul>
+              </div>
+
+              {/* Download Template Button */}
+              <button
+                onClick={downloadTemplate}
+                className="mb-4 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                <Download className="h-4 w-4" />
+                Tải file mẫu
+              </button>
+
+              {/* File Input */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                  Chọn file Excel:
+                </label>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-gray-900 dark:text-dark-text-primary border border-gray-300 dark:border-dark-border rounded-lg cursor-pointer bg-gray-50 dark:bg-dark-bg-tertiary focus:outline-none"
+                />
+                {selectedFile && (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
+                    File đã chọn: <strong>{selectedFile.name}</strong>
+                  </p>
+                )}
+              </div>
+
+              {/* Upload Result */}
+              {uploadResult && (
+                <div className="mb-4 p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg">
+                  <h4 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-2">
+                    Kết quả upload:
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4 mb-3">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{uploadResult.total}</p>
+                      <p className="text-xs text-gray-600 dark:text-dark-text-tertiary">Tổng số</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">{uploadResult.successCount}</p>
+                      <p className="text-xs text-gray-600 dark:text-dark-text-tertiary">Thành công</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-red-600 dark:text-red-400">{uploadResult.failedCount}</p>
+                      <p className="text-xs text-gray-600 dark:text-dark-text-tertiary">Thất bại</p>
+                    </div>
+                  </div>
+
+                  {/* Failed Items */}
+                  {uploadResult.results.failed.length > 0 && (
+                    <div className="mt-3">
+                      <h5 className="font-semibold text-red-600 dark:text-red-400 mb-2">
+                        Các dòng lỗi:
+                      </h5>
+                      <div className="max-h-40 overflow-y-auto">
+                        {uploadResult.results.failed.map((item: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="text-sm p-2 mb-1 bg-red-50 dark:bg-red-900/20 rounded border-l-4 border-red-500"
+                          >
+                            <span className="font-semibold">Dòng {item.row}</span> ({item.email}): {item.error}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={closeBulkUploadModal}
+                  className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-dark-bg-secondary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-300 dark:hover:bg-dark-bg-tertiary transition"
+                  disabled={isUploading}
+                >
+                  Đóng
+                </button>
+                <button
+                  onClick={handleBulkUpload}
+                  disabled={!selectedFile || isUploading}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isUploading ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      Upload
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        ),
+        document.body
+      )}
     </>
   );
 }
