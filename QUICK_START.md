@@ -336,7 +336,6 @@ make update  # Linux/Mac
 
 ## Tài liệu chi tiết
 
-- [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md) - Hướng dẫn deploy chi tiết
 - [README.md](./README.md) - Thông tin project
 - [Docker Documentation](https://docs.docker.com/)
 
