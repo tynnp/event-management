@@ -1,5 +1,7 @@
 // file: api/express-rest-api/src/config/database.js
-require("dotenv").config(); // thêm dòng này
+const dotenv = require('dotenv');
+const dotenvExpand = require('dotenv-expand');
+dotenvExpand.expand(dotenv.config());
 
 const { Pool } = require('pg');
 const mongoose = require('mongoose');
