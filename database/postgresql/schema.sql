@@ -1,9 +1,5 @@
 -- PostgreSQL Database Schema for Event Management System
--- Tạo database
-CREATE DATABASE event_management;
-
--- Sử dụng database
-\c event_management;
+-- Database được tạo tự động bởi Docker qua biến POSTGRES_DB
 
 -- Tạo extension cho UUID
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

@@ -1,0 +1,16 @@
+.git
+.gitignore
+.vscode
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+node_modules
+coverage
+.DS_Store
+README.md
+LICENSE.txt
+dump.rdb
+*.md
+!database/README.md
