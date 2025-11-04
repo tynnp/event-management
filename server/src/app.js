@@ -70,6 +70,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ---------------------------
+// HEALTH CHECK ENDPOINT (no rate limit, no logging)
+// ---------------------------
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// ---------------------------
 // RATE LIMITER TOÀN CỤC
 // ---------------------------
 app.use(generalLimiter);
