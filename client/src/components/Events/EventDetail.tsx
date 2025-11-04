@@ -31,6 +31,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
 
   const [showQR, setShowQR] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingToUser, setReplyingToUser] = useState<{ id: string; name: string } | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [modalRoot, setModalRoot] = useState<HTMLDivElement | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -613,12 +614,14 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     }
   };
 
-  const handleReply = (commentId: string) => {
+  const handleReply = (commentId: string, userName?: string, userId?: string) => {
     setReplyingTo(commentId);
-    setReplyContent("");
+    setReplyingToUser(userName && userId ? { id: userId, name: userName } : null);
+    setReplyContent(userName ? `@${userName} ` : "");
   };
   const handleCancelReply = () => {
     setReplyingTo(null);
+    setReplyingToUser(null);
     setReplyContent("");
   };
 
@@ -700,6 +703,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
     };
     await postComment(body);
     setReplyingTo(null);
+    setReplyingToUser(null);
     setReplyContent("");
   };
 
@@ -1106,7 +1110,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                           >
                             <ThumbsDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> {comment.dislikes ?? 0}
                           </button>
-                          <button onClick={() => handleReply(comment.id)} className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" title="Trả lời">
+                          <button onClick={() => handleReply(comment.id, user?.name, user?.id)} className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" title="Trả lời">
                             <Reply className="h-3 w-3 sm:h-4 sm:w-4" />
                           </button>
 
@@ -1194,7 +1198,7 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                       <span className="text-gray-500 dark:text-dark-text-tertiary text-[10px] sm:text-xs">{new Date(reply.createdAt).toLocaleString("vi-VN")}</span>
                                       {replyHidden && <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-[10px] rounded-full">Đã ẩn</span>}
                                     </div>
-                                    {/* Reply actions: hide/unhide, delete (no reply button) */}
+                                    {/* Reply actions: like, dislike, reply, hide/unhide, delete */}
                                     <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap">
                                         <button
                                           onClick={() => handleToggleLike(reply.id)}
@@ -1209,6 +1213,13 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                                           title="Không thích"
                                         >
                                           <ThumbsDown className="h-3 w-3 mr-1" /> {reply.dislikes ?? 0}
+                                        </button>
+                                        <button 
+                                          onClick={() => handleReply(reply.id, replyUser?.name, replyUser?.id)} 
+                                          className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" 
+                                          title="Trả lời"
+                                        >
+                                          <Reply className="h-3 w-3" />
                                         </button>
                                     {canModerate && (
                                       <>
@@ -1273,8 +1284,8 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
                         </div>
                       )}
 
-                      {/* Reply Form */}
-                      {replyingTo === comment.id && (
+                      {/* Reply Form - hiển thị khi reply parent hoặc bất kỳ reply nào */}
+                      {(replyingTo === comment.id || (comment.replies || []).some((r: Comment) => r.id === replyingTo)) && (
                         <form onSubmit={handleSubmitReply} className="mt-3 sm:mt-4 ml-2 sm:ml-4">
                           <div className="flex space-x-2 sm:space-x-3">
                             {currentUser?.avatar_url ? (

@@ -4,49 +4,64 @@ const { sendNotification } = require('./notificationController');
 
 exports.addComment = async (req, res) => {
   try {
-    const { eventId, content, parentId } = req.body;
+    const { eventId, content, parentId, mentionedUserId } = req.body;
     
     if (!eventId || !content) {
       return res.status(400).json({ message: 'eventId and content are required' });
+    }
+    
+    let actualParentId = parentId;
+    let targetComment = null;
+    
+    // Nếu là reply, kiểm tra xem comment được reply có phải là comment con không
+    if (parentId) {
+      targetComment = await Comment.findById(parentId);
+      if (!targetComment) {
+        return res.status(404).json({ message: 'Target comment not found' });
+      }
+      
+      // Nếu target comment có parentId (là comment con), dùng parentId của nó để cùng cấp
+      if (targetComment.parentId) {
+        actualParentId = targetComment.parentId;
+      }
     }
     
     const comment = new Comment({
       eventId,
       userId: req.user.id,
       content,
-      parentId: parentId || null,
+      parentId: actualParentId || null,
     });
     await comment.save();
     
-    // Nếu là reply, thêm comment này vào danh sách replies của parent và gửi thông báo
-    if (parentId) {
-      const parentComment = await Comment.findById(parentId);
-      if (!parentComment) {
-        return res.status(404).json({ message: 'Parent comment not found' });
-      }
-      // Kiểm tra xem comment đã có trong replies chưa
-      const commentIdStr = comment._id.toString();
-      const existingReply = parentComment.replies.find(r => r.toString() === commentIdStr);
-      if (!existingReply) {
-        parentComment.replies.push(comment._id);
-        await parentComment.save();
-      }
-      
-      // Gửi thông báo cho chủ bình luận gốc (nếu không phải chính mình)
-      if (parentComment.userId !== req.user.id) {
-        try {
-          const User = require('../models/User');
-          const user = await User.findById(req.user.id);
-          await sendNotification(
-            parentComment.userId,
-            'Có người trả lời bình luận của bạn',
-            `${user?.name || 'Ai đó'} đã trả lời bình luận của bạn: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
-            'comment_replied',
-            parentComment.eventId
-          );
-        } catch (notifErr) {
-          console.warn('Failed to send reply notification:', notifErr.message);
+    // Thêm comment này vào danh sách replies của parent (root comment)
+    if (actualParentId) {
+      const rootComment = await Comment.findById(actualParentId);
+      if (rootComment) {
+        const commentIdStr = comment._id.toString();
+        const existingReply = rootComment.replies.find(r => r.toString() === commentIdStr);
+        if (!existingReply) {
+          rootComment.replies.push(comment._id);
+          await rootComment.save();
         }
+      }
+    }
+    
+    // Gửi thông báo cho người được mention/reply trực tiếp (nếu có)
+    const User = require('../models/User');
+    const currentUser = await User.findById(req.user.id);
+    
+    if (targetComment && targetComment.userId !== req.user.id) {
+      try {
+        await sendNotification(
+          targetComment.userId,
+          'Có người trả lời bình luận của bạn',
+          `${currentUser?.name || 'Ai đó'} đã trả lời bình luận của bạn: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
+          'comment_replied',
+          eventId
+        );
+      } catch (notifErr) {
+        console.warn('Failed to send reply notification:', notifErr.message);
       }
     }
     
