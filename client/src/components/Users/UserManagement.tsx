@@ -37,9 +37,7 @@ export function UserManagement() {
         headers: { Authorization: `Bearer ${token}` },
       });
       dispatch({ type: "SET_USERS", payload: response.data });
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -90,8 +88,7 @@ export function UserManagement() {
       setShowDeleteModal(false);
       setSelectedUser(null);
     } catch (error) {
-      console.error("Failed to delete user:", error);
-      toast.error("Xóa người dùng thất bại!");
+      toast.error("Óa người dùng thất bại!");
     }
   };
 
@@ -111,7 +108,6 @@ export function UserManagement() {
         payload: { id, role: response.data.user.role },
       });
     } catch (error) {
-      console.error("Failed to update user role:", error);
       toast.error("Cập nhật vai trò thất bại!");
     }
   };
@@ -133,7 +129,6 @@ export function UserManagement() {
         updatedUser.is_locked ? "Người dùng đã bị khóa!" : "Người dùng đã được mở khóa!"
       );
     } catch (error) {
-      console.error("Failed to toggle lock:", error);
       toast.error("Thao tác thất bại!");
     }
   };
@@ -179,7 +174,6 @@ export function UserManagement() {
       await fetchUsers(); // Refresh danh sách users
       toast.success(`Thành công: ${response.data.successCount}/${response.data.total} tài khoản`);
     } catch (error: any) {
-      console.error("Failed to bulk upload:", error);
       toast.error(error.response?.data?.message || "Upload thất bại!");
     } finally {
       setIsUploading(false);

@@ -61,7 +61,6 @@ export function LoginForm() {
           });
           dispatch({ type: "FETCH_USERS", payload: response.data });
         } catch (error) {
-          console.error("Failed to fetch users:", error);
         }
       };
 
@@ -73,7 +72,6 @@ export function LoginForm() {
       const anyErr: any = error as any;
       const msg = anyErr?.response?.data?.message || "Email hoặc mật khẩu không đúng";
       setError(msg);
-      console.error("Login error:", error);
     }
   };
 
@@ -111,7 +109,6 @@ export function LoginForm() {
         throw new Error(res.data.message || "Lỗi không xác định");
       }
     } catch (err: any) {
-      console.error("Register error:", err);
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
       } else {
@@ -146,7 +143,6 @@ export function LoginForm() {
         throw new Error(res.data.message || "Lỗi không xác định");
       }
     } catch (err: any) {
-      console.error("Verify OTP error:", err);
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
       } else {

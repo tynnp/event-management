@@ -137,7 +137,6 @@ export function PersonalProfile() {
       setMessage("Cập nhật ảnh đại diện thành công!");
       setIsSuccess(true);
     } catch (err) {
-      console.error("Lỗi khi cập nhật avatar:", err);
       toast.error("Không thể cập nhật avatar!");
     }
   }, [imageToCrop, croppedAreaPixels, state.token, dispatch]);

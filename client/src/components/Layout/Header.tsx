@@ -46,11 +46,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
       const res = await axios.get(`${BASE}/notifications`, { headers });
       const rows = res.data || [];
-      console.log('📬 Notifications fetched:', rows);
       setNotifications(rows);
       setUnreadCount(rows.filter((n: any) => !n.is_read).length);
     } catch (err: any) {
-      console.error('❌ Error fetching notifications:', err.message, err.response?.data);
     }
   };
 

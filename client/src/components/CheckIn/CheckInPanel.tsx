@@ -145,16 +145,13 @@ export function CheckInPanel() {
     setScanResult("");
 
     if (qrScannerRef.current) {
-      console.log("Cleaning up existing scanner...");
       try {
         const state = await qrScannerRef.current.getState();
-        console.log("Current scanner state:", state);
         if (state === 2) {
           await qrScannerRef.current.stop();
         }
         await qrScannerRef.current.clear();
       } catch (e) {
-        console.log("Error during cleanup:", e);
       }
       qrScannerRef.current = null;
     }
@@ -170,7 +167,6 @@ export function CheckInPanel() {
       }
       scannerElement.innerHTML = "";
 
-      console.log("Creating new scanner instance...");
       qrScannerRef.current = new Html5Qrcode(scannerDivId);
 
       const config = {
@@ -228,18 +224,12 @@ export function CheckInPanel() {
         }, 100);
       };
 
-      console.log("Starting camera...");
       await qrScannerRef.current.start(
         { facingMode: "environment" },
         config,
         onScanSuccess,
-        (errorMessage) => { 
-          if (!errorMessage.includes("NotFoundException")) {
-            console.log("Scan error:", errorMessage);
-          }
-        }
+        (errorMessage) => {}
       );
-      console.log("Camera started successfully!");
     } catch (err: any) {
       setIsScanning(false);
       if (qrScannerRef.current) {
@@ -249,9 +239,6 @@ export function CheckInPanel() {
         } catch {}
         qrScannerRef.current = null;
       }
-      console.error("Scanner error:", err);
-      console.error("Error name:", err?.name);
-      console.error("Error message:", err?.message);
       
       const errorName = err?.name || "";
       const errorMsg = err?.message || "";

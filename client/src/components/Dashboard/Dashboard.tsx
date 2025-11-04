@@ -84,7 +84,6 @@ export function Dashboard() {
           category: e.category_name || e.category
         })) || [];
 
-        console.log("Raw events from backend:", eventsRes.data);
         setEvents(normalizedEvents);
         setUsers(usersRes.data || []);
 
@@ -93,7 +92,6 @@ export function Dashboard() {
           setStatistics(statsRes.data);
         }
       } catch (err: any) {
-        console.error('Error fetching dashboard data:', err);
         setError(err.response?.data?.message || 'Không thể tải dữ liệu');
       } finally {
         setLoading(false);

@@ -166,7 +166,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             }))
           }));
         } catch (err) {
-          console.warn('Could not fetch comments:', err);
         }
         
         if (!mounted) return;
@@ -220,8 +219,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
           const normalizedEventWithRatings = { ...normalizedEvent, comments: mergedComments, ratings, averageRating: Number.isFinite(avg) ? avg : normalizedEvent.averageRating };
           setRemoteEvent(normalizedEventWithRatings);
         } catch (err) {
-          // fallback: set without ratings
-          setRemoteEvent(normalizedEvent);
         }
         
         // Fetch users để có avatar
@@ -233,7 +230,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
             setAllUsers(usersRes.data);
           }
         } catch (err) {
-          console.warn('Could not fetch users:', err);
         }
       } catch (err: any) {
         if (!mounted) return;
@@ -398,7 +394,6 @@ export function EventDetail({ event: propEvent, onBack }: { event?: Event; onBac
         };
       });
     } catch (err) {
-      console.warn('Could not refetch comments:', err);
     }
   };
 

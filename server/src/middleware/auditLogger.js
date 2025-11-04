@@ -72,7 +72,7 @@ module.exports = async (req, res, next) => {
         );
       }
 
-      console.log(`🪵 [${method}] ${url} - ${status} (${duration}ms)`);
+      console.log(`[${method}] ${url} - ${status} (${duration}ms)`);
     } catch (err) {
       console.error('Audit Logger Error:', err.message);
     }

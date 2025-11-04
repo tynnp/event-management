@@ -66,7 +66,6 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
 
         const token = getToken();
         if (!token) {
-          console.warn("Không có token, không thể tải danh mục");
           return;
         }
 
@@ -80,12 +79,8 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
           setCategories(res.data);
           if (res.data.length > 0)
             setFormData((prev) => ({ ...prev, category: res.data[0].id }));
-        } else {
-          console.warn("API /categories trả về dữ liệu không hợp lệ:", res.data);
         }
-      } catch (err) {
-        console.error("Không thể tải danh mục:", err);
-      }
+      } catch (err) {}
     };
 
     fetchCategories();
@@ -199,8 +194,6 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
       const created = await res.json().catch(() => null);
 
       if (!res.ok) {
-        console.error(`[CreateEvent] Server returned ${res.status}:`, created);
-
         if (res.status === 401) {
           clearAuth();
           navigate('/login', { replace: true });
@@ -248,7 +241,6 @@ export function CreateEvent({ onCancel, onSuccess }: CreateEventProps) {
       setErrors({});
 
     } catch (err: any) {
-      console.error("Error creating event:", err);
       toast.error(err?.message || "Có lỗi xảy ra khi tạo sự kiện");
     } finally {
       setLoading(false);

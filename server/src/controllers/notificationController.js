@@ -13,10 +13,10 @@ exports.sendNotification = async (userId, title, message, type, relatedEventId =
       type,
       related_event_id: relatedEventId
     });
-    console.log(`✅ Notification sent: ${type} to user ${userId}`, { title, message });
+    console.log(`Notification sent: ${type} to user ${userId}`, { title, message });
     return notification;
   } catch (err) {
-    console.error('❌ Error sending notification:', err.message);
+    console.error('Error sending notification:', err.message);
     console.error('Details:', { userId, title, message, type, relatedEventId });
     throw err; // Don't silently fail - let caller handle it
   }

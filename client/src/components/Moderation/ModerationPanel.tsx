@@ -70,7 +70,6 @@ export function ModerationPanel() {
         const pending = normalizedEvents.filter((e: Event) => e.status === 'pending');
         setPendingEvents(pending);
       } catch (err) {
-        console.error('Error fetching events:', err);
       }
     };
 
@@ -82,7 +81,6 @@ export function ModerationPanel() {
         });
         setAllUsers(res.data || []);
       } catch (err) {
-        console.error('Error fetching users:', err);
       }
     };
 

@@ -146,7 +146,6 @@ export function StatisticsPanel() {
           setUserRatingsByEvent(map);
         } catch {}
       } catch (err: any) {
-        console.error("Error fetching statistics:", err);
         setError(err?.response?.data?.message || "Không thể tải thống kê từ API");
       } finally {
         setLoading(false);
