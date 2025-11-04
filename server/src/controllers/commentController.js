@@ -134,6 +134,22 @@ exports.updateComment = async (req, res) => {
             comment.likedBy = comment.likedBy.filter(id => id !== userId);
             comment.likes = Math.max(comment.likes - 1, 0);
           }
+          // Gửi thông báo cho chủ bình luận (nếu không phải chính mình)
+          if (comment.userId !== userId) {
+            try {
+              const User = require('../models/User');
+              const user = await User.findById(userId);
+              await sendNotification(
+                comment.userId,
+                'Có người không thích bình luận của bạn',
+                `${user?.name || 'Ai đó'} đã không thích bình luận của bạn trong sự kiện`,
+                'comment_disliked',
+                comment.eventId
+              );
+            } catch (notifErr) {
+              console.warn('Failed to send dislike notification:', notifErr.message);
+            }
+          }
         }
         break;
 
