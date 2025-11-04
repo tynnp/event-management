@@ -47,10 +47,12 @@ exports.addComment = async (req, res) => {
       }
     }
     
-    // Gửi thông báo cho người được mention/reply trực tiếp (nếu có)
+    // Gửi thông báo
     const User = require('../models/User');
+    const Event = require('../models/Event');
     const currentUser = await User.findById(req.user.id);
     
+    // Nếu là reply, gửi thông báo cho người được reply
     if (targetComment && targetComment.userId !== req.user.id) {
       try {
         await sendNotification(
@@ -62,6 +64,24 @@ exports.addComment = async (req, res) => {
         );
       } catch (notifErr) {
         console.warn('Failed to send reply notification:', notifErr.message);
+      }
+    }
+    
+    // Nếu là comment gốc (không phải reply), gửi thông báo cho chủ sự kiện
+    if (!actualParentId) {
+      try {
+        const event = await Event.findById(eventId);
+        if (event && event.created_by !== req.user.id) {
+          await sendNotification(
+            event.created_by,
+            'Có người bình luận vào sự kiện của bạn',
+            `${currentUser?.name || 'Ai đó'} đã bình luận: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
+            'event_commented',
+            eventId
+          );
+        }
+      } catch (notifErr) {
+        console.warn('Failed to send event comment notification:', notifErr.message);
       }
     }
     

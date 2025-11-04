@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogOut, Bell, Settings, Menu, Check, Trash2, Clock } from "lucide-react";
+import { LogOut, Bell, Settings, Menu, Trash2, Clock } from "lucide-react";
 import axios from "axios";
 import { useApp } from "../../context/AppContext";
 import { ThemeToggle } from "./ThemeToggle";
@@ -74,7 +74,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
     } catch {}
   };
 
-  const deleteNotification = async (id: string) => {
+  const deleteNotification = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation(); // Ngăn trigger click vào notification
     try {
       const token = getToken();
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
@@ -82,6 +83,21 @@ export function Header({ onMenuToggle }: HeaderProps) {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       setUnreadCount((c) => Math.max(0, c - 1));
     } catch {}
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    // Đánh dấu đã đọc nếu chưa đọc
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
+    
+    // Đóng dropdown thông báo
+    setOpenNotif(false);
+    
+    // Navigate đến sự kiện liên quan nếu có
+    if (notification.related_event_id) {
+      navigate(`/events/${notification.related_event_id}`);
+    }
   };
 
   const getAvatarUrl = (url?: string) => {
@@ -159,7 +175,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
                     ) : (
                       <ul className="divide-y divide-gray-100 dark:divide-dark-border">
                         {notifications.map((n) => (
-                          <li key={n.id} className={`px-4 py-3 flex items-start gap-3 ${n.is_read ? '' : 'bg-indigo-50/50 dark:bg-indigo-900/20'}`}>
+                          <li 
+                            key={n.id} 
+                            onClick={() => handleNotificationClick(n)}
+                            className={`px-4 py-3 flex items-start gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors ${n.is_read ? '' : 'bg-indigo-50/50 dark:bg-indigo-900/20'}`}
+                          >
                             <div className="mt-0.5">
                               <div className={`w-2 h-2 rounded-full ${n.is_read ? 'bg-gray-300' : 'bg-indigo-500'}`}></div>
                             </div>
@@ -171,13 +191,12 @@ export function Header({ onMenuToggle }: HeaderProps) {
                                 <span>{new Date(n.created_at || n.createdAt).toLocaleString('vi-VN')}</span>
                               </div>
                             </div>
-                            <div className="flex flex-col items-end gap-2 ml-2">
-                              {!n.is_read && (
-                                <button onClick={() => markAsRead(n.id)} title="Đánh dấu đã đọc" className="p-1.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100">
-                                  <Check className="w-4 h-4" />
-                                </button>
-                              )}
-                              <button onClick={() => deleteNotification(n.id)} title="Xóa" className="p-1.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100">
+                            <div className="flex items-center ml-2">
+                              <button 
+                                onClick={(e) => deleteNotification(n.id, e)} 
+                                title="Xóa" 
+                                className="p-1.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
