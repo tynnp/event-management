@@ -6,7 +6,7 @@
 [![Issues][issues-shield]][issues-url]
 ---
 
-## 📌 About
+## Giới thiệu
 
 Project quản lý sự kiện được xây dựng nhằm:
 
@@ -27,44 +27,49 @@ Project quản lý sự kiện được xây dựng nhằm:
 
 ---
 
-### 🛠 Built With
+### Công nghệ sử dụng
 
 * [![React][React.js]][React-url] – Frontend  
 * [![Node.js][Node.js]][Node-url] – Backend (ExpressJS)  
 * [![PostgreSQL][PostgreSQL]][PostgreSQL-url] – Database  
 * [![MongoDB][MongoDB]][MongoDB-url] – Database phụ trợ  
 * [![Redis][Redis]][Redis-url] – Cache / Session store  
-* [![Prisma][Prisma]][Prisma-url] – ORM cho PostgreSQL  
 * [![TypeScript][TypeScript]][TypeScript-url] – Static typing  
 * [![Swagger][Swagger]][Swagger-url] – API Documentation  
 * [![QR Code][QRCode]][QRCode-url] – QR Code generator  
 ---
-## 🚀 Getting Started
+## Bắt đầu
 
 Hướng dẫn để chạy dự án trên máy local.
 
-### Prerequisites (phiên bản mới nhất càng tốt)
-- Node.js (>=16)
-- npm
+### Yêu cầu hệ thống (phiên bản mới nhất càng tốt)
+- Node.js (>=18)
+- npm (>=9)
 - PostgreSQL (>=14)
 - MongoDB 
 - Redis
-- git (để clone về)
-### Installation
+- git (để clone mã nguồn)
 
-- Cài đặt Database
-      [click here](https://github.com/tynnp/event_management/tree/api/database)
-- Cài đặt Backend
-      [click here](https://github.com/tynnp/event-management/tree/main/server)
-- Cài đặt Frontend
-      ```bash
-	npm install
-	npm run build
-	npm run dev
-      ```
+### Cài đặt
+
+1. Clone repository:
+   ```bash
+   git clone https://github.com/tynnp/event_management.git
+   cd event_management
+   ```
+2. Cài đặt Database (PostgreSQL + MongoDB):
+   Tham khảo hướng dẫn chi tiết trong thư mục [`database/`](database/README.md).
+3. Cài đặt Backend (server):
+   Tham khảo hướng dẫn chi tiết trong thư mục [`server/`](server/README.md).
+4. Cài đặt Frontend (client):
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
 ---
 
-## 📂 Usage
+## Sử dụng
 
 - Admin quản lý thông số liệu toàn bộ quá trình của Moderator và User
 - Moderator có quyền quản lý sự kiện 
@@ -73,7 +78,7 @@ Hướng dẫn để chạy dự án trên máy local.
 - Xem thống kê và báo cáo sau khi sự kiện kết thúc.
 ---
 
-## 🛣 Roadmap
+## Lộ trình
 
 - [x] Đăng ký / Đăng nhập / Phân quyền
 - [x] Quản lý sự kiện (tạo, duyệt, tham gia)
@@ -85,36 +90,27 @@ Hướng dẫn để chạy dự án trên máy local.
 Xem [issues](https://github.com/tynnp/event_management/issues) để theo dõi tiến độ và đề xuất tính năng.
 ---
 
-## 🤝 Contributing
+## Đóng góp
 
 Đóng góp luôn được hoan nghênh!
 
-    1. Fork dự án
-    2. Tạo nhánh mới (`git checkout -b feature/somethingfun`)
-    3. Commit thay đổi (`git commit -m 'Add somethingfun'`)
-    4. Push (`git push origin feature/somethingfun`)
-    5. Tạo Pull Request
+1. Fork dự án
+2. Tạo nhánh mới (git checkout -b feature/somethingfun)
+3. Commit thay đổi (git commit -m 'Add somethingfun')
+4. Push (git push origin feature/somethingfun)
+5. Tạo Pull Request
 
-Cảm ơn những người đã đóng góp cho dự án này ✨
----
+Cảm ơn những người đã đóng góp cho dự án này.
 
-## 📜 License
+## License
 Distributed under the MIT License. See `LICENSE.txt` for more information.
----
 
-## 📧 Contact
+## Liên hệ
 
 Nhóm phát triển tynnp.dhsp@gmail.com (Tỷ Phú A.K.A của Project)
 
 Link project: [https://github.com/tynnp/event_management](https://github.com/tynnp/event_management)
----
 
-## 🙌 Acknowledgments
-
-- [Prisma](https://www.prisma.io/)  
-- [Render](https://render.com/) / [Vercel](https://vercel.com/)  
-- [Supabase](https://supabase.com/)  
----
 [React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
 [React-url]: https://reactjs.org/
 
@@ -129,9 +125,6 @@ Link project: [https://github.com/tynnp/event_management](https://github.com/tyn
 
 [Redis]: https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white
 [Redis-url]: https://redis.io/
-
-[Prisma]: https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white
-[Prisma-url]: https://www.prisma.io/
 
 [TypeScript]: https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white
 [TypeScript-url]: https://www.typescriptlang.org/
