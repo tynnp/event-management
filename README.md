@@ -1,5 +1,5 @@
 ﻿
-# Đồ án quản lý sự kiện Event Management
+# Đồ án quản lý sự kiện - Event Management
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -143,4 +143,5 @@ Link project: [https://github.com/tynnp/event_management](https://github.com/tyn
 [issues-shield]: https://img.shields.io/github/issues/tynnp/event_management.svg?style=for-the-badge
 
 [issues-url]: https://github.com/tynnp/event_management/issues
+
 
