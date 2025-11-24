@@ -87,7 +87,6 @@ Hướng dẫn để chạy dự án trên máy local.
 - [x] Thống kê & báo cáo nâng cao
 - [ ] Mobile App (React Native)
 
-Xem [issues](https://github.com/tynnp/event_management/issues) để theo dõi tiến độ và đề xuất tính năng.
 ---
 
 ## Đóng góp
@@ -144,3 +143,4 @@ Link project: [https://github.com/tynnp/event_management](https://github.com/tyn
 [issues-shield]: https://img.shields.io/github/issues/tynnp/event_management.svg?style=for-the-badge
 
 [issues-url]: https://github.com/tynnp/event_management/issues
+
